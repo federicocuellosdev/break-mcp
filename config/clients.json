@@ -1,0 +1,18 @@
+{
+  "clients": {
+    "preston": {
+      "name": "Preston",
+      "meta_ad_account_id": "act_000000000000000",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "sheets": {}
+    },
+    "previnca": {
+      "name": "Previnca",
+      "meta_ad_account_id": "act_000000000000000",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "sheets": {}
+    }
+  }
+}

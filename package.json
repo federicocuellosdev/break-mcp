@@ -1,0 +1,25 @@
+{
+  "name": "break-mcp",
+  "version": "0.2.0",
+  "description": "MCP server for Break agency clients (Meta Marketing API + Google Sheets)",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "add-user": "node bin/add-user.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "google-auth-library": "^9.15.0",
+    "googleapis": "^144.0.0",
+    "zod": "^3.24.1"
+  }
+}
