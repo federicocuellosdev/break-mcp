@@ -1,4 +1,4 @@
-const API_VERSION = process.env.GADS_API_VERSION || 'v18';
+const API_VERSION = process.env.GADS_API_VERSION || 'v25';
 
 let cachedToken = null;
 let cachedExpires = 0;
