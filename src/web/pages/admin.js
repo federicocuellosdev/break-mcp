@@ -913,6 +913,14 @@ const CLIENT_JS = `
     }
   };
 
+  window.debouncedSaveBudget=(function(){
+    var timers=new WeakMap();
+    return function(input){
+      clearTimeout(timers.get(input));
+      timers.set(input,setTimeout(function(){window.saveClientBudget(input)},600));
+    };
+  })();
+
   window.formatMoneyInput=function(input){
     var digits=(input.value||'').replace(/[^0-9]/g,'');
     var formatted=digits?Number(digits).toLocaleString('es-AR'):'';
@@ -932,23 +940,25 @@ const CLIENT_JS = `
     var slug=editor.dataset.clientSlug;
     var platform=input.dataset.platform;
     var role=input.dataset.role||'amount';
-    var raw=(input.value||'').trim().replace(/\./g,'');
+    var raw=(input.value||'').trim().replace(/\./g,'').replace(/,/g,'');
+    if(raw===''){return} // Empty → skip; don't accidentally delete on blur/tab
     if(input._last===raw)return;
     input._last=raw;
     var payload={platform:platform};
+    var fmtN=function(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})};
     if(role==='alert_pct'){
-      var pct=raw===''?null:Number(raw);
-      if(raw!==''&&(!Number.isFinite(pct)||pct<0||pct>100)){showSavedToast('Porcentaje inv&#225;lido (0-100)','error');return}
+      var pct=Number(raw);
+      if(!Number.isFinite(pct)||pct<0||pct>100){showSavedToast('Porcentaje inv&#225;lido (0-100)','error');return}
       payload.alert_pct=pct;
     }else{
-      var amount=raw===''?null:Number(raw);
-      if(raw!==''&&(!Number.isFinite(amount)||amount<0)){showSavedToast('Monto inv&#225;lido','error');return}
+      var amount=Number(raw);
+      if(!Number.isFinite(amount)||amount<0){showSavedToast('Monto inv&#225;lido','error');return}
       payload.amount=amount;
     }
     try{
       var r=await fetch('/admin/clients/'+slug+'/budget',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});
       if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||r.status)}
-      showSavedToast(role==='alert_pct'?'Umbral de alerta guardado':(payload.amount==null?'Presupuesto eliminado':'Presupuesto guardado'));
+      showSavedToast(role==='alert_pct'?('Alerta al '+payload.alert_pct+'% guardada'):('Presupuesto guardado: $ '+fmtN(payload.amount)));
     }catch(e){showSavedToast('Error: '+e.message,'error')}
   };
 
@@ -2197,14 +2207,14 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
                 <label class="budget-sublabel">Presupuesto mensual</label>
                 <div class="budget-input-wrap">
                   <span class="prefix">$</span>
-                  <input type="text" inputmode="numeric" placeholder="0" value="${esc(amountDisplay)}" data-platform="${p.key}" data-role="amount" oninput="formatMoneyInput(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
+                  <input type="text" inputmode="numeric" placeholder="0" value="${esc(amountDisplay)}" data-platform="${p.key}" data-role="amount" oninput="formatMoneyInput(this);debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
                   <span class="suffix">/mes</span>
                 </div>
               </div>
               <div class="budget-field">
                 <label class="budget-sublabel">Alertar al</label>
                 <div class="budget-input-wrap">
-                  <input type="number" min="1" max="100" step="1" placeholder="80" value="${esc(String(entry.alert_pct))}" data-platform="${p.key}" data-role="alert_pct" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
+                  <input type="number" min="1" max="100" step="1" placeholder="80" value="${esc(String(entry.alert_pct))}" data-platform="${p.key}" data-role="alert_pct" oninput="debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
                   <span class="suffix">% consumido</span>
                 </div>
               </div>
