@@ -947,6 +947,21 @@ const CLIENT_JS = `
     }
   };
 
+  window.handleBudgetInput=function(input){
+    var oldValue=input.value||'';
+    var oldCaret=input.selectionStart||0;
+    var digits=oldValue.replace(/[^0-9]/g,'');
+    var formatted=digits?Number(digits).toLocaleString('es-AR'):'';
+    if(formatted!==oldValue){
+      var digitsBefore=oldValue.slice(0,oldCaret).replace(/[^0-9]/g,'').length;
+      input.value=formatted;
+      var pos=0,count=0;
+      while(pos<formatted.length&&count<digitsBefore){if(/[0-9]/.test(formatted[pos]))count++;pos++;}
+      try{input.setSelectionRange(pos,pos)}catch(e){}
+    }
+    window.debouncedSaveBudget(input);
+  };
+
   window.saveClientBudget=async function(input){
     var editor=document.getElementById('client-editor');
     if(!editor){return}
@@ -2208,6 +2223,7 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
           .map((p) => {
             const raw = t.budgets && t.budgets[p.key];
             const entry = raw == null ? { amount: '', alert_pct: 80 } : (typeof raw === 'number' ? { amount: raw, alert_pct: 80 } : { amount: raw.amount ?? '', alert_pct: raw.alert_pct ?? 80 });
+            const amountDisplay = entry.amount === '' || entry.amount == null ? '' : Number(entry.amount).toLocaleString('es-AR');
             return `
             <div class="budget-card">
               <div class="budget-head">
@@ -2218,7 +2234,7 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
                 <label class="budget-sublabel">Presupuesto mensual</label>
                 <div class="budget-input-wrap">
                   <span class="prefix">$</span>
-                  <input type="number" min="0" step="1" placeholder="0" value="${esc(String(entry.amount))}" data-platform="${p.key}" data-role="amount" oninput="debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
+                  <input type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="${esc(amountDisplay)}" data-platform="${p.key}" data-role="amount" oninput="handleBudgetInput(this)" onblur="saveClientBudget(this)">
                   <span class="suffix">/mes</span>
                 </div>
               </div>
