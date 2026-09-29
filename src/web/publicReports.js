@@ -98,6 +98,8 @@ nav.side-nav{flex:1;padding:1rem 0;display:flex;flex-direction:column;gap:2px}
 .nav-item:hover{color:#fff;background:var(--w-faint)}
 .nav-item.active{color:#fff;background:var(--w-faint)}
 .nav-item.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad)}
+.nav-item.sub{padding-left:2.2rem;font-size:.82rem;color:rgba(255,255,255,.55);font-weight:400}
+.nav-item.sub:hover{color:#fff}
 .sidebar-footer{padding:1.2rem 1.5rem;border-top:1px solid var(--w-faint);font-size:.7rem;color:var(--w-dim);letter-spacing:.05em;line-height:1.5}
 .sidebar-footer a{color:var(--w-dim);text-decoration:none}
 .sidebar-footer a:hover{color:#fff}
@@ -171,7 +173,8 @@ ${FAVICON}
     <span class="role">Cliente</span>
   </div>
   <nav class="side-nav">
-    <a class="nav-item active" href="/${esc(client.slug)}">Informes</a>
+    <a class="nav-item active" href="/${esc(client.slug)}">Todos los informes</a>
+    ${reports.map((r) => `<a class="nav-item sub" href="/${esc(client.slug)}/${esc(r.slug)}">${esc(r.title)}</a>`).join('')}
   </nav>
   <div class="sidebar-footer">Powered by <a href="https://breakmkt.com.ar" target="_blank" rel="noopener">break</a></div>
 </aside>

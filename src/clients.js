@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -19,6 +19,11 @@ function load() {
     }
   } else {
     const path = process.env.CLIENTS_FILE || DEFAULT_PATH;
+    // Seed from packaged default if custom path does not exist yet (first boot with persistent disk)
+    if (!existsSync(path) && path !== DEFAULT_PATH && existsSync(DEFAULT_PATH)) {
+      mkdirSync(dirname(path), { recursive: true });
+      copyFileSync(DEFAULT_PATH, path);
+    }
     cache = JSON.parse(readFileSync(path, 'utf8'));
   }
 
