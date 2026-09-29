@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { renderReport } from '../render/template.js';
 import { renderDoc } from '../render/docTemplate.js';
 import { assertAccess } from '../users.js';
+import { saveReport } from '../web/publicReports.js';
 
 const kpiSchema = z.object({
   value: z.union([z.string(), z.number()]),
@@ -242,6 +243,75 @@ export function registerReportTools(server, ctx) {
         sections,
       });
       return { content: [{ type: 'text', text: html }] };
+    },
+  );
+
+  const sourceSchema = z.object({
+    platform: z.enum(['meta', 'gads', 'ga4', 'sheets', 'other']),
+    account_id: z.string().optional().describe('Ad account / customer / property id used'),
+    label: z.string().optional().describe('Human label shown to the client, ej. "Meta Ads · Preston"'),
+    period: z.string().optional().describe('Range used, ej. "2026-08-01 → 2026-08-31"'),
+  });
+
+  server.registerTool(
+    'publish_report',
+    {
+      title: 'Publish an HTML report to the client public gallery',
+      description:
+        'Uploads the given HTML to the server so it appears at mcp.breakmkt.com.ar/{client} as a card and at mcp.breakmkt.com.ar/{client}/{slug} as a full page. The server routes to the correct client folder based on the `client` slug and validates the user has access. Use this AFTER the user reviewed the local file and said "publicar / subir". Author is inferred from the bearer token.',
+      inputSchema: {
+        client: z.string().describe('Client slug (must be in your allowed list) — the server uses this to route to the right public folder'),
+        slug: z.string().describe('URL slug for the report (kebab-case, ej. "informe-septiembre-2026")'),
+        title: z.string().describe('Human title for the gallery card, ej. "Informe septiembre 2026"'),
+        description: z.string().optional().describe('One-line summary shown on the card'),
+        sources: z.array(sourceSchema).optional().describe('Data sources that fed this report (Meta / Google Ads / GA4 / Sheets). Multiple platforms per report are expected.'),
+        html: z.string().describe('Full standalone HTML of the report'),
+      },
+    },
+    async ({ client, slug, title, description, sources, html }) => {
+      assertAccess(ctx.user, client);
+      const base = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '').replace(/\/mcp$/, '');
+      const saved = saveReport({
+        clientSlug: client,
+        reportSlug: slug,
+        title,
+        description,
+        sources,
+        html,
+        author: { id: ctx.user.id, name: ctx.user.name },
+      });
+      const url = `${base}/${client}/${saved.slug}`;
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ ok: true, url, gallery_url: `${base}/${client}`, ...saved }, null, 2),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'list_published_reports',
+    {
+      title: 'List reports already published for a client',
+      description: 'Returns the reports currently visible in the client public gallery so you can avoid slug collisions or reuse a slug to update.',
+      inputSchema: {
+        client: z.string().describe('Client slug (must be in your allowed list)'),
+      },
+    },
+    async ({ client }) => {
+      assertAccess(ctx.user, client);
+      const { reportsForClient } = await import('../web/publicReports.js');
+      const items = reportsForClient(client).map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        description: r.description,
+        author: r.author_name,
+        published_at: r.published_at,
+      }));
+      return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
     },
   );
 }

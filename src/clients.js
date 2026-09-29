@@ -28,16 +28,94 @@ function load() {
   return cache;
 }
 
+function normAcc(single, plural) {
+  if (Array.isArray(plural) && plural.length) return plural.map(String);
+  if (single) return [String(single)];
+  return [];
+}
+
 export function listClients() {
   const { clients } = load();
-  return Object.entries(clients).map(([slug, c]) => ({
-    slug,
-    name: c.name,
-    meta_ad_account_id: c.meta_ad_account_id || null,
-    gads_customer_id: c.gads_customer_id || null,
-    ga4_property_id: c.ga4_property_id || null,
-    sheets: c.sheets || {},
-  }));
+  return Object.entries(clients)
+    .sort((a, b) => String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]), 'es', { sensitivity: 'base' }))
+    .map(([slug, c]) => {
+    const metaIds = normAcc(c.meta_ad_account_id, c.meta_ad_accounts);
+    const gadsIds = normAcc(c.gads_customer_id, c.gads_customers);
+    const ga4Ids = normAcc(c.ga4_property_id, c.ga4_properties);
+    return {
+      slug,
+      name: c.name,
+      active: c.active !== false,
+      meta_ad_account_id: metaIds[0] || null,
+      gads_customer_id: gadsIds[0] || null,
+      ga4_property_id: ga4Ids[0] || null,
+      meta_ad_accounts: metaIds,
+      gads_customers: gadsIds,
+      ga4_properties: ga4Ids,
+      sheets: c.sheets || {},
+      budgets: c.budgets || {},
+    };
+  });
+}
+
+const PLATFORM_FIELDS = {
+  meta: { singular: 'meta_ad_account_id', plural: 'meta_ad_accounts' },
+  gads: { singular: 'gads_customer_id', plural: 'gads_customers' },
+  ga4: { singular: 'ga4_property_id', plural: 'ga4_properties' },
+};
+
+const BUDGET_PLATFORMS = new Set(['meta', 'gads']);
+
+function normBudgetEntry(entry) {
+  if (entry == null) return null;
+  if (typeof entry === 'number') return { amount: entry, alert_pct: 80 };
+  return { amount: entry.amount ?? null, alert_pct: entry.alert_pct ?? 80 };
+}
+
+export function updateClientBudget(slug, platform, patch) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  if (!BUDGET_PLATFORMS.has(platform)) throw new Error(`platform inválida para presupuesto: ${platform}`);
+  if (!c.budgets) c.budgets = {};
+  const current = normBudgetEntry(c.budgets[platform]) || { amount: null, alert_pct: 80 };
+
+  if (patch && Object.prototype.hasOwnProperty.call(patch, 'amount')) {
+    const raw = patch.amount;
+    const n = raw === '' || raw == null ? null : Number(raw);
+    if (n != null && (!Number.isFinite(n) || n < 0)) throw new Error('Monto inválido');
+    current.amount = n;
+  }
+  if (patch && Object.prototype.hasOwnProperty.call(patch, 'alert_pct')) {
+    const raw = patch.alert_pct;
+    const n = raw === '' || raw == null ? null : Number(raw);
+    if (n != null && (!Number.isFinite(n) || n < 0 || n > 100)) throw new Error('Porcentaje inválido (0-100)');
+    current.alert_pct = n ?? 80;
+  }
+
+  if (current.amount == null) delete c.budgets[platform];
+  else c.budgets[platform] = current;
+
+  persist(db);
+  return c.budgets;
+}
+
+export function updateClientAccounts(slug, platform, ids) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  const fields = PLATFORM_FIELDS[platform];
+  if (!fields) throw new Error(`platform inválida: ${platform}`);
+  const normalized = Array.isArray(ids)
+    ? [...new Set(ids.map((s) => String(s).trim()).filter(Boolean))]
+    : String(ids || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+  c[fields.plural] = normalized;
+  c[fields.singular] = normalized[0] || null;
+  persist(db);
+  return normalized;
 }
 
 export function getClient(slug) {
@@ -47,7 +125,19 @@ export function getClient(slug) {
     const known = Object.keys(clients).join(', ');
     throw new Error(`Unknown client "${slug}". Known: ${known || '(none)'}`);
   }
-  return { slug, ...c };
+  const metaIds = normAcc(c.meta_ad_account_id, c.meta_ad_accounts);
+  const gadsIds = normAcc(c.gads_customer_id, c.gads_customers);
+  const ga4Ids = normAcc(c.ga4_property_id, c.ga4_properties);
+  return {
+    slug,
+    ...c,
+    meta_ad_account_id: metaIds[0] || null,
+    gads_customer_id: gadsIds[0] || null,
+    ga4_property_id: ga4Ids[0] || null,
+    meta_ad_accounts: metaIds,
+    gads_customers: gadsIds,
+    ga4_properties: ga4Ids,
+  };
 }
 
 export function resolveMetaAdAccount({ client, ad_account_id }) {
@@ -107,11 +197,17 @@ export function createClientRecord({ slug, name, meta_ad_account_id, gads_custom
   if (!name) throw new Error('name obligatorio');
   const db = load();
   if (db.clients[s]) throw new Error(`Ya existe un cliente con slug "${s}"`);
+  const meta = meta_ad_account_id ? String(meta_ad_account_id) : null;
+  const gads = gads_customer_id ? String(gads_customer_id) : null;
+  const ga4 = ga4_property_id ? String(ga4_property_id) : null;
   db.clients[s] = {
     name,
-    meta_ad_account_id: meta_ad_account_id || null,
-    gads_customer_id: gads_customer_id || null,
-    ga4_property_id: ga4_property_id || null,
+    meta_ad_account_id: meta,
+    gads_customer_id: gads,
+    ga4_property_id: ga4,
+    meta_ad_accounts: meta ? [meta] : [],
+    gads_customers: gads ? [gads] : [],
+    ga4_properties: ga4 ? [ga4] : [],
     sheets: {},
   };
   persist(db);
@@ -123,6 +219,7 @@ export function updateClientRecord(slug, patch) {
   const c = db.clients[slug];
   if (!c) throw new Error(`Cliente "${slug}" no existe`);
   if (patch.name !== undefined) c.name = patch.name;
+  if (patch.active !== undefined) c.active = !!patch.active;
   if (patch.meta_ad_account_id !== undefined) c.meta_ad_account_id = patch.meta_ad_account_id || null;
   if (patch.gads_customer_id !== undefined) c.gads_customer_id = patch.gads_customer_id || null;
   if (patch.ga4_property_id !== undefined) c.ga4_property_id = patch.ga4_property_id || null;

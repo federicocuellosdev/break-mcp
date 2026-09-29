@@ -6,6 +6,7 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { createServer } from './server.js';
 import { verifyToken } from './users.js';
 import { createWebRouter } from './web/routes.js';
+import { createPublicReportsRouter } from './web/publicReports.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -17,6 +18,7 @@ app.use('/public', express.static('public', { maxAge: '7d' }));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use(createWebRouter());
+app.use(createPublicReportsRouter());
 
 app.use('/mcp', express.json({ limit: '2mb' }));
 

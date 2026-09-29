@@ -2,17 +2,46 @@
   "clients": {
     "preston": {
       "name": "Preston",
-      "meta_ad_account_id": "act_000000000000000",
-      "gads_customer_id": null,
+      "meta_ad_account_id": null,
+      "gads_customer_id": "9809300411",
       "ga4_property_id": null,
-      "sheets": {}
+      "sheets": {},
+      "gads_customers": [
+        "9809300411"
+      ],
+      "budgets": {}
     },
     "previnca": {
       "name": "Previnca",
-      "meta_ad_account_id": "act_000000000000000",
-      "gads_customer_id": null,
+      "meta_ad_account_id": null,
+      "gads_customer_id": "2451808484",
       "ga4_property_id": null,
-      "sheets": {}
+      "sheets": {},
+      "gads_customers": [
+        "2451808484"
+      ]
+    },
+    "azahares": {
+      "name": "Azahares",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "9436704196",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "9436704196"
+      ],
+      "ga4_properties": [],
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 0,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 100000,
+          "alert_pct": 80
+        }
+      }
     }
   }
 }

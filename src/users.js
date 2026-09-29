@@ -71,7 +71,9 @@ export async function verifyCredentials(idOrEmail, password) {
 
 export function listAllUsers() {
   const { raw } = load();
-  return Object.entries(raw.users).map(([id, u]) => ({
+  return Object.entries(raw.users)
+    .sort((a, b) => String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]), 'es', { sensitivity: 'base' }))
+    .map(([id, u]) => ({
     id,
     name: u.name,
     email: u.email || null,
@@ -125,10 +127,35 @@ function normalizeClients(input) {
     .filter(Boolean);
 }
 
+const PASS_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+
+function generatePassword(length = 16) {
+  const bytes = randomBytes(length);
+  let out = '';
+  for (let i = 0; i < length; i++) out += PASS_ALPHABET[bytes[i] % PASS_ALPHABET.length];
+  return out;
+}
+
+function slugifyId(input) {
+  return String(input || '')
+    .toLowerCase()
+    .trim()
+    .replace(/@.*$/, '')
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export async function createUser({ id, name, email, role, clients, password }) {
-  if (!id || !name) throw new Error('id y name son obligatorios');
+  if (!name) throw new Error('name es obligatorio');
   const { raw } = load();
-  if (raw.users[id]) throw new Error(`Ya existe un usuario con id "${id}"`);
+  let finalId = id ? slugifyId(id) : slugifyId(email || name);
+  if (!finalId) throw new Error('no se pudo derivar un id válido');
+  if (raw.users[finalId]) {
+    let suffix = 2;
+    while (raw.users[`${finalId}-${suffix}`]) suffix++;
+    finalId = `${finalId}-${suffix}`;
+  }
+  const plainPassword = password || generatePassword(16);
   const entry = {
     token: randomBytes(32).toString('hex'),
     name,
@@ -137,11 +164,11 @@ export async function createUser({ id, name, email, role, clients, password }) {
     active: true,
     clients: normalizeClients(clients),
     accounts: { meta: [], gads: [], ga4: [] },
+    password_hash: await bcrypt.hash(plainPassword, 10),
   };
-  if (password) entry.password_hash = await bcrypt.hash(password, 10);
-  raw.users[id] = entry;
+  raw.users[finalId] = entry;
   persist(raw);
-  return { id, ...entry };
+  return { id: finalId, ...entry, _plain_password: plainPassword };
 }
 
 export async function updateUser(id, patch) {
@@ -175,6 +202,16 @@ export function updateUserAccounts(id, platform, ids) {
   u.accounts[platform] = normalized;
   persist(raw);
   return u.accounts;
+}
+
+export async function regenerateUserPassword(id) {
+  const { raw } = load();
+  const u = raw.users[id];
+  if (!u) throw new Error(`Usuario "${id}" no existe`);
+  const plain = generatePassword(16);
+  u.password_hash = await bcrypt.hash(plain, 10);
+  persist(raw);
+  return plain;
 }
 
 export function regenerateUserToken(id) {

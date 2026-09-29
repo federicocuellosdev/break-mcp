@@ -62,9 +62,9 @@ export async function listMccChildren() {
       customer_client.currency_code,
       customer_client.status,
       customer_client.manager,
-      customer_client.level
+      customer_client.level,
+      customer_client.test_account
     FROM customer_client
-    WHERE customer_client.status = 'ENABLED'
     ORDER BY customer_client.descriptive_name
   `.trim();
   const data = await runSearch({ customerId: mcc, query });
@@ -75,7 +75,9 @@ export async function listMccChildren() {
       id: String(c.id),
       name: c.descriptiveName || `Customer ${c.id}`,
       currency: c.currencyCode || '',
+      status: c.status || 'UNKNOWN',
       level: c.level,
+      test: !!c.testAccount,
     }));
 }
 

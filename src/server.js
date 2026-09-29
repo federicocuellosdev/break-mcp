@@ -5,6 +5,7 @@ import { registerSheetsTools } from './tools/sheets.js';
 import { registerGadsTools } from './tools/gads.js';
 import { registerGa4Tools } from './tools/ga4.js';
 import { registerReportTools } from './tools/report.js';
+import { registerLogsTools } from './tools/logs.js';
 
 export function createServer({ user }) {
   const server = new McpServer({
@@ -20,6 +21,7 @@ export function createServer({ user }) {
   registerGadsTools(server, ctx);
   registerGa4Tools(server, ctx);
   registerReportTools(server, ctx);
+  registerLogsTools(server, ctx);
 
   return server;
 }
