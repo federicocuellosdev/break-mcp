@@ -796,16 +796,26 @@ const CLIENT_JS = `
       if(!r.ok||data.error){list.innerHTML='<div class="accounts-loading err">Error: '+(data.error||r.status)+'</div>';return}
       var accounts=data.accounts||[];
       if(!accounts.length){list.innerHTML='<div class="accounts-loading warn">'+(data.notice||'No hay cuentas disponibles.')+'</div>';return}
+      accounts.sort(function(a,b){
+        var na=(a.name||'').trim();
+        var nb=(b.name||'').trim();
+        var aNum=/^\d/.test(na);
+        var bNum=/^\d/.test(nb);
+        if(aNum&&!bNum)return -1;
+        if(!aNum&&bNum)return 1;
+        return na.localeCompare(nb,undefined,{numeric:true,sensitivity:'base'});
+      });
       var STATUS_LABEL={ENABLED:'Habilitada',SUSPENDED:'Suspendida',CANCELED:'Cancelada',CLOSED:'Cerrada'};
       list.innerHTML=accounts.map(function(a){
         var isExisting=capState.existing.has(String(a.id));
         var st=a.status||'';
         var stCell=st?'<span class="status-pill '+st.toLowerCase()+'">'+(STATUS_LABEL[st]||st)+'</span>':'<span class="muted" style="font-size:.75rem">&#8212;</span>';
+        var idDisplay=String(a.id||'').replace(/^act_/,'');
         return '<label class="account-row" data-status="'+st+'"'+(isExisting?' style="opacity:.5"':'')+'>'
           +'<input type="checkbox" value="'+a.id+'" '+(isExisting?'checked disabled':'')+' onchange="capOnCheck(this)">'
           +'<span class="a-name">'+(a.name||'sin nombre')+(isExisting?' <em style="color:var(--muted);font-style:normal;font-size:.72rem"> &#183; ya asociada</em>':'')+'</span>'
           +'<span class="a-status">'+stCell+'</span>'
-          +'<span class="a-id">'+a.id+'</span>'
+          +'<span class="a-id">'+idDisplay+'</span>'
           +'</label>';
       }).join('');
     }catch(e){list.innerHTML='<div class="accounts-loading err">Error: '+e.message+'</div>'}
@@ -971,7 +981,6 @@ const CLIENT_JS = `
     var raw=(input.value||'').trim().replace(/\./g,'').replace(/,/g,'');
     if(raw===''){return} // Empty → skip; don't accidentally delete on blur/tab
     if(input._last===raw)return;
-    input._last=raw;
     var payload={platform:platform};
     var fmtN=function(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})};
     if(role==='alert_pct'){
@@ -986,6 +995,7 @@ const CLIENT_JS = `
     try{
       var r=await fetch('/admin/clients/'+slug+'/budget',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});
       if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||r.status)}
+      input._last=raw;
       showSavedToast(role==='alert_pct'?('Alerta al '+payload.alert_pct+'% guardada'):('Presupuesto guardado: $ '+fmtN(payload.amount)));
     }catch(e){showSavedToast('Error: '+e.message,'error')}
   };
@@ -1067,7 +1077,7 @@ const CLIENT_JS = `
     t.textContent=msg||'Guardado';
     t.hidden=false;
     clearTimeout(t._h);
-    t._h=setTimeout(function(){t.hidden=true},1800);
+    t._h=setTimeout(function(){t.hidden=true},3500);
   };
 
   // Custom select (pill dropdown replacement)

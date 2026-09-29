@@ -23,10 +23,12 @@
     },
     "azahares": {
       "name": "Azahares",
-      "meta_ad_account_id": null,
+      "meta_ad_account_id": "act_2347584838876950",
       "gads_customer_id": "9436704196",
       "ga4_property_id": null,
-      "meta_ad_accounts": [],
+      "meta_ad_accounts": [
+        "act_2347584838876950"
+      ],
       "gads_customers": [
         "9436704196"
       ],
