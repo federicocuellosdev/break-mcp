@@ -2208,7 +2208,6 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
           .map((p) => {
             const raw = t.budgets && t.budgets[p.key];
             const entry = raw == null ? { amount: '', alert_pct: 80 } : (typeof raw === 'number' ? { amount: raw, alert_pct: 80 } : { amount: raw.amount ?? '', alert_pct: raw.alert_pct ?? 80 });
-            const amountDisplay = entry.amount === '' || entry.amount == null ? '' : Number(entry.amount).toLocaleString('es-AR');
             return `
             <div class="budget-card">
               <div class="budget-head">
@@ -2219,7 +2218,7 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
                 <label class="budget-sublabel">Presupuesto mensual</label>
                 <div class="budget-input-wrap">
                   <span class="prefix">$</span>
-                  <input type="text" inputmode="numeric" placeholder="0" value="${esc(amountDisplay)}" data-platform="${p.key}" data-role="amount" oninput="formatMoneyInput(this);debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
+                  <input type="number" min="0" step="1" placeholder="0" value="${esc(String(entry.amount))}" data-platform="${p.key}" data-role="amount" oninput="debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
                   <span class="suffix">/mes</span>
                 </div>
               </div>
