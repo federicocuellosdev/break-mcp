@@ -917,9 +917,22 @@ const CLIENT_JS = `
     var timers=new WeakMap();
     return function(input){
       clearTimeout(timers.get(input));
-      timers.set(input,setTimeout(function(){window.saveClientBudget(input)},600));
+      timers.set(input,setTimeout(function(){window.saveClientBudget(input)},300));
     };
   })();
+
+  // Flush pending saves before leaving the page (unload / navigation)
+  window.addEventListener('beforeunload',function(){
+    document.querySelectorAll('input[data-role="amount"],input[data-role="alert_pct"]').forEach(function(i){
+      if(i._last!==(i.value||'').trim().replace(/\./g,'').replace(/,/g,''))window.saveClientBudget(i);
+    });
+  });
+  // Enter key triggers immediate save on budget fields
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter')return;
+    var t=e.target;
+    if(t&&t.tagName==='INPUT'&&(t.dataset.role==='amount'||t.dataset.role==='alert_pct')){e.preventDefault();window.saveClientBudget(t);t.blur();}
+  });
 
   window.formatMoneyInput=function(input){
     var digits=(input.value||'').replace(/[^0-9]/g,'');
@@ -2187,7 +2200,6 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
 
     <div class="card">
       <h2>Inversi&#243;n publicitaria</h2>
-      <p class="sub" style="margin-top:-.4rem;margin-bottom:1rem">Presupuesto mensual por plataforma. Se utiliza para generar alertas cuando el consumo del mes en curso (del 1&#186; al d&#237;a de hoy) supere el % configurado.</p>
       <div class="budget-grid">
         ${[
           { key: 'meta', label: 'Meta Ads', icon: META_ICON },
