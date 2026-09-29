@@ -327,7 +327,7 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .aside-sub-label{font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .aside-sub-value{font:600 .95rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.01em}
 .aside-foot{font-size:.68rem;color:var(--muted);line-height:1.4}
-.alerts-empty{border:1px dashed var(--line);border-radius:14px;padding:1.2rem 1.3rem;color:var(--muted);font-size:.85rem;background:var(--card)}
+.alerts-empty{border:1px dashed var(--line);border-radius:14px;padding:1.2rem 1.3rem;color:var(--muted);font-size:.85rem;background:var(--card);min-height:80px;display:flex;align-items:center}
 .alerts-list{display:flex;flex-direction:column;gap:.5rem}
 .alert-item{display:flex;align-items:center;gap:.85rem;padding:.85rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--card);border-left-width:4px}
 .alert-item.warn{border-left-color:#F6B40E}

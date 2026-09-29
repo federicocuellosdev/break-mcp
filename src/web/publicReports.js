@@ -82,31 +82,45 @@ function serveReport(clientSlug, reportSlug) {
 }
 
 const GALLERY_CSS = `
-:root{--bg:#F5F3F7;--black:#1B1B1D;--gray:#656467;--white:#FFFFFF;--border:#DDDDDD;--pink:#E13B7D;--grad:linear-gradient(135deg,#0087F2 0%,#BF4FCD 50%,#E13B7D 100%)}
+:root{--bg:#F5F3F7;--ink:#1B1B1D;--muted:#656467;--card:#FFFFFF;--line:#DDDDDD;--pink:#E13B7D;--soft:#F5F3F7;--dark:#1B1B1D;--w-dim:rgba(255,255,255,.55);--w-faint:rgba(255,255,255,.10);--grad:linear-gradient(135deg,#0087F2 0%,#BF4FCD 50%,#E13B7D 100%)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--black);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
-.gb{height:2px;background:var(--grad)}
-header{padding:clamp(2rem,6vh,4rem) clamp(1rem,5vw,3rem) clamp(1.4rem,3vh,2rem);max-width:1180px;margin:0 auto}
-.brand{display:flex;align-items:center;gap:.6rem;margin-bottom:1.6rem;font-size:1rem;font-weight:400;letter-spacing:-.01em}
-.brand .dot{display:inline-block;width:6px;height:6px;background:var(--grad);border-radius:50%;vertical-align:super}
-.brand .x{color:var(--gray);font-size:.8rem;margin:0 .2rem}
-.eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);margin-bottom:.6rem}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex}
+.gb{height:2px;background:var(--grad);position:fixed;top:0;left:0;right:0;z-index:100}
+aside.sidebar{width:250px;flex-shrink:0;background:var(--dark);color:#fff;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;padding-top:2px}
+.sidebar-logo{display:flex;align-items:baseline;gap:.7rem;padding:1.6rem 1.5rem;border-bottom:1px solid var(--w-faint)}
+.sidebar-logo .word{color:#fff;font-size:1.15rem;font-weight:400;letter-spacing:-.01em}
+.sidebar-logo .dot{display:inline-block;width:6px;height:6px;background:var(--grad);border-radius:50%;vertical-align:super}
+.sidebar-who{padding:1.1rem 1.5rem;border-bottom:1px solid var(--w-faint);display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.sidebar-who .name{color:#fff;font-size:.95rem;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-who .role{flex-shrink:0;font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--w-dim);padding:.2rem .55rem;border:1px solid var(--w-faint);border-radius:100px}
+nav.side-nav{flex:1;padding:1rem 0;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:block;padding:.85rem 1.5rem;color:rgba(255,255,255,.7);text-decoration:none;font-size:.92rem;font-weight:500;transition:all .18s;border-left:3px solid transparent;position:relative}
+.nav-item:hover{color:#fff;background:var(--w-faint)}
+.nav-item.active{color:#fff;background:var(--w-faint)}
+.nav-item.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad)}
+.sidebar-footer{padding:1.2rem 1.5rem;border-top:1px solid var(--w-faint);font-size:.7rem;color:var(--w-dim);letter-spacing:.05em;line-height:1.5}
+.sidebar-footer a{color:var(--w-dim);text-decoration:none}
+.sidebar-footer a:hover{color:#fff}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.1rem clamp(1rem,4vw,2rem);border-bottom:1px solid var(--line);background:var(--card)}
+.topbar-title{font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.section{padding:clamp(1.4rem,4vh,2.4rem) clamp(1rem,4vw,2rem)}
+.eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
 h1{font-size:clamp(2rem,4.6vw,3.4rem);font-weight:900;letter-spacing:-.03em;line-height:1;text-wrap:balance}
 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-.lede{font-size:1rem;color:var(--gray);margin-top:1rem;max-width:56ch}
-main{max-width:1180px;margin:0 auto;padding:0 clamp(1rem,5vw,3rem) clamp(3rem,8vh,6rem)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1.6rem}
-.card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:1.4rem 1.5rem;text-decoration:none;color:inherit;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:.5rem;min-height:172px}
+.lede{font-size:1rem;color:var(--muted);margin-top:1rem;max-width:56ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1.8rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.5rem;text-decoration:none;color:inherit;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:.5rem;min-height:172px}
 .card:hover{border-color:var(--pink);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.06)}
-.card .kicker{font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gray)}
-.card h3{font-size:1.1rem;font-weight:700;letter-spacing:-.005em;color:var(--black);margin:0}
-.card p{font-size:.86rem;color:var(--gray);margin:.15rem 0 0;flex:1}
+.card .kicker{font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.card h3{font-size:1.1rem;font-weight:700;letter-spacing:-.005em;color:var(--ink);margin:0}
+.card p{font-size:.86rem;color:var(--muted);margin:.15rem 0 0;flex:1}
 .card .sources{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
-.card .src-chip{font-size:.62rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .5rem;border-radius:100px;background:#F5F3F7;color:var(--gray);border:1px solid var(--border)}
-.card .meta{display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--gray);margin-top:auto;padding-top:.6rem;border-top:1px solid var(--border)}
-.card .meta strong{font-weight:600;color:var(--black);font-size:.75rem}
-.empty{background:var(--white);border:1px dashed var(--border);border-radius:16px;padding:2.4rem 1.6rem;text-align:center;color:var(--gray);margin-top:1.6rem}
-footer{padding:1.6rem;text-align:center;font-size:.72rem;color:var(--gray);letter-spacing:.12em;text-transform:uppercase}
+.card .src-chip{font-size:.62rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .5rem;border-radius:100px;background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.card .meta{display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:auto;padding-top:.6rem;border-top:1px solid var(--line)}
+.card .meta strong{font-weight:600;color:var(--ink);font-size:.75rem}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:2.4rem 1.6rem;text-align:center;color:var(--muted);margin-top:1.8rem;min-height:120px;display:flex;align-items:center;justify-content:center}
+@media (max-width:800px){body{flex-direction:column}aside.sidebar{width:100%;min-height:auto;position:relative}nav.side-nav{flex-direction:row;overflow-x:auto;padding:.5rem}.nav-item{border-left:none;border-bottom:3px solid transparent;white-space:nowrap;padding:.7rem 1rem}.nav-item.active::before{top:auto;left:0;right:0;bottom:0;width:auto;height:3px}}
 `;
 
 function fmtDate(iso) {
@@ -150,16 +164,26 @@ ${FAVICON}
 </head>
 <body>
 <div class="gb"></div>
-<header>
-  <div class="brand"><span>${esc(client.slug)}<span class="dot"></span></span><span class="x">&#215;</span><span>break<span class="dot"></span></span></div>
-  <span class="eyebrow">Informes publicados</span>
-  <h1>${esc(client.name)} &#183; <span class="grad-text">Informes</span></h1>
-  <p class="lede">Espacio p&#250;blico para ver los informes que Break publica para ${esc(client.name)}. Se actualiza cada vez que se genera un informe nuevo.</p>
-</header>
-<main>
-  ${reports.length ? `<div class="grid">${items}</div>` : '<div class="empty">Todav&#237;a no hay informes publicados para este cliente.</div>'}
-</main>
-<footer>break &#183; ${new Date().getFullYear()}</footer>
+<aside class="sidebar">
+  <div class="sidebar-logo"><span class="word">break<span class="dot"></span></span></div>
+  <div class="sidebar-who">
+    <div class="name">${esc(client.name)}</div>
+    <span class="role">Cliente</span>
+  </div>
+  <nav class="side-nav">
+    <a class="nav-item active" href="/${esc(client.slug)}">Informes</a>
+  </nav>
+  <div class="sidebar-footer">Powered by <a href="https://breakmkt.com.ar" target="_blank" rel="noopener">break</a></div>
+</aside>
+<div class="main">
+  <header class="topbar"><div class="topbar-title">Informes</div></header>
+  <section class="section">
+    <span class="eyebrow">Informes publicados</span>
+    <h1>${esc(client.name)} &#183; <span class="grad-text">Informes</span></h1>
+    <p class="lede">Espacio p&#250;blico para ver los informes que Break publica para ${esc(client.name)}. Se actualiza cada vez que se genera un informe nuevo.</p>
+    ${reports.length ? `<div class="grid">${items}</div>` : '<div class="empty">Todav&#237;a no hay informes publicados para este cliente.</div>'}
+  </section>
+</div>
 </body>
 </html>`;
 }
