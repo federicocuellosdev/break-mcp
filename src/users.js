@@ -7,7 +7,32 @@ import bcrypt from 'bcryptjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PATH = resolve(__dirname, '..', 'config', 'users.json');
 
+export const ROLES = ['admin', 'dev'];
+
 let cache = null;
+
+function devUserIdsFromEnv() {
+  return new Set(
+    String(process.env.MCP_DEV_USERS || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+function migrateRole(role, id, devIds) {
+  if (devIds.has(String(id).toLowerCase())) return 'dev';
+  if (role === 'dev') return 'dev';
+  return 'admin';
+}
+
+function migrateUser(id, u, devIds) {
+  const migrated = { ...u };
+  migrated.role = migrateRole(u.role, id, devIds);
+  delete migrated.clients;
+  delete migrated.accounts;
+  return migrated;
+}
 
 function load() {
   if (cache) return cache;
@@ -32,6 +57,11 @@ function load() {
 
   if (!raw.users || typeof raw.users !== 'object') {
     throw new Error('users config must have a top-level "users" object');
+  }
+
+  const devIds = devUserIdsFromEnv();
+  for (const [id, u] of Object.entries(raw.users)) {
+    raw.users[id] = migrateUser(id, u, devIds);
   }
 
   const byToken = new Map();
@@ -74,36 +104,46 @@ export function listAllUsers() {
   return Object.entries(raw.users)
     .sort((a, b) => String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]), 'es', { sensitivity: 'base' }))
     .map(([id, u]) => ({
-    id,
-    name: u.name,
-    email: u.email || null,
-    role: u.role,
-    active: u.active !== false,
-    clients: u.clients,
-    accounts: u.accounts || { meta: [], gads: [], ga4: [] },
-    has_password: !!u.password_hash,
-    has_token: !!u.token,
-  }));
+      id,
+      name: u.name,
+      email: u.email || null,
+      role: u.role,
+      active: u.active !== false,
+      has_password: !!u.password_hash,
+      has_token: !!u.token,
+    }));
 }
 
-export function canAccessClient(user, clientSlug) {
-  if (!user) return false;
-  if (user.role === 'admin' || user.clients === '*') return true;
-  if (Array.isArray(user.clients)) return user.clients.includes(clientSlug);
-  return false;
+export function isDev(user) {
+  return !!user && user.role === 'dev';
+}
+
+export function isAdminOrDev(user) {
+  return !!user && (user.role === 'admin' || user.role === 'dev');
+}
+
+export function canAccessClient(user) {
+  return isAdminOrDev(user);
 }
 
 export function allowedClientSlugs(user) {
-  if (!user) return [];
-  if (user.role === 'admin' || user.clients === '*') return null;
-  return Array.isArray(user.clients) ? user.clients : [];
+  return isAdminOrDev(user) ? null : [];
 }
 
 export function assertAccess(user, clientSlug) {
-  if (!canAccessClient(user, clientSlug)) {
+  if (!canAccessClient(user)) {
     throw new Error(
       `User "${user?.id || 'anonymous'}" is not allowed to access client "${clientSlug}"`,
     );
+  }
+}
+
+export function assertCanAssignRole(actor, targetRole) {
+  if (!ROLES.includes(targetRole)) {
+    throw new Error(`Rol inválido: ${targetRole}. Valores: ${ROLES.join(', ')}`);
+  }
+  if (targetRole === 'dev' && !isDev(actor)) {
+    throw new Error('Solo un usuario dev puede asignar el rol dev.');
   }
 }
 
@@ -116,15 +156,6 @@ function persist(db) {
   const path = process.env.MCP_USERS_FILE || DEFAULT_PATH;
   writeFileSync(path, JSON.stringify(db, null, 2) + '\n');
   cache = null;
-}
-
-function normalizeClients(input) {
-  if (input === '*' || input === '' || input == null) return '*';
-  if (Array.isArray(input)) return input.map((s) => String(s).trim()).filter(Boolean);
-  return String(input)
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
 }
 
 const PASS_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
@@ -145,8 +176,11 @@ function slugifyId(input) {
     .replace(/^-+|-+$/g, '');
 }
 
-export async function createUser({ id, name, email, role, clients, password }) {
+export async function createUser({ id, name, email, role, password }, { actor } = {}) {
   if (!name) throw new Error('name es obligatorio');
+  const finalRole = role || 'admin';
+  if (actor) assertCanAssignRole(actor, finalRole);
+  else if (!ROLES.includes(finalRole)) throw new Error(`Rol inválido: ${finalRole}`);
   const { raw } = load();
   let finalId = id ? slugifyId(id) : slugifyId(email || name);
   if (!finalId) throw new Error('no se pudo derivar un id válido');
@@ -160,10 +194,8 @@ export async function createUser({ id, name, email, role, clients, password }) {
     token: randomBytes(32).toString('hex'),
     name,
     email: email || '',
-    role: role || 'analyst',
+    role: finalRole,
     active: true,
-    clients: normalizeClients(clients),
-    accounts: { meta: [], gads: [], ga4: [] },
     password_hash: await bcrypt.hash(plainPassword, 10),
   };
   raw.users[finalId] = entry;
@@ -171,37 +203,21 @@ export async function createUser({ id, name, email, role, clients, password }) {
   return { id: finalId, ...entry, _plain_password: plainPassword };
 }
 
-export async function updateUser(id, patch) {
+export async function updateUser(id, patch, { actor } = {}) {
   const { raw } = load();
   const u = raw.users[id];
   if (!u) throw new Error(`Usuario "${id}" no existe`);
   if (patch.name !== undefined) u.name = patch.name;
   if (patch.email !== undefined) u.email = patch.email;
-  if (patch.role !== undefined) u.role = patch.role;
+  if (patch.role !== undefined) {
+    if (actor) assertCanAssignRole(actor, patch.role);
+    else if (!ROLES.includes(patch.role)) throw new Error(`Rol inválido: ${patch.role}`);
+    u.role = patch.role;
+  }
   if (patch.active !== undefined) u.active = !!patch.active;
-  if (patch.clients !== undefined) u.clients = normalizeClients(patch.clients);
   if (patch.password) u.password_hash = await bcrypt.hash(patch.password, 10);
   persist(raw);
   return { id, ...u };
-}
-
-export function updateUserAccounts(id, platform, ids) {
-  const { raw } = load();
-  const u = raw.users[id];
-  if (!u) throw new Error(`Usuario "${id}" no existe`);
-  if (!['meta', 'gads', 'ga4'].includes(platform)) {
-    throw new Error(`platform inválida: ${platform}`);
-  }
-  if (!u.accounts) u.accounts = { meta: [], gads: [], ga4: [] };
-  const normalized = Array.isArray(ids)
-    ? ids.map((s) => String(s).trim()).filter(Boolean)
-    : String(ids || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-  u.accounts[platform] = normalized;
-  persist(raw);
-  return u.accounts;
 }
 
 export async function regenerateUserPassword(id) {

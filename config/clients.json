@@ -2,14 +2,26 @@
   "clients": {
     "preston": {
       "name": "Preston",
-      "meta_ad_account_id": null,
+      "meta_ad_account_id": "act_780236853475045",
       "gads_customer_id": "9809300411",
       "ga4_property_id": null,
       "sheets": {},
+      "meta_ad_accounts": [
+        "act_780236853475045"
+      ],
       "gads_customers": [
         "9809300411"
       ],
-      "budgets": {}
+      "budgets": {
+        "meta": {
+          "amount": 1505000,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 255850,
+          "alert_pct": 80
+        }
+      }
     },
     "previnca": {
       "name": "Previnca",
@@ -17,6 +29,7 @@
       "gads_customer_id": "2451808484",
       "ga4_property_id": null,
       "sheets": {},
+      "meta_ad_accounts": [],
       "gads_customers": [
         "2451808484"
       ]
@@ -26,24 +39,650 @@
       "meta_ad_account_id": "act_2347584838876950",
       "gads_customer_id": "9436704196",
       "ga4_property_id": null,
+      "sheets": {},
       "meta_ad_accounts": [
         "act_2347584838876950"
       ],
       "gads_customers": [
         "9436704196"
       ],
-      "ga4_properties": [],
-      "sheets": {},
       "budgets": {
         "meta": {
-          "amount": 0,
+          "amount": 1053500,
           "alert_pct": 80
         },
         "gads": {
-          "amount": 100000,
+          "amount": 150500,
           "alert_pct": 80
         }
       }
+    },
+    "demo": {
+      "name": "Demo",
+      "meta_ad_account_id": null,
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "sheets": {},
+      "meta_ad_accounts": [],
+      "gads_customers": [],
+      "ga4_properties": []
+    },
+    "rinaldi": {
+      "name": "Rinaldi",
+      "meta_ad_account_id": "act_3172367672780372",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_3172367672780372"
+      ],
+      "gads_customers": [],
+      "sheets": {}
+    },
+    "pazcel": {
+      "name": "Break / Pazcel",
+      "meta_ad_account_id": "act_779316286252453",
+      "gads_customer_id": "6654807949",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_779316286252453",
+        "act_905780484841198"
+      ],
+      "gads_customers": [
+        "6654807949"
+      ],
+      "sheets": {}
+    },
+    "argenway": {
+      "name": "Argenway",
+      "meta_ad_account_id": "act_1377888335802809",
+      "gads_customer_id": "3514893354",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1377888335802809"
+      ],
+      "gads_customers": [
+        "3514893354",
+        "1084565846"
+      ],
+      "sheets": {}
+    },
+    "yafue": {
+      "name": "Yafue",
+      "meta_ad_account_id": "act_32661377630175808",
+      "gads_customer_id": "7827353739",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_32661377630175808"
+      ],
+      "gads_customers": [
+        "7827353739"
+      ],
+      "sheets": {}
+    },
+    "leandro-galindez": {
+      "name": "Leandro Galindez",
+      "meta_ad_account_id": "act_430079398936268",
+      "gads_customer_id": "9801127387",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_430079398936268"
+      ],
+      "gads_customers": [
+        "9801127387"
+      ],
+      "sheets": {}
+    },
+    "micro-hair": {
+      "name": "Micro Hair",
+      "meta_ad_account_id": "act_1051803508713991",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1051803508713991"
+      ],
+      "gads_customers": [],
+      "sheets": {}
+    },
+    "annika": {
+      "name": "Annika",
+      "meta_ad_account_id": "act_1125973698712076",
+      "gads_customer_id": "7894641772",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1125973698712076"
+      ],
+      "gads_customers": [
+        "7894641772"
+      ],
+      "sheets": {}
+    },
+    "secoia": {
+      "name": "Secoia",
+      "meta_ad_account_id": "act_1019038360140739",
+      "gads_customer_id": "9159430462",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1019038360140739"
+      ],
+      "gads_customers": [
+        "9159430462"
+      ],
+      "sheets": {}
+    },
+    "alma-de-rio": {
+      "name": "Alma de Río",
+      "meta_ad_account_id": "act_307428198255510",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_307428198255510"
+      ],
+      "gads_customers": [],
+      "sheets": {}
+    },
+    "maytronics": {
+      "name": "Maytronics LATAM",
+      "meta_ad_account_id": "act_638645297549545",
+      "gads_customer_id": "6180593950",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_638645297549545"
+      ],
+      "gads_customers": [
+        "6180593950"
+      ],
+      "sheets": {}
+    },
+    "marlaca": {
+      "name": "Marlaca",
+      "meta_ad_account_id": "act_1406504287568759",
+      "gads_customer_id": "2766347449",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1406504287568759"
+      ],
+      "gads_customers": [
+        "2766347449"
+      ],
+      "sheets": {}
+    },
+    "coas": {
+      "name": "COAS",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "3686868701",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "3686868701"
+      ],
+      "sheets": {}
+    },
+    "ampip": {
+      "name": "AMPIP",
+      "meta_ad_account_id": "act_656021006093798",
+      "gads_customer_id": "2421526864",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_656021006093798"
+      ],
+      "gads_customers": [
+        "2421526864"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "insumos-salud": {
+      "name": "Insumos en Salud",
+      "meta_ad_account_id": "act_2389157017909902",
+      "gads_customer_id": "5636243925",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_2389157017909902",
+        "act_399505765410522"
+      ],
+      "gads_customers": [
+        "5636243925"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "instalnet": {
+      "name": "Instalnet",
+      "meta_ad_account_id": "act_3070574569797230",
+      "gads_customer_id": "4666603193",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_3070574569797230"
+      ],
+      "gads_customers": [
+        "4666603193"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "azkar": {
+      "name": "Azkar",
+      "meta_ad_account_id": "act_563712476063380",
+      "gads_customer_id": "2498285017",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_563712476063380"
+      ],
+      "gads_customers": [
+        "2498285017"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "the-best": {
+      "name": "The Best",
+      "meta_ad_account_id": "act_794876070701362",
+      "gads_customer_id": "1831567995",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_794876070701362"
+      ],
+      "gads_customers": [
+        "1831567995"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "crediflow": {
+      "name": "Crediflow",
+      "meta_ad_account_id": "act_355193610233286",
+      "gads_customer_id": "7365407949",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_355193610233286"
+      ],
+      "gads_customers": [
+        "7365407949",
+        "5918161715"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "laboratorios-turner": {
+      "name": "Laboratorios Turner",
+      "meta_ad_account_id": "act_721907081968369",
+      "gads_customer_id": "5590420160",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_721907081968369"
+      ],
+      "gads_customers": [
+        "5590420160"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "soepu": {
+      "name": "SOEPU",
+      "meta_ad_account_id": "act_1336388323837166",
+      "gads_customer_id": "4363722547",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1336388323837166"
+      ],
+      "gads_customers": [
+        "4363722547"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "creva": {
+      "name": "Creva",
+      "meta_ad_account_id": "act_26963266313265923",
+      "gads_customer_id": "6319900433",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_26963266313265923",
+        "act_822856350704849",
+        "act_1575736810192797"
+      ],
+      "gads_customers": [
+        "6319900433"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "break-talent": {
+      "name": "Break Talent",
+      "meta_ad_account_id": "act_1367162101772893",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1367162101772893"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "cam-luminarias": {
+      "name": "CAM Luminarias",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "2782255837",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "2782255837"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "fdc": {
+      "name": "FDC",
+      "meta_ad_account_id": "act_287535113154112",
+      "gads_customer_id": "8998504301",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_287535113154112"
+      ],
+      "gads_customers": [
+        "8998504301"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "fundacion-coinag": {
+      "name": "Fundación Coinag",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "3309743617",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "3309743617"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "nautishop": {
+      "name": "Nautishop",
+      "meta_ad_account_id": "act_138846749840246",
+      "gads_customer_id": "9382620539",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_138846749840246",
+        "act_323587195913019"
+      ],
+      "gads_customers": [
+        "9382620539",
+        "8127487462"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "renofq": {
+      "name": "Reno FQ",
+      "meta_ad_account_id": "act_315020139175600",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_315020139175600",
+        "act_2064309223645571",
+        "act_365975410683180",
+        "act_1146698725502871"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "m3c-software": {
+      "name": "M3C Software",
+      "meta_ad_account_id": "act_304179054613501",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_304179054613501"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "ventex": {
+      "name": "Ventex",
+      "meta_ad_account_id": "act_361286138780663",
+      "gads_customer_id": "2694601566",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_361286138780663"
+      ],
+      "gads_customers": [
+        "2694601566"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "coffee-break": {
+      "name": "Coffee Break",
+      "meta_ad_account_id": "act_669515117538025",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_669515117538025"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "franco-cinelli": {
+      "name": "Franco Cinelli",
+      "meta_ad_account_id": "act_39341636",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_39341636"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "hardway": {
+      "name": "Hardway",
+      "meta_ad_account_id": "act_240424132984660",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_240424132984660",
+        "act_10210639463680525"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "argental": {
+      "name": "Argental",
+      "meta_ad_account_id": "act_2566343253680167",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_2566343253680167",
+        "act_285679248459148"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "vandalia": {
+      "name": "Vandalia",
+      "meta_ad_account_id": "act_274625942897812",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_274625942897812"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "pietra": {
+      "name": "Pietra",
+      "meta_ad_account_id": "act_751196098610058",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_751196098610058"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "kion": {
+      "name": "Kion",
+      "meta_ad_account_id": "act_281787219312230",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_281787219312230"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "fundar": {
+      "name": "Fundar",
+      "meta_ad_account_id": "act_607966549563748",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_607966549563748"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "fussetti": {
+      "name": "Fussetti",
+      "meta_ad_account_id": "act_1052193942368680",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1052193942368680"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "comeros": {
+      "name": "Comeros",
+      "meta_ad_account_id": "act_789405195349659",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_789405195349659"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "agapito-blanco": {
+      "name": "Agapito Blanco",
+      "meta_ad_account_id": "act_176718760449184",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_176718760449184"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "lehmann": {
+      "name": "Lehmann",
+      "meta_ad_account_id": "act_332433734926887",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_332433734926887"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "hacienda-go": {
+      "name": "Hacienda Go",
+      "meta_ad_account_id": "act_133162128716385",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_133162128716385"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "sibari": {
+      "name": "Sibari",
+      "meta_ad_account_id": "act_468288887242108",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_468288887242108"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "nova": {
+      "name": "Nova",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "3029839592",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "3029839592"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "mutual-aginco": {
+      "name": "Mutual Aginco",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "8292446650",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "8292446650"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "miriam-grannum": {
+      "name": "Miriam Grannum",
+      "meta_ad_account_id": null,
+      "gads_customer_id": "1883569854",
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [
+        "1883569854"
+      ],
+      "sheets": {},
+      "active": false
+    },
+    "lax": {
+      "name": "LAX",
+      "meta_ad_account_id": "act_1278397290449639",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1278397290449639"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
+    },
+    "velnet": {
+      "name": "Velnet",
+      "meta_ad_account_id": "act_1632980797938227",
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [
+        "act_1632980797938227"
+      ],
+      "gads_customers": [],
+      "sheets": {},
+      "active": false
     }
   }
 }

@@ -1,19 +1,17 @@
 {
-  "$comment": "Copy this file to users.json and fill in real tokens. In production inject as env var MCP_USERS_JSON (single-line JSON).",
+  "$comment": "Copy to users.json and fill in real tokens. In production inject as env MCP_USERS_JSON (single-line JSON). Force certain user ids to role='dev' via env MCP_DEV_USERS=fede,juan",
   "users": {
     "fede": {
       "token": "REPLACE_WITH_RANDOM_32_BYTES_HEX",
       "name": "Federico Cuellos",
       "email": "dev.federicocuellos@gmail.com",
-      "role": "admin",
-      "clients": "*"
+      "role": "dev"
     },
     "alicia": {
       "token": "REPLACE_WITH_RANDOM_32_BYTES_HEX",
       "name": "Alicia Ejemplo",
       "email": "alicia@break.agency",
-      "role": "analyst",
-      "clients": ["preston", "previnca"]
+      "role": "admin"
     }
   }
 }

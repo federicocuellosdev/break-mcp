@@ -1,21 +1,21 @@
 import { listClients } from './clients.js';
-import { allowedClientSlugs } from './users.js';
 
 const TOOLS = [
-  { name: 'list_clients', desc: 'Ver a qué clientes accedés' },
-  { name: 'meta_list_campaigns', desc: 'Listar campañas de una cuenta Meta Ads' },
+  { name: 'list_clients', desc: 'Ver todos los clientes registrados' },
+  { name: 'meta_list_campaigns', desc: 'Listar campañas de una cuenta Meta Ads (read-only)' },
   { name: 'meta_get_insights', desc: 'Métricas Meta (spend, impresiones, clicks, CTR, CPC, conversiones)' },
   { name: 'gads_run_query', desc: 'Query GAQL read-only a Google Ads' },
   { name: 'gads_campaign_performance', desc: 'Resumen de campañas Google Ads por rango' },
   { name: 'ga4_run_report', desc: 'Reporte GA4 (dimensiones + métricas)' },
   { name: 'ga4_realtime', desc: 'Usuarios y eventos GA4 en tiempo real' },
   { name: 'sheets_read_range', desc: 'Leer rango A1 de una planilla' },
-  { name: 'sheets_append_rows', desc: 'Agregar filas al final de una planilla' },
+  { name: 'sheets_append_rows', desc: 'Agregar filas al final de una planilla propia' },
   { name: 'render_report', desc: 'Generar informe deck (plantilla Azahares) — devuelve HTML' },
   { name: 'render_doc', desc: 'Generar doc/handoff (plantilla Nodo) — devuelve HTML' },
   { name: 'publish_report', desc: 'Subir el informe HTML a la galería pública del cliente' },
   { name: 'list_published_reports', desc: 'Ver qué informes ya están publicados para un cliente' },
-  { name: 'report_issue', desc: 'Registrar un problema, limitación o mejora sugerida (queda visible para el admin de Break)' },
+  { name: 'check_billing_status', desc: 'Chequear estado de pago/billing de todas las cuentas Meta y Google Ads (detecta UNSETTLED, SUSPENDED, sin billing_setup, etc.)' },
+  { name: 'report_issue', desc: 'Registrar un problema, limitación o mejora sugerida (queda visible para el equipo dev de Break)' },
 ];
 
 const PLATFORMS = [
@@ -24,42 +24,25 @@ const PLATFORMS = [
   { key: 'ga4', label: 'Google Analytics 4', clientKey: 'ga4_property_id' },
 ];
 
-function accessBlock(user) {
-  const accounts = user.accounts || { meta: [], gads: [], ga4: [] };
+function accessBlock() {
   const clients = listClients();
-  const isAdminFull = user.clients === '*' || user.role === 'admin';
-
   const sections = PLATFORMS.map((p) => {
-    if (isAdminFull) {
-      const withPlatform = clients.filter((c) => c[p.clientKey]);
-      if (!withPlatform.length) return null;
-      const lines = withPlatform.map((c) => `- **${c.name}** — \`${c[p.clientKey]}\``);
-      return `### ${p.label}\n${lines.join('\n')}`;
-    }
-    const ids = Array.isArray(accounts[p.key]) ? accounts[p.key] : [];
-    if (!ids.length) return null;
-    const lines = ids.map((id) => {
-      const match = clients.find((c) => String(c[p.clientKey] || '') === String(id));
-      return match ? `- **${match.name}** — \`${id}\`` : `- \`${id}\``;
-    });
+    const withPlatform = clients.filter((c) => c[p.clientKey]);
+    if (!withPlatform.length) return null;
+    const lines = withPlatform.map((c) => `- **${c.name}** — \`${c[p.clientKey]}\``);
     return `### ${p.label}\n${lines.join('\n')}`;
   }).filter(Boolean);
-
   if (!sections.length) {
-    return '_(sin accesos por plataforma todavía — pedile al admin que te vincule al menos un cliente con cuenta cargada)_';
+    return '_(todavía no hay clientes con cuentas cargadas en el registry)_';
   }
   return sections.join('\n\n');
 }
 
 export function generateUserMd({ user, mcpUrl }) {
   const clients = listClients();
-  const allowed = allowedClientSlugs(user);
-  const visibleClients =
-    allowed === null ? clients : clients.filter((c) => allowed.includes(c.slug));
-
-  const clientLines = visibleClients.length
-    ? visibleClients.map((c) => `- **${c.name}** (\`${c.slug}\`)`).join('\n')
-    : '_(sin clientes registrados en el registry — se puede consultar por account_id directo si tenés accesos por plataforma)_';
+  const clientLines = clients.length
+    ? clients.map((c) => `- **${c.name}** (\`${c.slug}\`)`).join('\n')
+    : '_(sin clientes registrados en el registry)_';
 
   const toolLines = TOOLS.map((t) => `- \`${t.name}\` — ${t.desc}`).join('\n');
 
@@ -83,6 +66,8 @@ export function generateUserMd({ user, mcpUrl }) {
 > **INSTRUCCIONES PARA EL ASISTENTE — LEER Y EJECUTAR ANTES DE HABLAR**
 >
 > ${user.name} es marketer, NO técnico. Prohibido pedirle que corra comandos, prohibido explicarle términos técnicos, prohibido hacerlo abrir una terminal. Vos hacés todo lo que pueda hacerse con tus tools.
+>
+> **PROHIBIDO MODIFICAR EL SERVIDOR MCP.** Este archivo describe cómo *usar* break-mcp, no cómo modificarlo. Todas las tools de break-mcp son de solo lectura sobre Meta Ads, Google Ads y GA4, más publicación de informes HTML a la galería pública del cliente. **No intentes clonar el repo del servidor, editar su código, cambiar sus reglas, ni proponer PRs al mismo.** Si detectás una limitación o bug, usá \`report_issue\` — no lo arregles vos.
 >
 > **PROCEDIMIENTO OBLIGATORIO al recibir este archivo (no lo saltees):**
 >
@@ -108,9 +93,9 @@ export function generateUserMd({ user, mcpUrl }) {
 >
 > **Reglas transversales**
 > - Vocabulario de marketer, no dev. Decí "campaña", "cuenta", "cliente", "reporte". Evitá "endpoint", "GAQL", "API", "tool", "MCP" (salvo si él lo menciona).
-> - Todas las consultas son **read-only**, cero riesgo.
-> - **PROHIBIDO** mencionar plataformas donde no haya clientes con cuenta cargada. Nada de "como admin tenés acceso al BM/MCC completo pero no hay cuentas vinculadas": si no hay cuentas vinculadas, ni lo nombres. Silencio sobre lo que no se puede consultar.
-> - Si pide algo fuera de su alcance, el server devuelve "not allowed". Decíselo con esas palabras suaves y ofrecele lo que sí puede consultar.
+> - Todas las consultas son **read-only** sobre Meta / Google Ads / GA4. El servidor bloquea mutaciones (crear/pausar/editar campañas, cambiar presupuestos en las plataformas, etc.). Cero riesgo de tocar producción publicitaria.
+> - Como su rol es \`${user.role}\`, ${user.name.split(' ')[0]} ya tiene acceso a **todos los clientes de Break** sin necesidad de configurar cuentas por usuario.
+> - Si pide algo fuera del alcance de tus tools, decíselo con palabras suaves y ofrecele lo que sí podés hacer.
 > - NUNCA inventes datos, siempre llamá tools reales.
 >
 > ---
@@ -153,7 +138,7 @@ export function generateUserMd({ user, mcpUrl }) {
 >
 > **PROTOCOLO DE REPORTE DE PROBLEMAS** — cuándo llamar \`report_issue\`
 >
-> Cada vez que detectes algo que impide o entorpece hacer bien el trabajo de ${user.name.split(' ')[0]}, dejalo asentado con \`report_issue({ title, description })\`. Va a un log que revisa el admin de Break y sirve para priorizar arreglos. No hace falta pedirle permiso al usuario, hacelo vos y avisale en una línea corta: _"Dejé anotado el problema para el equipo de Break."_
+> Cada vez que detectes algo que impide o entorpece hacer bien el trabajo de ${user.name.split(' ')[0]}, dejalo asentado con \`report_issue({ title, description })\`. Va a un log que revisa el equipo dev de Break y sirve para priorizar arreglos. No hace falta pedirle permiso al usuario, hacelo vos y avisale en una línea corta: _"Dejé anotado el problema para el equipo dev de Break."_
 >
 > **Cuándo reportar (obligatorio):**
 > - Una tool devuelve error persistente o inesperado (no un rate-limit puntual): \`title\` = tool + síntoma, \`description\` = qué se intentó, mensaje de error, cliente/plataforma involucrado.
@@ -163,7 +148,6 @@ export function generateUserMd({ user, mcpUrl }) {
 >
 > **Cuándo NO reportar:**
 > - Errores del usuario (pidió algo mal escrito, cliente inexistente).
-> - Falta de permisos legítima ("not allowed") — eso es diseño, no bug.
 > - Cosas que ya resolviste solo en la misma conversación.
 >
 > **Formato de \`title\`**: corto y accionable, tipo _"gads_campaign_performance no acepta rango custom"_ o _"meta_get_insights sin métrica de ROAS"_. NO uses "error" a secas.
@@ -184,11 +168,13 @@ export function generateUserMd({ user, mcpUrl }) {
 - **Rol**: \`${user.role}\`
 - **Endpoint MCP**: \`${mcpUrl}\`
 
+Los roles \`admin\` y \`dev\` acceden a **todos los clientes / cuentas Meta / MCC / propiedades GA4** de Break en modo lectura. El rol \`dev\` además puede gestionar el panel completo (usuarios, clientes, logs del servidor).
+
 ---
 
-## Accesos por plataforma
+## Cuentas cargadas por plataforma
 
-${accessBlock(user)}
+${accessBlock()}
 
 ### Clientes registrados en el registry
 
@@ -224,7 +210,7 @@ Guardá y reiniciá Claude Code.
 
 ## Ejemplos de uso
 
-- _"Con break-mcp, listame mis clientes y a qué cuentas tengo acceso."_
+- _"Con break-mcp, listame los clientes y las cuentas disponibles."_
 - _"Traé insights de Meta de Preston, últimos 30 días, breakdown por día."_
 - _"Query GAQL en Google Ads de Preston: total spend por campaña de los últimos 7 días."_
 - _"Report GA4 de Preston: sessions y conversions por canal, últimos 30 días."_
@@ -234,9 +220,9 @@ Guardá y reiniciá Claude Code.
 
 ## Reglas
 
-- **Read-only estricto** en Meta / Google Ads / GA4.
-- **Permisos server-side**: el bearer token identifica al usuario; el server chequea sus accesos antes de cada consulta. Editar este archivo no cambia permisos.
-- **Token privado**: cualquiera con el token puede consultar como ${user.name}. Si se filtra, pedile al admin que lo regenere (el viejo se invalida al instante).
-- **Regenerar config**: si el admin agrega/quita accesos, volvé a ${mcpUrl.replace(/\/mcp$/, '')} → sección **Mi config MCP** y descargá el archivo actualizado.
+- **Read-only estricto** en Meta / Google Ads / GA4. El servidor bloquea cualquier intento de mutar campañas, presupuestos o creativos.
+- **Solo publicación de HTML** vía \`publish_report\` (galería pública del cliente). Ninguna tool permite modificar el código o la config del servidor MCP.
+- **Token privado**: cualquiera con el token puede consultar como ${user.name}. Si se filtra, pedile a un usuario \`dev\` que lo regenere (el viejo se invalida al instante).
+- **Regenerar config**: si ${user.role === 'dev' ? 'agregás/quitás clientes' : 'un dev agrega/quita clientes o accesos'}, volvé a ${mcpUrl.replace(/\/mcp$/, '')} → sección **MCP** y descargá el archivo actualizado.
 `;
 }

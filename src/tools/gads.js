@@ -1,31 +1,13 @@
 import { z } from 'zod';
-import { resolveGadsCustomerId, getClient } from '../clients.js';
-import { assertAccess, allowedClientSlugs } from '../users.js';
+import { resolveGadsCustomerId } from '../clients.js';
+import { assertAccess, isAdminOrDev } from '../users.js';
 import { listAccessibleCustomers, runSearch } from '../providers/gads.js';
 
 const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
 
-function resolveAndAuthorizeCustomer(ctx, { client, customer_id }) {
+function resolveCustomer(ctx, { client, customer_id }) {
   if (client) assertAccess(ctx.user, client);
-  const cid = resolveGadsCustomerId({ client, customer_id });
-  if (!client && customer_id) {
-    const allowed = allowedClientSlugs(ctx.user);
-    if (allowed !== null) {
-      const match = allowed.find((slug) => {
-        try {
-          return String(getClient(slug).gads_customer_id) === String(customer_id);
-        } catch {
-          return false;
-        }
-      });
-      if (!match) {
-        throw new Error(
-          `customer_id ${customer_id} is not linked to any client you can access`,
-        );
-      }
-    }
-  }
-  return cid;
+  return resolveGadsCustomerId({ client, customer_id });
 }
 
 export function registerGadsTools(server, ctx) {
@@ -34,12 +16,12 @@ export function registerGadsTools(server, ctx) {
     {
       title: 'List Google Ads accounts accessible to the agency MCC',
       description:
-        'Returns the list of customer ids reachable via the configured MCC login-customer-id. Admin-only, use list_clients for scoped access.',
+        'Returns the list of customer ids reachable via the configured MCC login-customer-id.',
       inputSchema: {},
     },
     async () => {
-      if (ctx.user.role !== 'admin') {
-        throw new Error('gads_list_accessible_customers is admin-only. Use list_clients.');
+      if (!isAdminOrDev(ctx.user)) {
+        throw new Error('gads_list_accessible_customers requires admin or dev role.');
       }
       const data = await listAccessibleCustomers();
       return asText(data);
@@ -63,7 +45,7 @@ export function registerGadsTools(server, ctx) {
       },
     },
     async ({ client, customer_id, query }) => {
-      const cid = resolveAndAuthorizeCustomer(ctx, { client, customer_id });
+      const cid = resolveCustomer(ctx, { client, customer_id });
       const data = await runSearch({ customerId: cid, query });
       return asText(data);
     },
@@ -87,7 +69,7 @@ export function registerGadsTools(server, ctx) {
       },
     },
     async ({ client, customer_id, date_range = 'LAST_7_DAYS', since, until }) => {
-      const cid = resolveAndAuthorizeCustomer(ctx, { client, customer_id });
+      const cid = resolveCustomer(ctx, { client, customer_id });
       const where =
         since && until
           ? `segments.date BETWEEN '${since}' AND '${until}'`

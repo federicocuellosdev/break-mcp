@@ -1,52 +1,84 @@
 import { runSearch } from './providers/gads.js';
 
-async function metaSpend(accountIds, from, to) {
+async function metaGet(path, params = {}) {
   const token = process.env.META_ACCESS_TOKEN;
   if (!token) throw new Error('META_ACCESS_TOKEN not set');
   const ver = process.env.META_GRAPH_VERSION || 'v21.0';
-  let total = 0;
-  for (const acc of accountIds) {
-    const url = new URL(`https://graph.facebook.com/${ver}/${acc}/insights`);
-    url.searchParams.set('access_token', token);
-    url.searchParams.set('fields', 'spend');
-    url.searchParams.set('time_range', JSON.stringify({ since: from, until: to }));
-    const r = await fetch(url);
-    const j = await r.json();
-    if (j.error) throw new Error(j.error.message);
-    const row = j.data && j.data[0];
-    if (row && row.spend) total += Number(row.spend);
+  const url = new URL(`https://graph.facebook.com/${ver}${path}`);
+  url.searchParams.set('access_token', token);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
   }
-  return total;
+  const r = await fetch(url);
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message);
+  return j;
+}
+
+async function metaSpend(accountIds, from, to) {
+  let total = 0;
+  let currency = null;
+  for (const acc of accountIds) {
+    const j = await metaGet(`/${acc}/insights`, {
+      fields: 'spend,account_currency',
+      time_range: { since: from, until: to },
+    });
+    const row = j.data && j.data[0];
+    if (row) {
+      if (row.spend) total += Number(row.spend);
+      if (row.account_currency && !currency) currency = row.account_currency;
+    }
+  }
+  if (!currency && accountIds.length) {
+    try {
+      const info = await metaGet(`/${accountIds[0]}`, { fields: 'currency' });
+      currency = info.currency || null;
+    } catch {}
+  }
+  return { spend: total, currency };
 }
 
 async function gadsSpend(customerIds, from, to) {
   let total = 0;
-  const query = `SELECT metrics.cost_micros FROM customer WHERE segments.date BETWEEN '${from}' AND '${to}'`;
+  let currency = null;
+  const query = `SELECT metrics.cost_micros, customer.currency_code FROM customer WHERE segments.date BETWEEN '${from}' AND '${to}'`;
   for (const cid of customerIds) {
     const data = await runSearch({ customerId: cid, query });
-    const rows = data.results || [];
-    for (const row of rows) {
+    for (const row of data.results || []) {
       const cost = row.metrics && (row.metrics.costMicros || row.metrics.cost_micros);
       if (cost) total += Number(cost) / 1e6;
+      const cur = row.customer && (row.customer.currencyCode || row.customer.currency_code);
+      if (cur && !currency) currency = cur;
     }
   }
-  return total;
+  if (!currency && customerIds.length) {
+    try {
+      const info = await runSearch({
+        customerId: customerIds[0],
+        query: 'SELECT customer.currency_code FROM customer LIMIT 1',
+      });
+      const r = info.results && info.results[0];
+      currency = (r && r.customer && (r.customer.currencyCode || r.customer.currency_code)) || null;
+    } catch {}
+  }
+  return { spend: total, currency };
 }
 
-function buildStatus(budgetEntry, spendResult) {
+function buildStatus(budgetEntry, result) {
   const budget = Number(budgetEntry.amount) || 0;
   const alert_pct = budgetEntry.alert_pct ?? 80;
   const hasBudget = budgetEntry.amount != null && budget > 0;
-  if (spendResult && typeof spendResult === 'object' && spendResult.error) {
-    return { budget, alert_pct, spend: null, pct: null, status: 'error', error: spendResult.error };
+  if (result && result.error) {
+    return { budget, alert_pct, spend: null, pct: null, currency: null, status: 'error', error: result.error };
   }
-  const spend = Number(spendResult) || 0;
+  const spend = Number(result?.spend) || 0;
+  const currency = result?.currency || null;
   const pct = hasBudget ? (spend / budget) * 100 : null;
   let status = 'ok';
   if (!hasBudget) status = 'no-budget';
   else if (spend >= budget) status = 'over';
   else if (pct >= alert_pct) status = 'warn';
-  return { budget, alert_pct, spend, pct, status };
+  return { budget, alert_pct, spend, pct, currency, status };
 }
 
 export async function computeInvestment({ clients, from, to }) {
@@ -99,7 +131,13 @@ export async function computeInvestment({ clients, from, to }) {
       }
 
       await Promise.all(jobs);
-      return { slug: c.slug, name: c.name, platforms };
+      return {
+        slug: c.slug,
+        name: c.name,
+        meta_ad_accounts: metaAccs,
+        gads_customers: gadsAccs,
+        platforms,
+      };
     }),
   );
   return results;

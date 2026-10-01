@@ -3,13 +3,13 @@ import {
   verifyCredentials,
   getUserById,
   listAllUsers,
-  allowedClientSlugs,
   createUser,
   updateUser,
-  updateUserAccounts,
   deleteUser,
   regenerateUserToken,
   regenerateUserPassword,
+  isDev,
+  isAdminOrDev,
 } from '../users.js';
 import { listMccChildren } from '../providers/gads.js';
 import { listAccountSummaries } from '../providers/ga4.js';
@@ -122,22 +122,24 @@ export function createWebRouter() {
   };
 
   const requireAdmin = (req, res, next) => {
-    if (!res.locals.user || res.locals.user.role !== 'admin') {
-      return res.status(403).send('Forbidden');
-    }
+    if (!isAdminOrDev(res.locals.user)) return res.status(403).send('Forbidden');
+    next();
+  };
+
+  const requireDev = (req, res, next) => {
+    if (!isDev(res.locals.user)) return res.status(403).send('Forbidden');
     next();
   };
 
   router.get('/admin', requireLogin, (req, res) => {
     const user = res.locals.user;
     const clients = listClients();
-    const allowed = allowedClientSlugs(user);
     const stats = {
       users: listAllUsers().length,
       clients: clients.length,
       tools: TOOLS_COUNT,
       role: user.role,
-      myClients: allowed,
+      myClients: null,
     };
     res.set('Content-Type', 'text/html; charset=utf-8').send(renderDashboard({ user, stats }));
   });
@@ -164,9 +166,12 @@ export function createWebRouter() {
   });
 
   router.post('/admin/users', requireLogin, requireAdmin, async (req, res) => {
-    const { id, name, email, role, clients, password } = req.body || {};
+    const { id, name, email, role, password } = req.body || {};
     try {
-      const created = await createUser({ id, name, email, role, clients, password });
+      const created = await createUser(
+        { id, name, email, role, password },
+        { actor: res.locals.user },
+      );
       const q = new URLSearchParams({
         ok: `Usuario "${created.id}" creado. Copiá la contraseña y compartísela.`,
         pw: created._plain_password || '',
@@ -197,9 +202,13 @@ export function createWebRouter() {
   });
 
   router.post('/admin/users/:id', requireLogin, requireAdmin, async (req, res) => {
-    const { name, email, role, clients, password } = req.body || {};
+    const { name, email, role, password } = req.body || {};
     try {
-      await updateUser(req.params.id, { name, email, role, clients, password });
+      await updateUser(
+        req.params.id,
+        { name, email, role, password },
+        { actor: res.locals.user },
+      );
       redirWithFlash(res, `/admin/users/${req.params.id}/edit`, 'ok', 'Cambios guardados.');
     } catch (e) {
       redirWithFlash(res, `/admin/users/${req.params.id}/edit`, 'err', e.message);
@@ -235,41 +244,7 @@ export function createWebRouter() {
     }
   });
 
-  router.post('/admin/users/:id/revoke-client/:slug', requireLogin, requireAdmin, async (req, res) => {
-    const { id, slug } = req.params;
-    try {
-      const u = getUserById(id);
-      if (!u) return res.status(404).json({ error: 'usuario no existe' });
-      const client = getClient(slug);
-      // Remove client slug from user's clients array (if array)
-      if (Array.isArray(u.clients)) {
-        await updateUser(id, { clients: u.clients.filter((s) => s !== slug) });
-      }
-      // Remove all client's platform IDs from user's accounts
-      const acc = u.accounts || { meta: [], gads: [], ga4: [] };
-      const cMeta = client.meta_ad_accounts || (client.meta_ad_account_id ? [client.meta_ad_account_id] : []);
-      const cGads = client.gads_customers || (client.gads_customer_id ? [client.gads_customer_id] : []);
-      const cGa4 = client.ga4_properties || (client.ga4_property_id ? [client.ga4_property_id] : []);
-      updateUserAccounts(id, 'meta', (acc.meta || []).filter((x) => !cMeta.map(String).includes(String(x))));
-      updateUserAccounts(id, 'gads', (acc.gads || []).filter((x) => !cGads.map(String).includes(String(x))));
-      updateUserAccounts(id, 'ga4', (acc.ga4 || []).filter((x) => !cGa4.map(String).includes(String(x))));
-      res.json({ ok: true });
-    } catch (e) {
-      res.status(400).json({ error: e.message });
-    }
-  });
-
-  router.post('/admin/users/:id/accounts', requireLogin, requireAdmin, express.json(), (req, res) => {
-    const { platform, ids } = req.body || {};
-    try {
-      const accounts = updateUserAccounts(req.params.id, platform, ids || []);
-      res.json({ ok: true, accounts });
-    } catch (e) {
-      res.status(400).json({ error: e.message });
-    }
-  });
-
-  // Live account lists from each platform
+  // Live account lists from each platform (used by the CLIENT edit page)
   router.get('/admin/api/meta-accounts', requireLogin, requireAdmin, async (_req, res) => {
     try {
       const bmId = process.env.META_BUSINESS_ID;
@@ -285,9 +260,28 @@ export function createWebRouter() {
       ]);
       if (owned.error) return res.status(400).json({ error: owned.error.message });
       if (client.error) return res.status(400).json({ error: client.error.message });
+      const META_STATUS = {
+        1: 'ENABLED',
+        2: 'SUSPENDED',
+        3: 'SUSPENDED',
+        7: 'SUSPENDED',
+        8: 'SUSPENDED',
+        9: 'SUSPENDED',
+        100: 'CANCELED',
+        101: 'CLOSED',
+        201: 'ENABLED',
+        202: 'CLOSED',
+      };
+      const mapAcc = (kind) => (a) => ({
+        id: a.id,
+        name: a.name || `Account ${a.account_id}`,
+        currency: a.currency,
+        kind,
+        status: META_STATUS[a.account_status] || null,
+      });
       const accounts = [
-        ...(owned.data || []).map((a) => ({ id: a.id, name: a.name || `Account ${a.account_id}`, currency: a.currency, kind: 'owned' })),
-        ...(client.data || []).map((a) => ({ id: a.id, name: a.name || `Account ${a.account_id}`, currency: a.currency, kind: 'client' })),
+        ...(owned.data || []).map(mapAcc('owned')),
+        ...(client.data || []).map(mapAcc('client')),
       ];
       res.json({ accounts });
     } catch (e) {
@@ -358,14 +352,13 @@ export function createWebRouter() {
   router.get('/admin/clients', requireLogin, (req, res) => {
     const user = res.locals.user;
     const clients = listClients();
-    const allowed = allowedClientSlugs(user);
     res
       .set('Content-Type', 'text/html; charset=utf-8')
       .send(
         renderClientsView({
           user,
           clients,
-          allowedForUser: allowed,
+          allowedForUser: null,
           flash: flashFromQuery(req),
         }),
       );
@@ -417,33 +410,13 @@ export function createWebRouter() {
     } catch {
       return res.status(404).send('Not found');
     }
-    // Find users with EXPLICIT access to this client (excludes admin catch-all "*")
-    const allUsers = listAllUsers();
-    const metaIds = target.meta_ad_accounts || (target.meta_ad_account_id ? [target.meta_ad_account_id] : []);
-    const gadsIds = target.gads_customers || (target.gads_customer_id ? [target.gads_customer_id] : []);
-    const ga4Ids = target.ga4_properties || (target.ga4_property_id ? [target.ga4_property_id] : []);
-    const usersWithAccess = allUsers.filter((u) => {
-      if (Array.isArray(u.clients) && u.clients.includes(req.params.slug)) return true;
-      const acc = u.accounts || {};
-      if (metaIds.some((id) => (acc.meta || []).includes(String(id)))) return true;
-      if (gadsIds.some((id) => (acc.gads || []).includes(String(id)))) return true;
-      if (ga4Ids.some((id) => (acc.ga4 || []).includes(String(id)))) return true;
-      return false;
-    });
-    // Enrich each user with their access flags per platform for this client
-    usersWithAccess.forEach((u) => {
-      const acc = u.accounts || {};
-      u._meta_access = metaIds.some((id) => (acc.meta || []).includes(String(id)));
-      u._gads_access = gadsIds.some((id) => (acc.gads || []).includes(String(id)));
-      u._ga4_access = ga4Ids.some((id) => (acc.ga4 || []).includes(String(id)));
-    });
     res
       .set('Content-Type', 'text/html; charset=utf-8')
+      .set('Cache-Control', 'no-store')
       .send(
         renderClientEditView({
           user: res.locals.user,
           target: { slug: req.params.slug, ...target },
-          usersWithAccess,
           flash: flashFromQuery(req),
         }),
       );
@@ -478,6 +451,38 @@ export function createWebRouter() {
       res.json({ ok: true, budgets: saved });
     } catch (e) {
       res.status(400).json({ error: e.message });
+    }
+  });
+
+  const billingCache = { ts: 0, data: null, inflight: null };
+  router.get('/admin/api/billing-summary', requireLogin, requireAdmin, async (req, res) => {
+    const now = Date.now();
+    const TTL = 15 * 60 * 1000;
+    const force = req.query.refresh === '1';
+    if (!force && billingCache.data && now - billingCache.ts < TTL) {
+      return res.json({ ...billingCache.data, cached: true, age_ms: now - billingCache.ts });
+    }
+    if (billingCache.inflight) {
+      try {
+        const data = await billingCache.inflight;
+        return res.json({ ...data, cached: false });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+    billingCache.inflight = (async () => {
+      const { checkBillingSummary } = await import('../tools/billing.js');
+      return checkBillingSummary();
+    })();
+    try {
+      const data = await billingCache.inflight;
+      billingCache.ts = Date.now();
+      billingCache.data = data;
+      res.json({ ...data, cached: false });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    } finally {
+      billingCache.inflight = null;
     }
   });
 
@@ -520,10 +525,7 @@ export function createWebRouter() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
     }
-    const user = res.locals.user;
-    const allowed = allowedClientSlugs(user);
-    const all = listClients();
-    const clients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
+    const clients = listClients().filter((c) => c.active !== false);
     try {
       const { computeInvestment } = await import('../investment.js');
       const data = await computeInvestment({ clients, from, to });
@@ -552,15 +554,15 @@ export function createWebRouter() {
     }
   });
 
-  // -------- LOGS --------
-  router.get('/admin/logs', requireLogin, requireAdmin, (req, res) => {
+  // -------- LOGS (dev-only) --------
+  router.get('/admin/logs', requireLogin, requireDev, (req, res) => {
     const logs = listLogs();
     res
       .set('Content-Type', 'text/html; charset=utf-8')
       .send(renderLogsView({ user: res.locals.user, logs, flash: flashFromQuery(req) }));
   });
 
-  router.post('/admin/logs/:id/delete', requireLogin, requireAdmin, (req, res) => {
+  router.post('/admin/logs/:id/delete', requireLogin, requireDev, (req, res) => {
     try {
       deleteLog(req.params.id);
       redirWithFlash(res, '/admin/logs', 'ok', 'Log eliminado.');

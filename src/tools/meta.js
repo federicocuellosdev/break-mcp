@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { resolveMetaAdAccount, getClient } from '../clients.js';
-import { assertAccess, allowedClientSlugs } from '../users.js';
+import { resolveMetaAdAccount } from '../clients.js';
+import { assertAccess, isAdminOrDev } from '../users.js';
 
 const GRAPH = () => `https://graph.facebook.com/${process.env.META_GRAPH_VERSION || 'v21.0'}`;
 
@@ -25,27 +25,9 @@ async function graph(path, params = {}) {
 
 const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
 
-function resolveAndAuthorizeAct(ctx, { client, ad_account_id }) {
+function resolveAct(ctx, { client, ad_account_id }) {
   if (client) assertAccess(ctx.user, client);
-  const act = resolveMetaAdAccount({ client, ad_account_id });
-  if (!client && ad_account_id) {
-    const allowed = allowedClientSlugs(ctx.user);
-    if (allowed !== null) {
-      const match = allowed.find((slug) => {
-        try {
-          return getClient(slug).meta_ad_account_id === ad_account_id;
-        } catch {
-          return false;
-        }
-      });
-      if (!match) {
-        throw new Error(
-          `ad_account_id ${ad_account_id} is not linked to any client you can access`,
-        );
-      }
-    }
-  }
-  return act;
+  return resolveMetaAdAccount({ client, ad_account_id });
 }
 
 export function registerMetaTools(server, ctx) {
@@ -60,8 +42,8 @@ export function registerMetaTools(server, ctx) {
       },
     },
     async ({ limit = 100 }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new Error('meta_list_ad_accounts is admin-only. Use list_clients to see your accessible accounts.');
+      if (!isAdminOrDev(ctx.user)) {
+        throw new Error('meta_list_ad_accounts requires admin or dev role.');
       }
       const bmId = process.env.META_BUSINESS_ID;
       if (!bmId) throw new Error('META_BUSINESS_ID not set');
@@ -97,7 +79,7 @@ export function registerMetaTools(server, ctx) {
       },
     },
     async ({ client, ad_account_id, limit = 50, effective_status }) => {
-      const actId = resolveAndAuthorizeAct(ctx, { client, ad_account_id });
+      const actId = resolveAct(ctx, { client, ad_account_id });
       const fields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time';
       const params = { fields, limit };
       if (effective_status?.length) params.effective_status = effective_status;
@@ -144,9 +126,9 @@ export function registerMetaTools(server, ctx) {
         if (level !== 'account') {
           throw new Error('entity_id is required when level is not "account"');
         }
-        id = resolveAndAuthorizeAct(ctx, { client });
+        id = resolveAct(ctx, { client });
       } else if (level === 'account') {
-        id = resolveAndAuthorizeAct(ctx, { client, ad_account_id: entity_id });
+        id = resolveAct(ctx, { client, ad_account_id: entity_id });
       } else if (client) {
         assertAccess(ctx.user, client);
       }
@@ -173,7 +155,7 @@ export function registerMetaTools(server, ctx) {
     {
       title: 'Raw Meta Graph GET',
       description:
-        'Escape hatch: perform an arbitrary GET on the Graph API. Use for endpoints not yet wrapped as dedicated tools.',
+        'Escape hatch: perform an arbitrary GET on the Graph API. Read-only. Use for endpoints not yet wrapped as dedicated tools.',
       inputSchema: {
         path: z
           .string()
@@ -182,8 +164,8 @@ export function registerMetaTools(server, ctx) {
       },
     },
     async ({ path, params = {} }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new Error('meta_graph_get is admin-only (bypasses client-level access checks).');
+      if (!isAdminOrDev(ctx.user)) {
+        throw new Error('meta_graph_get requires admin or dev role.');
       }
       if (!path.startsWith('/')) throw new Error('path must start with /');
       const data = await graph(path, params);

@@ -13,7 +13,7 @@ const CSS = `
   --sidebar-w:240px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scrollbar-gutter:stable}
+html{scrollbar-gutter:stable;overflow-y:scroll}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh}
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
@@ -91,8 +91,8 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 
 /* ── Pills / badges ──────────────────────────────────────────────────── */
 .pill{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:100px}
-.pill.admin{background:var(--ink);color:var(--white)}
-.pill.analyst{background:var(--soft);color:var(--muted)}
+.pill.admin{background:var(--soft);color:var(--ink)}
+.pill.dev{background:var(--ink);color:var(--white)}
 .pill.ok{background:#e6f6ee;color:var(--green)}
 .pill.warn{background:var(--coral-soft);color:var(--coral)}
 .pill.all{background:var(--pink-soft);color:var(--pink)}
@@ -282,7 +282,14 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 /* ── Client budgets ──────────────────────────────────────────────────── */
 .budget-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
 .budget-card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.75rem}
-.budget-head{display:flex;align-items:center;gap:.6rem}
+.budget-head{display:flex;align-items:center;gap:.6rem;min-height:34px}
+.budget-head .budget-save{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:var(--ink);color:#fff;border:none;border-radius:50%;cursor:pointer;transition:opacity .15s,background .15s,visibility 0s;padding:0;visibility:hidden}
+.budget-card.dirty .budget-head .budget-save,.budget-head .budget-save.saved,.budget-head .budget-save.err{visibility:visible}
+.budget-head .budget-save:hover{opacity:.85}
+.budget-head .budget-save:disabled{opacity:.5;cursor:default}
+.budget-head .budget-save.saved{background:#1f9d55}
+.budget-head .budget-save.err{background:var(--coral)}
+.budget-head .budget-save svg{width:16px;height:16px}
 .budget-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .budget-icon img,.budget-icon svg{width:100%;height:100%;object-fit:contain}
 .budget-label{font:600 .9rem 'Inter',sans-serif;color:var(--ink)}
@@ -295,6 +302,26 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .budget-field{display:flex;flex-direction:column;gap:.35rem}
 .budget-sublabel{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .budget-hint{font-size:.72rem;color:var(--muted)}
+.budget-head .budget-edit{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
+.budget-head .budget-edit:hover{color:var(--ink);border-color:var(--ink)}
+.budget-head .budget-edit svg{width:14px;height:14px}
+.budget-card.editing .budget-head .budget-edit{background:var(--ink);color:#fff;border-color:var(--ink)}
+.budget-head .budget-save{margin-left:.4rem}
+.budget-progress{display:flex;flex-direction:column;gap:.5rem}
+.budget-bar{position:relative;height:10px;background:rgba(27,27,29,.06);border-radius:100px;overflow:hidden}
+.budget-bar-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--grad,linear-gradient(135deg,#0087F2 0%,#BF4FCD 50%,#E13B7D 100%));border-radius:100px;transition:width .5s cubic-bezier(.16,1,.3,1)}
+.budget-card.alert .budget-bar-fill{background:#f0a500}
+.budget-card.over .budget-bar-fill{background:var(--coral)}
+.budget-usage{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;font-variant-numeric:tabular-nums}
+.budget-usage .spend{font:700 .95rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.01em}
+.budget-usage .limit{font:500 .78rem 'Inter',sans-serif;color:var(--muted)}
+.budget-usage .pct{font:800 .92rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.01em}
+.budget-card.alert .budget-usage .pct{color:#c48000}
+.budget-card.over .budget-usage .pct{color:var(--coral)}
+.budget-usage .empty{font:500 .78rem 'Inter',sans-serif;color:var(--muted);font-style:italic}
+.budget-editor{display:flex;flex-direction:row;flex-wrap:wrap;gap:.65rem;padding-top:.5rem;border-top:1px solid var(--line)}
+.budget-editor .budget-field{flex:1;min-width:140px}
+.budget-editor .budget-field:last-child{flex:0 0 150px}
 
 /* ── Dashboard news feed ─────────────────────────────────────────────── */
 .dash-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:1.4rem;margin-top:2rem;align-items:start}
@@ -332,6 +359,8 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .alert-item{display:flex;align-items:center;gap:.85rem;padding:.85rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--card);border-left-width:4px}
 .alert-item.warn{border-left-color:#F6B40E}
 .alert-item.over{border-left-color:var(--coral)}
+.alert-item.billing{border-left-color:var(--coral);border-color:var(--coral);background:var(--coral-soft)}
+.alert-item.billing .alert-title{color:var(--coral)}
 .alert-item .alert-icon{width:32px;height:32px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .alert-item .alert-icon img,.alert-item .alert-icon svg{width:20px;height:20px;object-fit:contain}
 .alert-item .alert-body{flex:1;min-width:0}
@@ -340,6 +369,7 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .alert-item .alert-pill{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:100px;flex-shrink:0}
 .alert-item .alert-pill.warn{background:#fff3d1;color:#8a6d00}
 .alert-item .alert-pill.over{background:var(--coral-soft);color:var(--coral)}
+.alert-item .alert-pill.billing{background:var(--coral);color:#fff}
 .alert-loading{padding:.9rem 1rem;color:var(--muted);font-size:.8rem}
 
 /* ── Investment section ─────────────────────────────────────────────── */
@@ -386,8 +416,79 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .rp-btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
 .rp-btn.primary:hover{background:var(--pink);opacity:.9;color:#fff}
 .rp-btn:disabled{opacity:.4;cursor:not-allowed}
-.inv-list{display:flex;flex-direction:column;gap:.8rem}
-.inv-card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:1rem 1.2rem}
+.inv-list{display:flex;flex-direction:column;gap:.9rem}
+.inv-block-head{display:grid;grid-template-columns:1fr .9fr 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:0 1.4rem .6rem;font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.inv-block-head > .right{text-align:right}
+.inv-block-head > :nth-child(3),
+.inv-block-row > .inv-block-cell:nth-child(3){text-align:center}
+.inv-block{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.inv-block[hidden]{display:none}
+.inv-block-row{display:grid;grid-template-columns:1fr .9fr 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:.95rem 1.4rem;border-top:1px solid var(--line)}
+.inv-block-row:first-child{border-top:none}
+.inv-block-cell{min-width:0}
+.inv-block-cell.right{text-align:right;justify-self:end}
+.inv-block-cell .inv-cell-client{display:inline-flex;align-items:center;gap:.5rem;font:700 .95rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.005em}
+.inv-block-cell .inv-cell-platform{display:inline-flex;align-items:center;gap:.55rem;font:600 .88rem 'Inter',sans-serif;color:var(--ink)}
+.plat-billing-chip{display:inline-flex;align-items:center;gap:.3rem;font:600 .64rem 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:.22rem .55rem;border-radius:100px;white-space:nowrap;line-height:1}
+.plat-billing-chip.ok{background:#e6f6ee;color:var(--green)}
+.plat-billing-chip.warn{background:#fff6d6;color:#8a6d00}
+.plat-billing-chip.bad{background:var(--coral-soft);color:var(--coral)}
+.plat-billing-chip.loading,.plat-billing-chip.unknown,.plat-billing-chip.missing{background:var(--soft);color:var(--muted)}
+.plat-billing-chip.hidden{display:none}
+.inv-block-cell .inv-cell-platform .ic{width:20px;height:20px;display:inline-flex;flex-shrink:0}
+.inv-block-cell .inv-cell-platform .ic img,.inv-block-cell .inv-cell-platform .ic svg{width:100%;height:100%;object-fit:contain}
+.inv-list-head{display:grid;grid-template-columns:1fr 130px 130px 130px 240px;gap:1.4rem;align-items:center;padding:0 1.4rem .5rem}
+.inv-list-head.inv-list-head-4{grid-template-columns:1fr 150px 150px 280px}
+.inv-list-head[hidden]{display:none}
+.inv-grid.inv-grid-4{grid-template-columns:1fr 150px 150px 280px}
+.inv-card[hidden]{display:none}
+.inv-card-head-bar{display:flex;align-items:center;gap:.4rem;padding:.15rem 0 .2rem}
+.inv-list-head > *{font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.inv-list-head > *:first-child{text-align:left}
+.inv-card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:.4rem 1.4rem}
+.inv-card-row{display:grid;grid-template-columns:1fr 130px 130px 130px 240px;gap:1.4rem;align-items:center;padding:.85rem 1.4rem;text-decoration:none;color:inherit;transition:border-color .15s,background .15s}
+.inv-card-row:hover{border-color:var(--pink);background:linear-gradient(0deg,rgba(0,0,0,0.01),rgba(0,0,0,0.01)),var(--card)}
+.inv-client-cell{display:flex;align-items:center;gap:.6rem;min-width:0}
+.inv-client-cell .inv-card-title{font:700 .92rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.005em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inv-plat-badges{display:inline-flex;align-items:center;gap:.35rem;flex-shrink:0}
+.inv-plat-badge{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;background:var(--soft);border-radius:6px;padding:3px}
+.inv-plat-badge img,.inv-plat-badge svg{width:100%;height:100%;object-fit:contain}
+.inv-plat-empty-inline{font-size:.7rem;color:var(--muted);font-weight:500;letter-spacing:.02em}
+/* ─ Minimal table style (Stripe/Linear) ─ */
+.inv-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.inv-table th,.inv-table td{padding:.85rem 1.1rem;text-align:left;font-size:.82rem;color:var(--ink);border-bottom:1px solid var(--line);vertical-align:middle}
+.inv-table tr:last-child td{border-bottom:none}
+.inv-table thead th{font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--soft);padding-top:.7rem;padding-bottom:.7rem}
+.inv-table thead th.right,.inv-table td.right{text-align:right}
+.inv-table tbody tr{}
+.inv-table tbody tr.inv-tr-first td{border-top:1px solid var(--line)}
+.inv-table tbody tr.inv-tr-first:first-child td{border-top:none}
+.inv-cell-client{font-weight:700;font-size:.9rem;color:var(--ink);display:inline-flex;align-items:center;gap:.5rem}
+.inv-cell-client .inv-card-edit{width:24px;height:24px;color:var(--muted)}
+.inv-cell-client .inv-card-edit:hover{color:var(--pink)}
+.inv-cell-platform{display:inline-flex;align-items:center;gap:.55rem;color:var(--ink);font-weight:500}
+.inv-cell-platform .ic{width:18px;height:18px;display:inline-flex;flex-shrink:0}
+.inv-cell-platform .ic img,.inv-cell-platform .ic svg{width:100%;height:100%;object-fit:contain}
+.inv-num{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);white-space:nowrap}
+.inv-num.muted{color:var(--muted);font-weight:500}
+.inv-progress-cell{display:flex;align-items:center;gap:.7rem;min-width:200px}
+.inv-progress-cell .inv-bar-wrap{flex:1;height:6px;background:rgba(16,24,40,.08);border-radius:100px;overflow:hidden;position:relative;max-width:160px}
+.inv-progress-cell .inv-bar-fill{position:absolute;inset:0;background:var(--green);border-radius:100px;transition:width .3s}
+.inv-progress-cell .inv-bar-fill.warn{background:#F6B40E}
+.inv-progress-cell .inv-bar-fill.over{background:var(--coral)}
+.inv-progress-cell .inv-bar-fill.neutral{background:var(--line)}
+.inv-progress-cell .inv-pct{font-weight:700;font-size:.8rem;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
+.inv-progress-cell .inv-pct.ok{color:var(--green)}
+.inv-progress-cell .inv-pct.warn{color:#8a6d00}
+.inv-progress-cell .inv-pct.over{color:var(--coral)}
+.inv-progress-cell .inv-pct.muted{color:var(--muted);font-weight:500;font-size:.74rem}
+.inv-card+.inv-card{margin-top:0}
+.inv-search{position:relative;display:inline-flex;align-items:center;flex:1;min-width:200px;border:1px solid var(--line);border-radius:100px;background:var(--card);padding:.7rem 1.1rem;transition:border-color .15s;box-sizing:border-box}
+.inv-search:focus-within{border-color:var(--pink)}
+.inv-search svg{width:14px;height:14px;color:var(--muted);flex-shrink:0;margin-right:.5rem}
+.inv-search input{flex:1;border:none;outline:none;background:transparent;font:600 .74rem 'Inter',sans-serif;letter-spacing:.02em;color:var(--ink);min-width:0;padding:0;line-height:1}
+.inv-search input::placeholder{color:var(--muted);font-weight:500}
+.inv-card[hidden]{display:none}
 .inv-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;gap:.6rem}
 .inv-card-title{font:700 .95rem 'Inter',sans-serif;color:var(--ink);letter-spacing:-.005em}
 .inv-card-edit{width:30px;height:30px;border-radius:50%;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:background .15s,color .15s}
@@ -396,13 +497,16 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .inv-card-link{font-size:.72rem;color:var(--muted);text-decoration:none;letter-spacing:.04em}
 .inv-card-link:hover{color:var(--pink)}
 .inv-grid{display:grid;grid-template-columns:1fr 130px 130px 130px 240px;gap:1.4rem;align-items:center}
-.inv-col-head{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:.35rem 0 .15rem}
-.inv-col-head.right{text-align:right}
-.inv-card-title-cell{display:flex;align-items:center;gap:.4rem;padding:.35rem 0 .15rem}
+.inv-col-head{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);height:3rem;display:flex;align-items:center;justify-content:flex-end}
+.inv-col-head.right{text-align:right;justify-content:flex-end}
+.inv-card-title-cell{display:flex;align-items:center;gap:.4rem;height:3rem}
 .inv-grid-divider{grid-column:1 / -1;height:1px;background:var(--line);margin:0}
 .inv-plat-row{display:contents}
-.inv-plat-row > *{padding:.55rem 0}
+.inv-plat-row > *{height:2.4rem;display:flex;align-items:center}
+.inv-plat-row > .inv-num{justify-content:flex-end}
+.inv-plat-row > .inv-consumo{justify-content:flex-end}
 .inv-num.resto{color:var(--green)}
+.inv-num.resto.warn{color:#8a6d00}
 .inv-num.resto.over{color:var(--coral)}
 .inv-plat-name{display:flex;align-items:center;gap:.55rem;font:600 .82rem 'Inter',sans-serif;color:var(--ink)}
 .inv-plat-name .ic{width:18px;height:18px;display:inline-flex;flex-shrink:0}
@@ -923,41 +1027,7 @@ const CLIENT_JS = `
     }
   };
 
-  window.debouncedSaveBudget=(function(){
-    var timers=new WeakMap();
-    return function(input){
-      clearTimeout(timers.get(input));
-      timers.set(input,setTimeout(function(){window.saveClientBudget(input)},300));
-    };
-  })();
-
-  // Flush pending saves before leaving the page (unload / navigation)
-  window.addEventListener('beforeunload',function(){
-    document.querySelectorAll('input[data-role="amount"],input[data-role="alert_pct"]').forEach(function(i){
-      if(i._last!==(i.value||'').trim().replace(/\./g,'').replace(/,/g,''))window.saveClientBudget(i);
-    });
-  });
-  // Enter key triggers immediate save on budget fields
-  document.addEventListener('keydown',function(e){
-    if(e.key!=='Enter')return;
-    var t=e.target;
-    if(t&&t.tagName==='INPUT'&&(t.dataset.role==='amount'||t.dataset.role==='alert_pct')){e.preventDefault();window.saveClientBudget(t);t.blur();}
-  });
-
-  window.formatMoneyInput=function(input){
-    var digits=(input.value||'').replace(/[^0-9]/g,'');
-    var formatted=digits?Number(digits).toLocaleString('es-AR'):'';
-    if(formatted!==input.value){
-      var start=input.selectionStart;
-      var before=input.value.slice(0,start).replace(/[^0-9]/g,'').length;
-      input.value=formatted;
-      var pos=0,seen=0;
-      while(pos<formatted.length&&seen<before){if(/[0-9]/.test(formatted[pos]))seen++;pos++;}
-      try{input.setSelectionRange(pos,pos)}catch(e){}
-    }
-  };
-
-  window.handleBudgetInput=function(input){
+  window.formatBudgetAmount=function(input){
     var oldValue=input.value||'';
     var oldCaret=input.selectionStart||0;
     var digits=oldValue.replace(/[^0-9]/g,'');
@@ -969,36 +1039,161 @@ const CLIENT_JS = `
       while(pos<formatted.length&&count<digitsBefore){if(/[0-9]/.test(formatted[pos]))count++;pos++;}
       try{input.setSelectionRange(pos,pos)}catch(e){}
     }
-    window.debouncedSaveBudget(input);
+    markBudgetDirty(input);
   };
 
-  window.saveClientBudget=async function(input){
-    var editor=document.getElementById('client-editor');
-    if(!editor){return}
-    var slug=editor.dataset.clientSlug;
-    var platform=input.dataset.platform;
-    var role=input.dataset.role||'amount';
-    var raw=(input.value||'').trim().replace(/\./g,'').replace(/,/g,'');
-    if(raw===''){return} // Empty → skip; don't accidentally delete on blur/tab
-    if(input._last===raw)return;
-    var payload={platform:platform};
-    var fmtN=function(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})};
-    if(role==='alert_pct'){
-      var pct=Number(raw);
-      if(!Number.isFinite(pct)||pct<0||pct>100){showSavedToast('Porcentaje inv&#225;lido (0-100)','error');return}
-      payload.alert_pct=pct;
-    }else{
-      var amount=Number(raw);
-      if(!Number.isFinite(amount)||amount<0){showSavedToast('Monto inv&#225;lido','error');return}
-      payload.amount=amount;
+  function normalizedBudgetValue(input){
+    var v=(input.value||'').trim();
+    if(input.dataset.role==='amount')v=v.replace(/[^0-9]/g,'');
+    return v;
+  }
+  function markBudgetDirty(input){
+    var card=input.closest('[data-budget-card]');
+    if(!card)return;
+    var inputs=card.querySelectorAll('input[data-role=amount],input[data-role=alert_pct]');
+    var dirty=false;
+    inputs.forEach(function(i){
+      var initial=(i.dataset.initial||'').trim();
+      if(normalizedBudgetValue(i)!==initial)dirty=true;
+    });
+    var btn=card.querySelector('[data-role=save-budget]');
+    if(btn)btn.classList.remove('saved','err');
+    card.classList.toggle('dirty',dirty);
+  }
+  window.markBudgetDirty=markBudgetDirty;
+
+  // Enter en cualquier input del budget-card dispara el guardado
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter')return;
+    var t=e.target;
+    if(!t||t.tagName!=='INPUT')return;
+    var card=t.closest('[data-budget-card]');
+    if(!card)return;
+    e.preventDefault();
+    var btn=card.querySelector('[data-role=save-budget]');
+    if(btn)btn.click();
+  });
+
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-role=save-budget]');
+    if(!btn)return;
+    e.preventDefault();
+    window.saveBudgetCard(btn);
+  });
+
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-role=edit-budget]');
+    if(!btn)return;
+    e.preventDefault();
+    var card=btn.closest('[data-budget-card]');
+    if(!card)return;
+    var willEdit=!card.classList.contains('editing');
+    card.classList.toggle('editing',willEdit);
+    if(willEdit){
+      var input=card.querySelector('input[data-role=amount]');
+      if(input)try{input.focus();input.select()}catch(e){}
     }
+  });
+
+  function fmtARS(n){try{return '$'+Number(n).toLocaleString('es-AR',{maximumFractionDigits:0})}catch(e){return '$'+n}}
+  function paintBudgetBar(card,spend,limit){
+    var fill=card.querySelector('[data-role=bar-fill]');
+    var spendTxt=card.querySelector('[data-role=spend-txt]');
+    var pctTxt=card.querySelector('[data-role=pct-txt]');
+    var limitTxt=card.querySelector('[data-role=limit-txt]');
+    if(!fill)return;
+    var lim=Number(limit)||0;
+    var sp=Number(spend)||0;
+    var pct=lim>0?(sp/lim)*100:0;
+    fill.style.width=(lim>0?Math.min(pct,100):0).toFixed(1)+'%';
+    card.classList.remove('alert','over');
+    var alertPctInput=card.querySelector('input[data-role=alert_pct]');
+    var alertThr=alertPctInput?Number(alertPctInput.dataset.initial)||80:80;
+    if(lim>0){
+      if(pct>=100)card.classList.add('over');
+      else if(pct>=alertThr)card.classList.add('alert');
+    }
+    if(spendTxt)spendTxt.textContent=fmtARS(sp);
+    if(limitTxt)limitTxt.textContent=(lim>0?'/ '+fmtARS(lim):'/ sin presupuesto')+' · alerta al '+alertThr+'%';
+    if(pctTxt)pctTxt.textContent=lim>0?pct.toFixed(0)+'%':'';
+  }
+  window.paintBudgetBar=paintBudgetBar;
+
+  (function loadBudgetSpend(){
+    var editor=document.getElementById('client-editor');
+    if(!editor)return;
+    var slug=editor.dataset.clientSlug;
+    if(!slug)return;
+    var cards=document.querySelectorAll('[data-budget-card]');
+    if(!cards.length)return;
+    var now=new Date();
+    var from=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+    var to=now.toISOString().slice(0,10);
+    fetch('/admin/api/investment?from='+from+'&to='+to,{credentials:'same-origin'})
+      .then(function(r){return r.ok?r.json():null})
+      .then(function(data){
+        if(!data||!Array.isArray(data.clients))return;
+        var mine=data.clients.find(function(c){return c.slug===slug});
+        if(!mine||!mine.platforms)return;
+        cards.forEach(function(card){
+          var p=card.dataset.platform;
+          var pf=mine.platforms[p];
+          var lim=Number(card.dataset.limit||0);
+          if(pf&&pf.spend!=null)paintBudgetBar(card,pf.spend,lim);
+        });
+      })
+      .catch(function(){});
+  })();
+
+  window.saveBudgetCard=async function(btn){
+    var card=btn.closest('[data-budget-card]');
+    var editor=document.getElementById('client-editor');
+    if(!card||!editor)return;
+    var slug=editor.dataset.clientSlug;
+    var platform=card.dataset.platform;
+    var amountInput=card.querySelector('input[data-role=amount]');
+    var pctInput=card.querySelector('input[data-role=alert_pct]');
+    var amtRaw=(amountInput.value||'').replace(/[^0-9]/g,'');
+    var pctRaw=(pctInput.value||'').replace(/[^0-9]/g,'');
+    console.log('[budget CLICK]',{platform:platform,amountValue:amountInput.value,amtRaw:amtRaw,pctRaw:pctRaw});
+    if(amtRaw===''){setBudgetBtnState(btn,'err','Ingresá un monto');showSavedToast('Ingresá un monto antes de guardar','error');return}
+    var amount=Number(amtRaw);
+    var pct=pctRaw===''?80:Number(pctRaw);
+    if(!Number.isFinite(amount)||amount<0){setBudgetBtnState(btn,'err','Monto inv&#225;lido');return}
+    if(!Number.isFinite(pct)||pct<1||pct>100){setBudgetBtnState(btn,'err','Alerta 1-100');return}
+    console.log('[budget SAVE]',{slug:slug,platform:platform,amount:amount,pct:pct,rawAmount:amountInput.value});
+    setBudgetBtnState(btn,'saving','Guardando&#8230;');
     try{
-      var r=await fetch('/admin/clients/'+slug+'/budget',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});
-      if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||r.status)}
-      input._last=raw;
-      showSavedToast(role==='alert_pct'?('Alerta al '+payload.alert_pct+'% guardada'):('Presupuesto guardado: $ '+fmtN(payload.amount)));
-    }catch(e){showSavedToast('Error: '+e.message,'error')}
+      var r=await fetch('/admin/clients/'+slug+'/budget',{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({client:'v2',platform:platform,amount:amount,alert_pct:pct}),
+      });
+      if(r.redirected){throw new Error('Sesi&#243;n expirada, recarg&#225; la p&#225;gina')}
+      if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||('HTTP '+r.status))}
+      amountInput.dataset.initial=String(amount);
+      pctInput.dataset.initial=String(pct);
+      card.dataset.limit=String(amount);
+      card.classList.remove('dirty');
+      var spendTxt=card.querySelector('[data-role=spend-txt]');
+      var spend=spendTxt?Number((spendTxt.textContent||'').replace(/[^0-9]/g,''))||0:0;
+      if(typeof window.paintBudgetBar==='function')window.paintBudgetBar(card,spend,amount);
+      setBudgetBtnState(btn,'saved','Guardado');
+      setTimeout(function(){setBudgetBtnState(btn,'idle','Guardar');btn.classList.remove('saved','err');card.classList.remove('editing')},1200);
+    }catch(e){
+      setBudgetBtnState(btn,'err','Error');
+      showSavedToast('No se pudo guardar: '+e.message,'error');
+    }
   };
+
+  function setBudgetBtnState(btn,state,label){
+    btn.classList.remove('saved','err');
+    btn.disabled=(state==='saving');
+    if(state==='saved')btn.classList.add('saved');
+    else if(state==='err')btn.classList.add('err');
+    var lbl=btn.querySelector('[data-role=save-label]');
+    if(lbl)lbl.innerHTML=label;
+  }
 
   window.toggleUserPlatformForClient=async function(btn){
     if(btn.classList.contains('disabled'))return;
@@ -1321,14 +1516,14 @@ function flashBanner(flash) {
 function sidebar(user, active) {
   const nav = [
     { key: 'dashboard', label: 'Dashboard', href: '/admin' },
-    { key: 'users', label: 'Usuarios', href: '/admin/users', admin: true },
+    { key: 'users', label: 'Usuarios', href: '/admin/users' },
     { key: 'clients', label: 'Clientes', href: '/admin/clients' },
     { key: 'investment', label: 'Inversión', href: '/admin/investment' },
-    { key: 'logs', label: 'Logs', href: '/admin/logs', admin: true },
+    { key: 'logs', label: 'Logs', href: '/admin/logs', dev: true },
     { key: 'config', label: 'MCP', href: '/admin/config' },
   ];
   const items = nav
-    .filter((n) => !n.admin || user.role === 'admin')
+    .filter((n) => !n.dev || user.role === 'dev')
     .map(
       (n) =>
         `<a href="${n.href}" class="nav-item ${n.key === active ? 'active' : ''}">${esc(n.label)}</a>`,
@@ -1407,11 +1602,33 @@ export function renderDashboard({ user }) {
       <div class="dash-main">
         <section class="dash-section">
           <div class="dash-section-title">Alertas</div>
-          <div id="dash-alerts"><div class="alert-loading">Cargando alertas&#8230;</div></div>
+          <div id="dash-alerts"><div class="alerts-empty">Cargando alertas&#8230;</div></div>
         </section>
         <section class="dash-section">
           <div class="dash-section-title">Noticias</div>
           <div class="news-feed">
+            <div class="news-item">
+              <div class="news-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--pink)"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
+              <div class="news-body">
+                <div class="news-head">
+                  <span class="news-tag">Nuevo</span>
+                  <span class="news-date">${esc(today)}</span>
+                </div>
+                <h3 class="news-title">Nueva secci&#243;n Inversi&#243;n</h3>
+                <p class="news-text">Ahora pod&#233;s ver el gasto real de cada cliente por plataforma y compararlo contra el presupuesto configurado en su ficha. Filtr&#225; por mes, &#250;ltimos 7/30 d&#237;as o rango custom, y buscador por nombre. Las alertas de consumo (warn/over) impactan directo en el dashboard.</p>
+              </div>
+            </div>
+            <div class="news-item">
+              <div class="news-icon">${META_ICON}</div>
+              <div class="news-body">
+                <div class="news-head">
+                  <span class="news-tag">Nuevo</span>
+                  <span class="news-date">${esc(today)}</span>
+                </div>
+                <h3 class="news-title">Meta Ads ya est&#225; integrado</h3>
+                <p class="news-text">Pod&#233;s asociar cuentas de Meta Ads a cada cliente desde la ficha, con estado (habilitada / suspendida / cerrada) visible en el pill del ID. Las consultas de campa&#241;as, ad sets, ads e insights ya andan v&#237;a la Marketing API.</p>
+              </div>
+            </div>
             <div class="news-item">
               <div class="news-icon">${GADS_ICON}</div>
               <div class="news-body">
@@ -1476,39 +1693,68 @@ export function renderDashboard({ user }) {
       var box=document.getElementById('dash-alerts');
       if(!box)return;
       var PLAT={meta:{label:'Meta Ads',icon:${JSON.stringify(META_ICON)}},gads:{label:'Google Ads',icon:${JSON.stringify(GADS_ICON)}}};
-      function fmt(n){return '$ '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
+      function curSym(c){return c==='USD'?'US$':c==='EUR'?'&#8364;':'$'}
+      function fmt(n,c){if(n==null)return '&#8212;';return curSym(c)+' '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
       function iso(d){return d.toISOString().slice(0,10)}
       var now=new Date();
       var from=iso(new Date(now.getFullYear(),now.getMonth(),1));
       var to=iso(now);
-      fetch('/admin/api/investment?from='+from+'&to='+to).then(function(r){return r.json()}).then(function(d){
+      Promise.all([
+        fetch('/admin/api/investment?from='+from+'&to='+to).then(function(r){return r.json()}),
+        fetch('/admin/api/billing-summary').then(function(r){return r.json()}).catch(function(){return null})
+      ]).then(function(res){
+        var d=res[0];
+        var billing=res[1];
         if(d.error){box.innerHTML='<div class="alerts-empty">No se pudieron cargar las alertas: '+d.error+'</div>';return}
         var items=[];
         (d.clients||[]).forEach(function(c){
           Object.keys(c.platforms).forEach(function(pk){
             var p=c.platforms[pk];
-            if(p.status!=='warn'&&p.status!=='over')return;
             var meta=PLAT[pk]||{label:pk,icon:''};
-            var pct=p.pct==null?0:Math.round(p.pct);
-            var txt;
-            if(p.status==='over'){
-              txt='Super&#243; el presupuesto del mes: '+fmt(p.spend)+' de '+fmt(p.budget)+' ('+pct+'%).';
-            }else{
-              txt='Consumo cerca del l&#237;mite: '+fmt(p.spend)+' de '+fmt(p.budget)+' ('+pct+'%).';
+            if(p.status==='warn'||p.status==='over'){
+              var pct=p.pct==null?0:Math.round(p.pct);
+              var txt=p.status==='over'
+                ? 'Super&#243; el presupuesto del mes: '+fmt(p.spend,p.currency)+' de '+fmt(p.budget,p.currency)+' ('+pct+'%).'
+                : 'Consumo cerca del l&#237;mite: '+fmt(p.spend,p.currency)+' de '+fmt(p.budget,p.currency)+' ('+pct+'%).';
+              items.push({cls:p.status,slug:c.slug,name:c.name,plat:meta,txt:txt,sortKey:pct,kind:'budget'});
             }
-            items.push({cls:p.status,slug:c.slug,name:c.name,plat:meta,txt:txt,pct:pct});
+            // Billing errors (rojo)
+            if(billing&&billing[pk]&&billing[pk].accounts){
+              var accIds = pk==='meta' ? (c.meta_ad_accounts||[]) : (c.gads_customers||[]);
+              var badReasons=[];
+              accIds.forEach(function(id){
+                var acc=billing[pk].accounts[id];
+                if(acc && acc.billing==='bad'){
+                  badReasons.push(acc.disable_reason||acc.billing_setup||acc.status||'problema de pago');
+                }
+              });
+              if(badReasons.length){
+                items.push({
+                  cls:'billing',
+                  slug:c.slug,
+                  name:c.name,
+                  plat:meta,
+                  txt:'Problema de pago detectado en la cuenta: '+badReasons[0]+'. Revis&#225; el billing antes de que se corte la pauta.',
+                  sortKey:9999,
+                  kind:'billing'
+                });
+              }
+            }
           });
         });
         if(!items.length){box.innerHTML='<div class="alerts-empty">Sin alertas.</div>';return}
-        items.sort(function(a,b){return (b.cls==='over'?1:0)-(a.cls==='over'?1:0) || b.pct-a.pct});
+        // Billing primero, luego over, luego warn, dentro de cada grupo por pct desc
+        var order={billing:0,over:1,warn:2};
+        items.sort(function(a,b){return (order[a.cls]-order[b.cls]) || b.sortKey-a.sortKey});
         box.innerHTML='<div class="alerts-list">'+items.map(function(a){
+          var pillText=a.cls==='billing'?'error pago':a.cls==='over'?'excedido':'alerta';
           return '<a class="alert-item '+a.cls+'" href="/admin/clients/'+a.slug+'/edit" style="text-decoration:none">'
             +'<div class="alert-icon">'+a.plat.icon+'</div>'
             +'<div class="alert-body">'
             +'<div class="alert-title">'+a.name+' &#183; '+a.plat.label+'</div>'
             +'<div class="alert-text">'+a.txt+'</div>'
             +'</div>'
-            +'<span class="alert-pill '+a.cls+'">'+(a.cls==='over'?'excedido':'alerta')+'</span>'
+            +'<span class="alert-pill '+a.cls+'">'+pillText+'</span>'
             +'</a>';
         }).join('')+'</div>';
       }).catch(function(e){box.innerHTML='<div class="alerts-empty">No se pudieron cargar las alertas: '+e.message+'</div>'});
@@ -1520,6 +1766,10 @@ export function renderDashboard({ user }) {
 export function renderInvestment({ user }) {
   const body = `
     <div class="inv-toolbar">
+      <label class="inv-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="text" id="inv-search-input" placeholder="Buscar cliente&#8230;" autocomplete="off">
+      </label>
       <div class="presets">
         <button type="button" class="inv-preset" data-preset="mtd">Mes actual</button>
         <button type="button" class="inv-preset" data-preset="7d">&#218;ltimos 7 d&#237;as</button>
@@ -1654,7 +1904,8 @@ export function renderInvestment({ user }) {
       function setActive(k){
         document.querySelectorAll('.inv-preset').forEach(function(b){b.classList.toggle('active',b.dataset.preset===k)});
       }
-      function fmt(n){return '$ '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
+      function curSym(c){return c==='USD'?'US$':c==='EUR'?'&#8364;':'$'}
+      function fmt(n,c){if(n==null)return '&#8212;';return curSym(c)+' '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
       var PLAT={meta:{label:'Meta Ads',icon:${JSON.stringify(META_ICON)}},gads:{label:'Google Ads',icon:${JSON.stringify(GADS_ICON)}}};
       function render(data){
         if(!data.clients||!data.clients.length){
@@ -1662,11 +1913,30 @@ export function renderInvestment({ user }) {
           return;
         }
         var EDIT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-        list.innerHTML=data.clients.map(function(c){
-          var pks=Object.keys(c.platforms).filter(function(pk){return c.platforms[pk].status!=='no-account'});
-          var platRows=pks.map(function(pk){
+        var header='<div class="inv-block-head">'
+          +'<span>Cliente</span>'
+          +'<span>Plataforma</span>'
+          +'<span>Estado del pago</span>'
+          +'<span class="right">Invertido</span>'
+          +'<span class="right">Presupuesto</span>'
+          +'<span>Consumo</span>'
+          +'</div>';
+        var blocks=data.clients.map(function(c){
+          var PLAT_ORDER=['meta','gads','ga4'];
+          var pks=PLAT_ORDER.filter(function(pk){return c.platforms[pk]&&c.platforms[pk].status!=='no-account'});
+          var clientCell='<span class="inv-cell-client">'+c.name
+            +'<a class="inv-card-edit" href="/admin/clients/'+c.slug+'/edit" title="Editar">'+EDIT_ICON+'</a></span>';
+          if(!pks.length){
+            return '<div class="inv-block" data-client-name="'+c.name.toLowerCase()+'">'
+              +'<div class="inv-block-row">'
+              +'<div class="inv-block-cell">'+clientCell+'</div>'
+              +'<div class="inv-block-cell muted" style="grid-column:2 / -1;color:var(--muted);font-size:.82rem">Sin plataformas configuradas</div>'
+              +'</div>'
+              +'</div>';
+          }
+          var rows=pks.map(function(pk,idx){
             var p=c.platforms[pk];
-            var meta=PLAT[pk]||{label:pk,icon:''};
+            var m=PLAT[pk]||{label:pk,icon:''};
             var pctNum=p.pct==null?0:Math.min(100,Math.round(p.pct));
             var barCls=p.status==='over'?'over':(p.status==='warn'?'warn':(p.status==='no-budget'||p.status==='error'?'neutral':''));
             var pctLabel=p.status==='error'||p.status==='no-budget'?'muted':(p.status==='over'?'over':(p.status==='warn'?'warn':'ok'));
@@ -1674,37 +1944,99 @@ export function renderInvestment({ user }) {
             if(p.status==='error')pctText='sin datos';
             else if(p.status==='no-budget')pctText='sin presup.';
             else pctText=(p.pct==null?'&#8212;':Math.round(p.pct)+'%');
-            var spendText=p.spend==null?'&#8212;':fmt(p.spend);
-            var budgetText=p.budget?fmt(p.budget):'&#8212;';
-            var restoText='&#8212;',restoCls='';
-            if(p.budget&&p.spend!=null){
-              var diff=p.budget-p.spend;
-              restoText=(diff<0?'-':'')+fmt(Math.abs(diff));
-              if(diff<0)restoCls=' over';
-            }
-            return '<div class="inv-plat-row">'
-              +'<div class="inv-plat-name"><span class="ic">'+meta.icon+'</span><span>'+meta.label+'</span></div>'
-              +'<div class="inv-num">'+spendText+'</div>'
-              +'<div class="inv-num muted">'+budgetText+'</div>'
-              +'<div class="inv-num resto'+restoCls+'">'+restoText+'</div>'
-              +'<div class="inv-consumo"><div class="inv-bar-wrap"><div class="inv-bar-fill '+barCls+'" style="width:'+pctNum+'%"></div></div><span class="inv-pct '+pctLabel+'">'+pctText+'</span></div>'
+            var spendText=p.spend==null?'&#8212;':fmt(p.spend,p.currency);
+            var budgetText=p.budget?fmt(p.budget,p.currency):'&#8212;';
+            var accIds = pk==='meta' ? (c.meta_ad_accounts||(c.meta_ad_account_id?[c.meta_ad_account_id]:[]))
+                       : pk==='gads' ? (c.gads_customers||(c.gads_customer_id?[c.gads_customer_id]:[]))
+                       : [];
+            var platAttrs = ' data-platform="'+pk+'" data-account-ids="'+accIds.join(',')+'"';
+            return '<div class="inv-block-row"'+platAttrs+'>'
+              +'<div class="inv-block-cell">'+(idx===0?clientCell:'')+'</div>'
+              +'<div class="inv-block-cell"><span class="inv-cell-platform"><span class="ic">'+m.icon+'</span>'+m.label+'</span></div>'
+              +'<div class="inv-block-cell"><span class="plat-billing-chip loading" data-role="billing-chip">&#8230;</span></div>'
+              +'<div class="inv-block-cell right inv-num">'+spendText+'</div>'
+              +'<div class="inv-block-cell right inv-num muted">'+budgetText+'</div>'
+              +'<div class="inv-block-cell"><div class="inv-progress-cell"><div class="inv-bar-wrap"><div class="inv-bar-fill '+barCls+'" style="width:'+pctNum+'%"></div></div><span class="inv-pct '+pctLabel+'">'+pctText+'</span></div></div>'
               +'</div>';
-          }).join('<div class="inv-grid-divider"></div>');
-          var rows='<div class="inv-grid">'
-            +'<div class="inv-card-title-cell"><span class="inv-card-title">'+c.name+'</span><a class="inv-card-edit" href="/admin/clients/'+c.slug+'/edit" title="Editar cliente">'+EDIT_ICON+'</a></div>'
-            +'<div class="inv-col-head right">Inversi&#243;n</div>'
-            +'<div class="inv-col-head right">Presupuesto</div>'
-            +'<div class="inv-col-head right">Resto</div>'
-            +'<div class="inv-col-head right">Consumo</div>'
-            +'<div class="inv-grid-divider"></div>'
-            +platRows
-            +'</div>';
-          if(!pks.length){
-            rows='<div class="inv-card-head"><div class="inv-card-title">'+c.name+'</div><a class="inv-card-edit" href="/admin/clients/'+c.slug+'/edit" title="Editar cliente">'+EDIT_ICON+'</a></div><div class="inv-plat-empty">Sin plataformas configuradas. Cargalas desde <a href="/admin/clients/'+c.slug+'/edit">la ficha del cliente</a>.</div>';
-          }
-          return '<div class="inv-card">'+rows+'</div>';
+          }).join('');
+          return '<div class="inv-block" data-client-name="'+c.name.toLowerCase()+'">'+rows+'</div>';
         }).join('');
+        list.innerHTML=header+blocks;
+        applyFilter();
+        loadBillingChips();
+        return;
       }
+      function shortFunding(s){
+        if(!s)return '';
+        var m=s.match(/(VISA|Mastercard|MASTERCARD|Amex|AMEX|American Express)\\s*\\*?\\s*(\\d{4})/i);
+        if(m)return m[1].toUpperCase().replace('AMERICAN EXPRESS','AMEX')+' *'+m[2];
+        if(s.length>22)return s.slice(0,22)+'&#8230;';
+        return s;
+      }
+      function pickWorst(flags){
+        if(flags.indexOf('bad')>=0)return 'bad';
+        if(flags.indexOf('warn')>=0)return 'warn';
+        if(flags.indexOf('ok')>=0)return 'ok';
+        return 'unknown';
+      }
+      var FLAG_LABEL={ok:'Normal',warn:'Revisar',bad:'Error',missing:'Sin cuenta',unknown:'Sin datos'};
+      function billingLabel(platform,ids,summary){
+        if(!summary||!summary[platform])return {flag:'unknown',detail:''};
+        var map=summary[platform].accounts||{};
+        if(summary[platform].error)return {flag:'unknown',detail:summary[platform].error};
+        var hit=ids.map(function(id){return map[id]}).filter(Boolean);
+        if(!hit.length)return {flag:'missing',detail:'cuenta no vinculada al BM/MCC de Break'};
+        var flag=pickWorst(hit.map(function(h){return h.billing}));
+        var detail='';
+        if(flag==='ok'){
+          var funding=hit.map(function(h){return h.funding}).filter(Boolean)[0];
+          detail=funding?shortFunding(funding):'';
+        } else if(flag==='bad'){
+          var statuses=hit.filter(function(h){return h.billing==='bad'}).map(function(h){return h.disable_reason||h.billing_setup||h.status});
+          detail=statuses[0]||'problema de pago';
+        } else if(flag==='warn'){
+          var ws=hit.filter(function(h){return h.billing==='warn'}).map(function(h){return h.disable_reason||h.billing_setup||h.status});
+          detail=ws[0]||'revisar billing';
+        }
+        return {flag:flag,detail:detail};
+      }
+      function paintChips(summary){
+        list.querySelectorAll('.inv-block-row[data-platform]').forEach(function(row){
+          var chip=row.querySelector('[data-role=billing-chip]');
+          if(!chip)return;
+          var platform=row.dataset.platform;
+          var ids=(row.dataset.accountIds||'').split(',').filter(Boolean);
+          if(!ids.length){chip.className='plat-billing-chip hidden';chip.textContent='';chip.hidden=true;return}
+          var lbl=billingLabel(platform,ids,summary);
+          chip.className='plat-billing-chip '+lbl.flag;
+          chip.textContent=FLAG_LABEL[lbl.flag]||'Sin datos';
+          if(lbl.detail)chip.title=lbl.detail; else chip.removeAttribute('title');
+        });
+      }
+      var billingLoadToken=0;
+      function loadBillingChips(){
+        var mine=++billingLoadToken;
+        fetch('/admin/api/billing-summary').then(function(r){return r.json()}).then(function(d){
+          if(mine!==billingLoadToken)return;
+          if(d.error){
+            list.querySelectorAll('[data-role=billing-chip]').forEach(function(c){c.className='plat-billing-chip unknown';c.textContent='sin datos'});
+            return;
+          }
+          paintChips(d);
+        }).catch(function(){
+          list.querySelectorAll('[data-role=billing-chip]').forEach(function(c){c.className='plat-billing-chip unknown';c.textContent='sin datos'});
+        });
+      }
+      var searchInput=document.getElementById('inv-search-input');
+      function normalize(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')}
+      function applyFilter(){
+        var q=normalize(searchInput?searchInput.value:'');
+        list.querySelectorAll('.inv-block').forEach(function(b){
+          var name=b.dataset.clientName||'';
+          b.hidden=!!q&&name.indexOf(q)<0;
+        });
+      }
+      if(searchInput)searchInput.addEventListener('input',applyFilter);
       function reload(){
         var from=fromEl.value,to=toEl.value;
         if(!from||!to)return;
@@ -1733,12 +2065,22 @@ export function renderInvestment({ user }) {
 
 /* ─────────── Users ─────────── */
 function roleSelectCS(currentRole, opts_ = {}) {
-  const opts = [
-    { value: 'analyst', label: 'Analista' },
+  const actorRole = opts_.actorRole || 'admin';
+  const allOpts = [
     { value: 'admin', label: 'Admin' },
+    { value: 'dev', label: 'Dev' },
   ];
+  // Only dev users can assign the dev role; admins can only assign admin.
+  const opts = actorRole === 'dev' ? allOpts : allOpts.filter((o) => o.value !== 'dev');
   const cur = opts.find((o) => o.value === currentRole) || opts[0];
   const autosave = opts_.autosave ? ` data-autosave="1" data-user-id="${esc(opts_.userId || '')}"` : '';
+  const readonly = opts.length <= 1;
+  if (readonly) {
+    return `<div class="cs-wrap cs-readonly">
+      <button type="button" class="cs-btn" disabled><span class="cs-value">${esc(cur.label)}</span></button>
+      <input type="hidden" name="role" value="${esc(cur.value)}">
+    </div>`;
+  }
   return `
     <div class="cs-wrap"${autosave}>
       <button type="button" class="cs-btn"><span class="cs-value">${esc(cur.label)}</span><span class="cs-chevron"></span></button>
@@ -1841,7 +2183,7 @@ function userModal({ mode, target, availableClients }) {
         }
         <div class="field">
           <label>Rol</label>
-          ${roleSelectCS(t.role || 'analyst')}
+          ${roleSelectCS(t.role || 'admin')}
         </div>
         <div class="field">
           <label>Contrase&#241;a ${isEdit ? '<span style="opacity:.6;text-transform:none;letter-spacing:0;font-weight:400"> &#183; opcional</span>' : ''}</label>
@@ -1902,7 +2244,7 @@ export function renderUsersView({ user, users, flash }) {
           <div style="font-weight:600">${esc(u.name)}</div>
           ${u.email ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.15rem">${esc(u.email)}</div>` : ''}
         </td>
-        <td><span class="pill ${u.role === 'admin' ? 'admin' : 'analyst'}">${esc(u.role)}</span></td>
+        <td><span class="pill ${u.role === 'dev' ? 'dev' : 'admin'}">${esc(u.role)}</span></td>
         <td>
           <form class="switch-form" method="POST" action="/admin/users/${esc(u.id)}/active">
             <label class="switch" title="${u.active !== false ? 'Cuenta activa' : 'Cuenta desactivada'}">
@@ -1993,9 +2335,7 @@ function userNewModal() {
 /* ─────────── User edit (dedicated page, no modal) ─────────── */
 export function renderUserEditView({ user, target, flash, initialPassword }) {
   const t = target || {};
-  const acc = t.accounts || { meta: [], gads: [], ga4: [] };
-  const dataAttrs = `data-user-id="${esc(t.id)}" data-accounts-meta="${(acc.meta || []).join(',')}" data-accounts-gads="${(acc.gads || []).join(',')}" data-accounts-ga4="${(acc.ga4 || []).join(',')}"`;
-  const clients = listClients();
+  const dataAttrs = `data-user-id="${esc(t.id)}"`;
 
   const credentialsCard = initialPassword
     ? `
@@ -2037,7 +2377,7 @@ export function renderUserEditView({ user, target, flash, initialPassword }) {
         </div>
         <div class="profile-item">
           <div class="profile-label">Rol</div>
-          ${roleSelectCS(t.role || 'analyst', { autosave: true, userId: t.id })}
+          ${roleSelectCS(t.role || 'admin', { autosave: true, userId: t.id, actorRole: user.role })}
         </div>
         <div class="profile-item">
           <div class="profile-label">Regenerar credenciales</div>
@@ -2052,51 +2392,8 @@ export function renderUserEditView({ user, target, flash, initialPassword }) {
     </div>
 
     <div class="card">
-      <h2>Clientes y accesos</h2>
-      <p style="color:var(--muted);font-size:.85rem;margin:-.3rem 0 1rem">Toc&#225; cada plataforma para activar o desactivar el acceso a los datos del cliente en esa plataforma.</p>
-      <div class="clients-access-list">${clientsAccessList(clients, acc)}</div>
-    </div>
-
-
-    <div class="modal-overlay" id="accounts-modal" hidden>
-      <div class="modal" style="max-width:640px">
-        <div class="accounts-modal-head">
-          <div class="accounts-modal-title">
-            <h3>Cuentas de <span>&#8212;</span></h3>
-            <div class="modal-title-actions">
-              <button type="button" class="btn-save-icon" id="acc-save-icon" onclick="savePickerAndClose()" title="Guardar y cerrar" aria-label="Guardar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </button>
-              <button type="button" class="btn-close" onclick="closeModal('accounts-modal')" title="Cerrar" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="accounts-divider"></div>
-          <p class="accounts-modal-note">Solo se muestran cuentas activas. Para activar o desactivar una cuenta dirigite al administrador de Break en Google Ads.</p>
-        </div>
-        <div class="accounts-modal-columns">
-          <input type="checkbox" id="acc-select-all" onchange="pickerToggleAll(this.checked)" title="Seleccionar todas">
-          <span class="col-name">Nombre de cuenta</span>
-          <span class="col-status">
-            <span class="col-status-dropdown" id="acc-status-dropdown">
-              <button type="button" class="col-status-btn" onclick="toggleStatusDropdown(event)">
-                <span id="acc-status-label">Estado</span>
-                <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg>
-              </button>
-              <div class="col-status-menu" hidden>
-                <div class="col-status-opt selected" data-value="" data-label="Estado" onclick="pickStatus(this)">Todas</div>
-                <div class="col-status-opt" data-value="ENABLED" data-label="Habilitadas" onclick="pickStatus(this)">Habilitadas</div>
-                <div class="col-status-opt" data-value="SUSPENDED" data-label="Suspendidas" onclick="pickStatus(this)">Suspendidas</div>
-                <div class="col-status-opt" data-value="CANCELED" data-label="Canceladas" onclick="pickStatus(this)">Canceladas</div>
-                <div class="col-status-opt" data-value="CLOSED" data-label="Cerradas" onclick="pickStatus(this)">Cerradas</div>
-              </div>
-            </span>
-          </span>
-          <span class="col-id">ID</span>
-        </div>
-        <div class="accounts-panel-list"></div>
-      </div>
+      <h2>Acceso a datos</h2>
+      <p style="color:var(--muted);font-size:.9rem;margin:0">Todos los usuarios (admin y dev) tienen acceso <strong>de solo lectura</strong> a todas las cuentas Meta, Google Ads y GA4 vinculadas al Business Manager / MCC / Service Account de Break. No hace falta configurar cuentas por usuario.</p>
     </div>
   </div>`;
 
@@ -2112,7 +2409,7 @@ export function renderUserEditView({ user, target, flash, initialPassword }) {
 }
 
 /* ─────────── Client edit (mirrors user edit) ─────────── */
-export function renderClientEditView({ user, target, usersWithAccess, flash }) {
+export function renderClientEditView({ user, target, flash }) {
   const t = target || {};
   const publicBase = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '');
   const publicUrl = `${publicBase}/${t.slug}`;
@@ -2132,7 +2429,7 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
               (id) => `
               <div class="acc-list-row" data-account-id="${esc(id)}">
                 <span class="acc-list-name" data-role="name"><span class="muted" style="font-weight:400">Cargando&#8230;</span></span>
-                <span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${esc(id)}</span>
+                <span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${esc(String(id).replace(/^act_/, ''))}</span>
                 <button type="button" class="icon-action danger" onclick="removeClientAccount(this,'${esc(p.key)}','${esc(id)}')" title="Quitar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
@@ -2152,44 +2449,6 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
     })
     .join('');
 
-  const clientMetaIds = platformsForClient[0].ids;
-  const clientGadsIds = platformsForClient[1].ids;
-  const clientGa4Ids = platformsForClient[2].ids;
-
-  const userChip = (platform, label, iconHtml, clientIds, active) => {
-    if (!clientIds || !clientIds.length) {
-      return `<span class="ct-chip disabled" title="El cliente no tiene ${label} configurado"><span class="ct-icon">${iconHtml}</span><span class="ct-label">${label}</span></span>`;
-    }
-    return `<button type="button" class="ct-chip ${active ? 'active' : ''}" data-platform="${platform}" data-client-ids="${esc(clientIds.join(','))}" onclick="toggleUserPlatformForClient(this)">
-      <span class="ct-icon">${iconHtml}</span>
-      <span class="ct-label">${label}</span>
-    </button>`;
-  };
-
-  const usersHtml = (usersWithAccess || []).length
-    ? usersWithAccess
-        .map((u) => {
-          const accMeta = ((u.accounts && u.accounts.meta) || []).join(',');
-          const accGads = ((u.accounts && u.accounts.gads) || []).join(',');
-          const accGa4 = ((u.accounts && u.accounts.ga4) || []).join(',');
-          return `
-          <div class="user-access-row" data-user-id="${esc(u.id)}" data-accounts-meta="${esc(accMeta)}" data-accounts-gads="${esc(accGads)}" data-accounts-ga4="${esc(accGa4)}">
-            <div class="user-access-info">
-              <div class="user-access-name-row">
-                <div class="user-access-name">${esc(u.name)}</div>
-                <span class="pill ${u.role === 'admin' ? 'admin' : 'analyst'}">${u.role === 'admin' ? 'Admin' : 'Analista'}</span>
-              </div>
-              ${u.email ? `<div class="user-access-email">${esc(u.email)}</div>` : ''}
-            </div>
-            <div class="user-access-chips">
-              ${userChip('meta', 'Meta Ads', META_ICON, clientMetaIds, u._meta_access)}
-              ${userChip('gads', 'Google Ads', GADS_ICON, clientGadsIds, u._gads_access)}
-              ${userChip('ga4', 'GA4', GA4_ICON, clientGa4Ids, u._ga4_access)}
-            </div>
-          </div>`;
-        })
-        .join('')
-    : `<div class="reports-empty" style="margin:0">Ning&#250;n usuario tiene acceso a este cliente todav&#237;a. Asign&#225;selo desde la edici&#243;n de un usuario.</div>`;
 
   const body = `
   <div id="client-editor" data-client-slug="${esc(t.slug)}">
@@ -2235,24 +2494,36 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
             const entry = raw == null ? { amount: '', alert_pct: 80 } : (typeof raw === 'number' ? { amount: raw, alert_pct: 80 } : { amount: raw.amount ?? '', alert_pct: raw.alert_pct ?? 80 });
             const amountDisplay = entry.amount === '' || entry.amount == null ? '' : Number(entry.amount).toLocaleString('es-AR');
             return `
-            <div class="budget-card">
+            <div class="budget-card" data-budget-card data-platform="${p.key}" data-limit="${esc(String(entry.amount ?? ''))}">
               <div class="budget-head">
                 <div class="budget-icon">${p.icon}</div>
                 <div class="budget-label">${esc(p.label)}</div>
+                <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
               </div>
-              <div class="budget-field">
-                <label class="budget-sublabel">Presupuesto mensual</label>
-                <div class="budget-input-wrap">
-                  <span class="prefix">$</span>
-                  <input type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="${esc(amountDisplay)}" data-platform="${p.key}" data-role="amount" oninput="handleBudgetInput(this)" onblur="saveClientBudget(this)">
-                  <span class="suffix">/mes</span>
+              <div class="budget-progress">
+                <div class="budget-bar"><div class="budget-bar-fill" data-role="bar-fill" style="width:0%"></div></div>
+                <div class="budget-usage">
+                  <span data-role="usage-line"><span class="spend" data-role="spend-txt">&#8212;</span> <span class="limit" data-role="limit-txt">${entry.amount ? '/ $' + esc(amountDisplay) : '/ sin presupuesto'} &#183; alerta al ${esc(String(entry.alert_pct))}%</span></span>
+                  <span class="pct" data-role="pct-txt">${entry.amount ? '&#8212;' : ''}</span>
                 </div>
               </div>
-              <div class="budget-field">
-                <label class="budget-sublabel">Alertar al</label>
-                <div class="budget-input-wrap">
-                  <input type="number" min="1" max="100" step="1" placeholder="80" value="${esc(String(entry.alert_pct))}" data-platform="${p.key}" data-role="alert_pct" oninput="debouncedSaveBudget(this)" onchange="saveClientBudget(this)" onblur="saveClientBudget(this)">
-                  <span class="suffix">% consumido</span>
+              <div class="budget-editor">
+                <div class="budget-field">
+                  <label class="budget-sublabel">Presupuesto mensual</label>
+                  <div class="budget-input-wrap">
+                    <span class="prefix">$</span>
+                    <input type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="${esc(amountDisplay)}" data-role="amount" data-initial="${esc(String(entry.amount ?? ''))}" oninput="formatBudgetAmount(this)">
+                    <span class="suffix">/mes</span>
+                  </div>
+                </div>
+                <div class="budget-field">
+                  <label class="budget-sublabel">Alertar al</label>
+                  <div class="budget-input-wrap">
+                    <input type="number" min="1" max="100" step="1" placeholder="80" value="${esc(String(entry.alert_pct))}" data-role="alert_pct" data-initial="${esc(String(entry.alert_pct))}" oninput="markBudgetDirty(this)">
+                    <span class="suffix">% consumido</span>
+                  </div>
                 </div>
               </div>
             </div>`;
@@ -2264,11 +2535,6 @@ export function renderClientEditView({ user, target, usersWithAccess, flash }) {
     <div class="card">
       <h2>Cuentas conectadas</h2>
       <div class="acc-list-container">${platformsHtml}</div>
-    </div>
-
-    <div class="card">
-      <h2>Usuarios con acceso <span class="tag">${(usersWithAccess || []).length}</span></h2>
-      <div class="users-access-list">${usersHtml}</div>
     </div>
   </div>`;
 
@@ -2405,7 +2671,7 @@ function clientModal({ mode, target }) {
 }
 
 export function renderClientsView({ user, clients, allowedForUser, flash }) {
-  const isAdmin = user.role === 'admin';
+  const isAdmin = user.role === 'admin' || user.role === 'dev';
   const publicBase = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '');
 
   const rows = clients
