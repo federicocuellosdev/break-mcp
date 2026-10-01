@@ -2796,7 +2796,10 @@ function clientModal({ mode, target }) {
 }
 
 export function renderClientsView({ user, clients, allowedForUser, flash }) {
-  const isAdmin = user.role === 'admin' || user.role === 'dev';
+  // analyst también puede activar/editar; crear y eliminar sigue siendo admin/dev
+  const canEdit = user.role === 'admin' || user.role === 'dev' || user.role === 'analyst';
+  const canCreateDelete = user.role === 'admin' || user.role === 'dev';
+  const isAdmin = canEdit;
   const publicBase = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '');
 
   const rows = clients
@@ -2838,7 +2841,7 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
         </td>
         <td>
           ${
-            isAdmin
+            canCreateDelete
               ? `<form method="POST" action="/admin/clients/${esc(c.slug)}/delete" data-confirm-title="Eliminar cliente" data-confirm-msg="&#191;Eliminar ${esc(c.name)}? Los usuarios que lo ten&#237;an asignado quedan sin ese acceso." data-confirm-label="Eliminar" style="margin:0">
                   <button type="button" class="icon-action danger" onclick="askConfirmForm(this)" title="Eliminar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -2857,7 +2860,7 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
     <div class="filtros">
       <input type="text" id="search" class="input-search" placeholder="Buscar cliente...">
       <div class="spacer"></div>
-      ${isAdmin ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
+      ${canCreateDelete ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
     </div>
     <div class="table-wrap">
       <table>

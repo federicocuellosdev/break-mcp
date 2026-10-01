@@ -132,6 +132,13 @@ export function createWebRouter() {
     next();
   };
 
+  // analyst también puede editar/activar clientes (no crear ni borrar)
+  const requireClientManager = (req, res, next) => {
+    const r = res.locals.user?.role;
+    if (r === 'admin' || r === 'dev' || r === 'analyst') return next();
+    return res.status(403).send('Forbidden');
+  };
+
   router.get('/admin', requireLogin, (req, res) => {
     const user = res.locals.user;
     const clients = listClients();
@@ -411,7 +418,7 @@ export function createWebRouter() {
     }
   });
 
-  router.get('/admin/clients/:slug/edit', requireLogin, requireAdmin, (req, res) => {
+  router.get('/admin/clients/:slug/edit', requireLogin, requireClientManager, (req, res) => {
     let target;
     try {
       target = getClient(req.params.slug);
@@ -430,7 +437,7 @@ export function createWebRouter() {
       );
   });
 
-  router.post('/admin/clients/:slug', requireLogin, requireAdmin, (req, res) => {
+  router.post('/admin/clients/:slug', requireLogin, requireClientManager, (req, res) => {
     try {
       updateClientRecord(req.params.slug, req.body || {});
       redirWithFlash(res, `/admin/clients/${req.params.slug}/edit`, 'ok', 'Cambios guardados.');
@@ -439,7 +446,7 @@ export function createWebRouter() {
     }
   });
 
-  router.post('/admin/clients/:slug/accounts', requireLogin, requireAdmin, express.json(), (req, res) => {
+  router.post('/admin/clients/:slug/accounts', requireLogin, requireClientManager, express.json(), (req, res) => {
     const { platform, ids } = req.body || {};
     try {
       const saved = updateClientAccounts(req.params.slug, platform, ids || []);
@@ -449,7 +456,7 @@ export function createWebRouter() {
     }
   });
 
-  router.post('/admin/clients/:slug/budget', requireLogin, requireAdmin, express.json(), (req, res) => {
+  router.post('/admin/clients/:slug/budget', requireLogin, requireClientManager, express.json(), (req, res) => {
     const { platform, amount, alert_pct } = req.body || {};
     const patch = {};
     if (amount !== undefined) patch.amount = amount;
@@ -463,7 +470,7 @@ export function createWebRouter() {
   });
 
   const billingCache = { ts: 0, data: null, inflight: null };
-  router.get('/admin/api/billing-summary', requireLogin, requireAdmin, async (req, res) => {
+  router.get('/admin/api/billing-summary', requireLogin, async (req, res) => {
     const now = Date.now();
     const TTL = 15 * 60 * 1000;
     const force = req.query.refresh === '1';
@@ -544,7 +551,7 @@ export function createWebRouter() {
     }
   });
 
-  router.post('/admin/clients/:slug/active', requireLogin, requireAdmin, (req, res) => {
+  router.post('/admin/clients/:slug/active', requireLogin, requireClientManager, (req, res) => {
     const active = req.body.active === 'true' || req.body.active === 'on' || req.body.active === '1';
     try {
       updateClientRecord(req.params.slug, { active });
