@@ -2796,10 +2796,8 @@ function clientModal({ mode, target }) {
 }
 
 export function renderClientsView({ user, clients, allowedForUser, flash }) {
-  // analyst también puede activar/editar; crear y eliminar sigue siendo admin/dev
-  const canEdit = user.role === 'admin' || user.role === 'dev' || user.role === 'analyst';
-  const canCreateDelete = user.role === 'admin' || user.role === 'dev';
-  const isAdmin = canEdit;
+  const isAdmin = user.role === 'admin' || user.role === 'dev';
+  const canCreateDelete = isAdmin;
   const publicBase = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '');
 
   const rows = clients
