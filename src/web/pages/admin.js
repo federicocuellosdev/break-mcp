@@ -555,6 +555,9 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .creds-value code{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.9rem;color:var(--ink);background:transparent;padding:0;word-break:break-all}
 .creds-actions{display:flex;justify-content:flex-end}
 .creds-actions .btn.primary{display:inline-flex;align-items:center}
+.creds-copy-btn{flex-shrink:0;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:pointer;transition:all .15s;padding:0}
+.creds-copy-btn:hover{color:var(--ink);border-color:var(--muted);background:var(--soft)}
+.creds-copy-btn svg{width:16px;height:16px}
 
 /* ── Logs table ──────────────────────────────────────────────────────── */
 .logs-table td{vertical-align:top}
@@ -2448,20 +2451,34 @@ export function renderUserEditView({ user, target, flash, initialPassword }) {
       <p class="sub" style="margin:-.3rem 0 1rem">Esta contrase&#241;a se muestra <strong>una sola vez</strong>. Copiala y compart&#237;sela ahora; despu&#233;s no se puede volver a ver.</p>
       <div class="creds-grid">
         <div class="creds-row">
+          <div class="creds-label">Acceso</div>
+          <div class="creds-value"><code data-creds-url>&#8212;</code></div>
+          <button type="button" class="creds-copy-btn" title="Copiar acceso" onclick="copyText(location.origin, this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="creds-row">
           <div class="creds-label">Email</div>
           <div class="creds-value"><code>${esc(t.email || '')}</code></div>
+          <button type="button" class="creds-copy-btn" title="Copiar email" onclick="copyText(${JSON.stringify(t.email || '')}, this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
         </div>
         <div class="creds-row">
           <div class="creds-label">Contrase&#241;a</div>
           <div class="creds-value"><code>${esc(initialPassword)}</code></div>
+          <button type="button" class="creds-copy-btn" title="Copiar contrase&#241;a" onclick="copyText(${JSON.stringify(initialPassword)}, this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
         </div>
       </div>
       <div class="creds-actions">
         <button type="button" class="btn primary" onclick="copyText('Acceso: ' + location.origin + '\nEmail: ' + ${JSON.stringify(t.email || '')} + '\nContraseña: ' + ${JSON.stringify(initialPassword)}, this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:.4rem"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copiar acceso, email y contrase&#241;a
+          Copiar accesos
         </button>
       </div>
+      <script>(function(){var e=document.querySelector('[data-creds-url]');if(e)e.textContent=location.origin;})();</script>
     </div>`
     : '';
 
