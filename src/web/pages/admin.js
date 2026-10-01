@@ -652,7 +652,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ── Config MD box ───────────────────────────────────────────────────── */
-.md-box{background:var(--ink);color:#e8e8ec;border-radius:14px;padding:1.2rem 1.4rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;white-space:pre-wrap;overflow-x:auto;overflow-y:auto;height:calc(100vh - 280px);min-height:300px}
+.md-box{background:var(--ink);color:#e8e8ec;border-radius:14px;padding:1rem 1.2rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.76rem;line-height:1.45;white-space:pre-wrap;overflow-x:auto;overflow-y:auto;height:calc(100vh - 380px);min-height:220px}
 .actions{display:flex;gap:.6rem;margin-top:1rem}
 .token-box{background:var(--soft);border:1px solid var(--line);border-radius:100px;padding:.6rem 1rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.78rem;word-break:break-all;color:var(--ink);margin-top:.35rem}
 
