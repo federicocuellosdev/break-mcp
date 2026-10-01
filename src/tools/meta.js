@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { resolveMetaAdAccount } from '../clients.js';
-import { assertAccess, isAdminOrDev } from '../users.js';
+import { resolveMetaAdAccount, getClient } from '../clients.js';
+import { assertAccess, isAdminOrDev, allowedClientSlugs } from '../users.js';
 
 const GRAPH = () => `https://graph.facebook.com/${process.env.META_GRAPH_VERSION || 'v21.0'}`;
 
@@ -27,7 +27,21 @@ const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, n
 
 function resolveAct(ctx, { client, ad_account_id }) {
   if (client) assertAccess(ctx.user, client);
-  return resolveMetaAdAccount({ client, ad_account_id });
+  const act = resolveMetaAdAccount({ client, ad_account_id });
+  if (!client && ad_account_id) {
+    const allowed = allowedClientSlugs(ctx.user);
+    if (allowed !== null) {
+      const linked = allowed.some((slug) => {
+        try {
+          const c = getClient(slug);
+          const ids = c.meta_ad_accounts || (c.meta_ad_account_id ? [c.meta_ad_account_id] : []);
+          return ids.map(String).includes(String(act));
+        } catch { return false; }
+      });
+      if (!linked) throw new Error(`ad_account_id ${act} is not linked to any client you can access.`);
+    }
+  }
+  return act;
 }
 
 export function registerMetaTools(server, ctx) {

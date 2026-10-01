@@ -1,13 +1,27 @@
 import { z } from 'zod';
-import { resolveGadsCustomerId } from '../clients.js';
-import { assertAccess, isAdminOrDev } from '../users.js';
+import { resolveGadsCustomerId, getClient } from '../clients.js';
+import { assertAccess, isAdminOrDev, allowedClientSlugs } from '../users.js';
 import { listAccessibleCustomers, runSearch } from '../providers/gads.js';
 
 const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
 
 function resolveCustomer(ctx, { client, customer_id }) {
   if (client) assertAccess(ctx.user, client);
-  return resolveGadsCustomerId({ client, customer_id });
+  const cid = resolveGadsCustomerId({ client, customer_id });
+  if (!client && customer_id) {
+    const allowed = allowedClientSlugs(ctx.user);
+    if (allowed !== null) {
+      const linked = allowed.some((slug) => {
+        try {
+          const c = getClient(slug);
+          const ids = c.gads_customers || (c.gads_customer_id ? [c.gads_customer_id] : []);
+          return ids.map(String).includes(String(cid));
+        } catch { return false; }
+      });
+      if (!linked) throw new Error(`customer_id ${cid} is not linked to any client you can access.`);
+    }
+  }
+  return cid;
 }
 
 export function registerGadsTools(server, ctx) {

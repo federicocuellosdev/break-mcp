@@ -1,13 +1,27 @@
 import { z } from 'zod';
-import { resolveGa4PropertyId } from '../clients.js';
-import { assertAccess } from '../users.js';
+import { resolveGa4PropertyId, getClient } from '../clients.js';
+import { assertAccess, allowedClientSlugs } from '../users.js';
 import { runReport, runRealtime, getMetadata } from '../providers/ga4.js';
 
 const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
 
 function resolveProperty(ctx, { client, property_id }) {
   if (client) assertAccess(ctx.user, client);
-  return resolveGa4PropertyId({ client, property_id });
+  const pid = resolveGa4PropertyId({ client, property_id });
+  if (!client && property_id) {
+    const allowed = allowedClientSlugs(ctx.user);
+    if (allowed !== null) {
+      const linked = allowed.some((slug) => {
+        try {
+          const c = getClient(slug);
+          const ids = c.ga4_properties || (c.ga4_property_id ? [c.ga4_property_id] : []);
+          return ids.map(String).includes(String(pid));
+        } catch { return false; }
+      });
+      if (!linked) throw new Error(`property_id ${pid} is not linked to any client you can access.`);
+    }
+  }
+  return pid;
 }
 
 export function registerGa4Tools(server, ctx) {
