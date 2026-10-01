@@ -533,8 +533,8 @@ export function createWebRouter() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
     }
-    // Panel: analyst/admin/dev ven todos los activos (varios ojos).
-    const clients = listClients().filter((c) => c.active !== false);
+    // Panel: analyst/admin/dev ven todos los activos (varios ojos). Demo excluido.
+    const clients = listClients().filter((c) => c.active !== false && c.slug !== 'demo');
     try {
       const { computeInvestment } = await import('../investment.js');
       const data = await computeInvestment({ clients, from, to });
