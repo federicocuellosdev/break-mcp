@@ -1,7 +1,8 @@
 import { listClients } from './clients.js';
+import { allowedClientSlugs } from './users.js';
 
 const TOOLS = [
-  { name: 'list_clients', desc: 'Ver todos los clientes registrados' },
+  { name: 'list_clients', desc: 'Ver clientes que podés consultar' },
   { name: 'meta_list_campaigns', desc: 'Listar campañas de una cuenta Meta Ads (read-only)' },
   { name: 'meta_get_insights', desc: 'Métricas Meta (spend, impresiones, clicks, CTR, CPC, conversiones)' },
   { name: 'gads_run_query', desc: 'Query GAQL read-only a Google Ads' },
@@ -14,8 +15,15 @@ const TOOLS = [
   { name: 'render_doc', desc: 'Generar doc/handoff (plantilla Nodo) — devuelve HTML' },
   { name: 'publish_report', desc: 'Subir el informe HTML a la galería pública del cliente' },
   { name: 'list_published_reports', desc: 'Ver qué informes ya están publicados para un cliente' },
-  { name: 'check_billing_status', desc: 'Chequear estado de pago/billing de todas las cuentas Meta y Google Ads (detecta UNSETTLED, SUSPENDED, sin billing_setup, etc.)' },
   { name: 'report_issue', desc: 'Registrar un problema, limitación o mejora sugerida (queda visible para el equipo dev de Break)' },
+];
+
+// Admin/dev only tools (nunca listadas para analyst)
+const ADMIN_TOOLS = [
+  { name: 'meta_list_ad_accounts', desc: 'Listar todas las cuentas Meta del BM' },
+  { name: 'meta_graph_get', desc: 'GET crudo a Meta Graph' },
+  { name: 'gads_list_accessible_customers', desc: 'Listar todos los customers del MCC' },
+  { name: 'check_billing_status', desc: 'Barrido de billing en todas las cuentas Meta y Ads' },
 ];
 
 const PLATFORMS = [
@@ -24,27 +32,31 @@ const PLATFORMS = [
   { key: 'ga4', label: 'Google Analytics 4', clientKey: 'ga4_property_id' },
 ];
 
-function accessBlock() {
-  const clients = listClients();
+function accessBlock(visibleClients) {
   const sections = PLATFORMS.map((p) => {
-    const withPlatform = clients.filter((c) => c[p.clientKey]);
+    const withPlatform = visibleClients.filter((c) => c[p.clientKey]);
     if (!withPlatform.length) return null;
     const lines = withPlatform.map((c) => `- **${c.name}** — \`${c[p.clientKey]}\``);
     return `### ${p.label}\n${lines.join('\n')}`;
   }).filter(Boolean);
   if (!sections.length) {
-    return '_(todavía no hay clientes con cuentas cargadas en el registry)_';
+    return '_(no hay cuentas disponibles con tu rol actual — pedí al admin que te asigne clientes)_';
   }
   return sections.join('\n\n');
 }
 
 export function generateUserMd({ user, mcpUrl }) {
-  const clients = listClients();
-  const clientLines = clients.length
-    ? clients.map((c) => `- **${c.name}** (\`${c.slug}\`)`).join('\n')
-    : '_(sin clientes registrados en el registry)_';
+  const all = listClients().filter((c) => c.active !== false);
+  const allowed = allowedClientSlugs(user);
+  const visibleClients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
+  const isAnalyst = user.role === 'analyst';
 
-  const toolLines = TOOLS.map((t) => `- \`${t.name}\` — ${t.desc}`).join('\n');
+  const clientLines = visibleClients.length
+    ? visibleClients.map((c) => `- **${c.name}** (\`${c.slug}\`)`).join('\n')
+    : '_(todavía no tenés clientes asignados — pedí al admin que te vincule por lo menos uno)_';
+
+  const toolList = isAnalyst ? TOOLS : [...TOOLS, ...ADMIN_TOOLS];
+  const toolLines = toolList.map((t) => `- \`${t.name}\` — ${t.desc}`).join('\n');
 
   const mcpJsonSnippet = JSON.stringify(
     {
@@ -61,6 +73,14 @@ export function generateUserMd({ user, mcpUrl }) {
   );
 
   const cliSnippet = `claude mcp add --transport http break-mcp ${mcpUrl} --header "Authorization: Bearer ${user.token}"`;
+  const firstName = user.name.split(' ')[0];
+  const generatedAt = new Date().toISOString();
+
+  const scopeRule = isAnalyst
+    ? `**Alcance limitado**: ${firstName} tiene rol \`analyst\`. SOLO puede consultar los clientes listados abajo (${visibleClients.length} cliente${visibleClients.length === 1 ? '' : 's'}). Si pide datos de un cliente que no está en esa lista, el servidor responde "not allowed" — decíselo con palabras suaves y ofrecele uno que SÍ pueda. **Prohibido inventar, listar o insinuar la existencia de clientes fuera de su alcance.**`
+    : `Como su rol es \`${user.role}\`, ${firstName} tiene acceso de lectura a **todos los clientes de Break** sin configuración por usuario.`;
+
+  const sampleClient = visibleClients[0]?.name || 'tu cliente';
 
   return `> [!IMPORTANT]
 > **INSTRUCCIONES PARA EL ASISTENTE — LEER Y EJECUTAR ANTES DE HABLAR**
@@ -84,23 +104,21 @@ export function generateUserMd({ user, mcpUrl }) {
 
 >
 > **PASO C — MCP conectado, bienvenida**
-> 1. Llamá \`list_clients\` primero (los datos de abajo pueden estar desactualizados; la verdad es lo que devuelve la tool).
-> 2. Saludá por primer nombre: _"Hola ${user.name.split(' ')[0]}."_
-> 3. Presentale SOLO las plataformas donde realmente pueda consultar algo (o sea: donde HAY al menos un cliente con cuenta cargada). Formato de lista corta con NOMBRES de cliente, no IDs. Ejemplo:
->    - _Google Ads_: Preston
->    - _Meta Ads_: Preston, Yafue
+> 1. Llamá \`list_clients\` primero. **La lista que devuelva esa tool es la única fuente de verdad sobre qué clientes podés consultar.** No uses el listado estático de abajo si está vacío o si querés verificar.
+> 2. Saludá por primer nombre: _"Hola ${firstName}."_
+> 3. Presentale SOLO las plataformas donde \`list_clients\` devuelva al menos un cliente con cuenta cargada. Formato de lista corta con NOMBRES de cliente, no IDs.
 > 4. Los ejemplos concretos que le ofrezcas tienen que usar esos mismos clientes/plataformas.
 >
 > **Reglas transversales**
 > - Vocabulario de marketer, no dev. Decí "campaña", "cuenta", "cliente", "reporte". Evitá "endpoint", "GAQL", "API", "tool", "MCP" (salvo si él lo menciona).
 > - Todas las consultas son **read-only** sobre Meta / Google Ads / GA4. El servidor bloquea mutaciones (crear/pausar/editar campañas, cambiar presupuestos en las plataformas, etc.). Cero riesgo de tocar producción publicitaria.
-> - Como su rol es \`${user.role}\`, ${user.name.split(' ')[0]} ya tiene acceso a **todos los clientes de Break** sin necesidad de configurar cuentas por usuario.
+> - ${scopeRule}
 > - Si pide algo fuera del alcance de tus tools, decíselo con palabras suaves y ofrecele lo que sí podés hacer.
 > - NUNCA inventes datos, siempre llamá tools reales.
 >
 > ---
 >
-> **PROTOCOLO DE INFORMES** — cómo armar y publicar un informe cuando ${user.name.split(' ')[0]} lo pida
+> **PROTOCOLO DE INFORMES** — cómo armar y publicar un informe cuando ${firstName} lo pida
 >
 > **Carpeta de trabajo local** (obligatoria — todo se hace acá, no en /tmp ni en el cwd):
 > \`\`\`
@@ -138,7 +156,7 @@ export function generateUserMd({ user, mcpUrl }) {
 >
 > **PROTOCOLO DE REPORTE DE PROBLEMAS** — cuándo llamar \`report_issue\`
 >
-> Cada vez que detectes algo que impide o entorpece hacer bien el trabajo de ${user.name.split(' ')[0]}, dejalo asentado con \`report_issue({ title, description })\`. Va a un log que revisa el equipo dev de Break y sirve para priorizar arreglos. No hace falta pedirle permiso al usuario, hacelo vos y avisale en una línea corta: _"Dejé anotado el problema para el equipo dev de Break."_
+> Cada vez que detectes algo que impide o entorpece hacer bien el trabajo de ${firstName}, dejalo asentado con \`report_issue({ title, description })\`. Va a un log que revisa el equipo dev de Break y sirve para priorizar arreglos. No hace falta pedirle permiso al usuario, hacelo vos y avisale en una línea corta: _"Dejé anotado el problema para el equipo dev de Break."_
 >
 > **Cuándo reportar (obligatorio):**
 > - Una tool devuelve error persistente o inesperado (no un rate-limit puntual): \`title\` = tool + síntoma, \`description\` = qué se intentó, mensaje de error, cliente/plataforma involucrado.
@@ -147,7 +165,7 @@ export function generateUserMd({ user, mcpUrl }) {
 > - El registry / accesos están inconsistentes (cliente sin cuenta cargada en una plataforma donde debería tenerla).
 >
 > **Cuándo NO reportar:**
-> - Errores del usuario (pidió algo mal escrito, cliente inexistente).
+> - Errores del usuario (pidió algo mal escrito, cliente inexistente o fuera de alcance).
 > - Cosas que ya resolviste solo en la misma conversación.
 >
 > **Formato de \`title\`**: corto y accionable, tipo _"gads_campaign_performance no acepta rango custom"_ o _"meta_get_insights sin métrica de ROAS"_. NO uses "error" a secas.
@@ -160,6 +178,9 @@ export function generateUserMd({ user, mcpUrl }) {
 
 # break-mcp — ${user.name}
 
+> Generado: ${generatedAt}
+> Si tu admin cambió tus accesos después de esta fecha, descargá este archivo de nuevo desde ${mcpUrl.replace(/\/mcp$/, '')} → **MCP**.
+
 ---
 
 ## Perfil
@@ -167,16 +188,21 @@ export function generateUserMd({ user, mcpUrl }) {
 - **Usuario**: \`${user.id}\`${user.email ? ` · ${user.email}` : ''}
 - **Rol**: \`${user.role}\`
 - **Endpoint MCP**: \`${mcpUrl}\`
+${isAnalyst ? `- **Alcance**: ${visibleClients.length} cliente${visibleClients.length === 1 ? '' : 's'} asignado${visibleClients.length === 1 ? '' : 's'}` : ''}
 
-Los roles \`admin\` y \`dev\` acceden a **todos los clientes / cuentas Meta / MCC / propiedades GA4** de Break en modo lectura. El rol \`dev\` además puede gestionar el panel completo (usuarios, clientes, logs del servidor).
+${
+  isAnalyst
+    ? `El rol \`analyst\` tiene acceso de solo lectura **únicamente a los clientes listados a continuación**. El servidor filtra todas las consultas por esa lista.`
+    : `Los roles \`admin\` y \`dev\` acceden a **todos los clientes / cuentas Meta / MCC / propiedades GA4** de Break en modo lectura. El rol \`dev\` además puede gestionar el panel completo (usuarios, clientes, logs del servidor).`
+}
 
 ---
 
-## Cuentas cargadas por plataforma
+## Cuentas que podés consultar
 
-${accessBlock()}
+${accessBlock(visibleClients)}
 
-### Clientes registrados en el registry
+### Clientes asignados
 
 ${clientLines}
 
@@ -211,10 +237,10 @@ Guardá y reiniciá Claude Code.
 ## Ejemplos de uso
 
 - _"Con break-mcp, listame los clientes y las cuentas disponibles."_
-- _"Traé insights de Meta de Preston, últimos 30 días, breakdown por día."_
-- _"Query GAQL en Google Ads de Preston: total spend por campaña de los últimos 7 días."_
-- _"Report GA4 de Preston: sessions y conversions por canal, últimos 30 días."_
-- _"Con todo eso, armame un informe deck usando la plantilla de Azahares."_
+- _"Traé insights de Meta de ${sampleClient}, últimos 30 días, breakdown por día."_
+- _"Query GAQL en Google Ads de ${sampleClient}: total spend por campaña de los últimos 7 días."_
+- _"Report GA4 de ${sampleClient}: sessions y conversions por canal, últimos 30 días."_
+- _"Con todo eso, armame un informe deck de ${sampleClient}."_
 
 ---
 
@@ -223,6 +249,6 @@ Guardá y reiniciá Claude Code.
 - **Read-only estricto** en Meta / Google Ads / GA4. El servidor bloquea cualquier intento de mutar campañas, presupuestos o creativos.
 - **Solo publicación de HTML** vía \`publish_report\` (galería pública del cliente). Ninguna tool permite modificar el código o la config del servidor MCP.
 - **Token privado**: cualquiera con el token puede consultar como ${user.name}. Si se filtra, pedile a un usuario \`dev\` que lo regenere (el viejo se invalida al instante).
-- **Regenerar config**: si ${user.role === 'dev' ? 'agregás/quitás clientes' : 'un dev agrega/quita clientes o accesos'}, volvé a ${mcpUrl.replace(/\/mcp$/, '')} → sección **MCP** y descargá el archivo actualizado.
+- **Alcance definido por el admin**: tu lista de clientes la controla un \`dev\`/\`admin\` desde el panel. Si cambia, tu bearer token se regenera automáticamente — tenés que volver a bajar este archivo.
 `;
 }

@@ -355,18 +355,18 @@ export function createWebRouter() {
   });
 
   // -------- CLIENTS --------
+  // Panel: todos los clientes son visibles para analyst/admin/dev (varios ojos).
+  // El filtro per-analyst solo aplica a tools MCP (en /src/tools/*).
   router.get('/admin/clients', requireLogin, (req, res) => {
     const user = res.locals.user;
-    const allowed = allowedClientSlugs(user);
-    const all = listClients();
-    const clients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
+    const clients = listClients();
     res
       .set('Content-Type', 'text/html; charset=utf-8')
       .send(
         renderClientsView({
           user,
           clients,
-          allowedForUser: allowed,
+          allowedForUser: null,
           flash: flashFromQuery(req),
         }),
       );
@@ -533,9 +533,8 @@ export function createWebRouter() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
     }
-    const allowed = allowedClientSlugs(res.locals.user);
-    const all = listClients().filter((c) => c.active !== false);
-    const clients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
+    // Panel: analyst/admin/dev ven todos los activos (varios ojos).
+    const clients = listClients().filter((c) => c.active !== false);
     try {
       const { computeInvestment } = await import('../investment.js');
       const data = await computeInvestment({ clients, from, to });

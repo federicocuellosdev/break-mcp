@@ -240,6 +240,7 @@ export async function updateUser(id, patch, { actor } = {}) {
   const { raw } = load();
   const u = raw.users[id];
   if (!u) throw new Error(`Usuario "${id}" no existe`);
+  const prevClients = Array.isArray(u.clients) ? [...u.clients].sort().join(',') : '';
   if (patch.name !== undefined) u.name = patch.name;
   if (patch.email !== undefined) u.email = patch.email;
   if (patch.role !== undefined) {
@@ -253,6 +254,11 @@ export async function updateUser(id, patch, { actor } = {}) {
   if (patch.password) u.password_hash = await bcrypt.hash(patch.password, 10);
   if (patch.clients !== undefined && u.role === 'analyst') {
     u.clients = Array.isArray(patch.clients) ? patch.clients.filter(Boolean) : [];
+  }
+  // Si cambió el set de clientes del analyst, invalidar el token (el .md viejo deja de funcionar).
+  const newClients = Array.isArray(u.clients) ? [...u.clients].sort().join(',') : '';
+  if (u.role === 'analyst' && newClients !== prevClients) {
+    u.token = randomBytes(32).toString('hex');
   }
   persist(raw);
   return { id, ...u };
