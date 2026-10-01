@@ -20,9 +20,19 @@ function load() {
   } else {
     const path = process.env.CLIENTS_FILE || DEFAULT_PATH;
     // Seed from packaged default if custom path does not exist yet (first boot with persistent disk)
-    if (!existsSync(path) && path !== DEFAULT_PATH && existsSync(DEFAULT_PATH)) {
-      mkdirSync(dirname(path), { recursive: true });
-      copyFileSync(DEFAULT_PATH, path);
+    if (path !== DEFAULT_PATH && existsSync(DEFAULT_PATH)) {
+      if (!existsSync(path)) {
+        mkdirSync(dirname(path), { recursive: true });
+        copyFileSync(DEFAULT_PATH, path);
+      } else if (process.env.CLIENTS_FORCE_SEED === '1') {
+        // Backup current and re-seed from repo. Set CLIENTS_FORCE_SEED=1 for one boot,
+        // then remove it. Backup goes next to the file with a timestamp.
+        mkdirSync(dirname(path), { recursive: true });
+        const bak = `${path}.bak.${Date.now()}`;
+        copyFileSync(path, bak);
+        copyFileSync(DEFAULT_PATH, path);
+        console.log(`[clients] Force-seeded ${path} from repo. Backup: ${bak}`);
+      }
     }
     cache = JSON.parse(readFileSync(path, 'utf8'));
   }
