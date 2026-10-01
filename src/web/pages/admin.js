@@ -2806,7 +2806,7 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
       const shortUrl = publicUrl.replace(/^https?:\/\//, '');
       const active = c.active !== false;
       return `
-      <tr data-searchable>
+      <tr data-searchable data-active="${active ? '1' : '0'}">
         <td><div style="font-weight:600">${esc(c.name)}</div></td>
         <td>
           <div class="url-cell-plain">
@@ -2857,9 +2857,38 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
   const body = `
     <div class="filtros">
       <input type="text" id="search" class="input-search" placeholder="Buscar cliente...">
+      <select id="clients-status-filter" class="select" onchange="filterClientsByStatus(this.value)">
+        <option value="all">Todos</option>
+        <option value="active">Activos</option>
+        <option value="paused">Pausados</option>
+      </select>
       <div class="spacer"></div>
       ${canCreateDelete ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
     </div>
+    <script>
+      window.filterClientsByStatus=function(val){
+        var rows=document.querySelectorAll('tr[data-active]');
+        rows.forEach(function(r){
+          var act=r.dataset.active==='1';
+          var show = val==='all' || (val==='active' && act) || (val==='paused' && !act);
+          r.dataset.statusHidden = show ? '' : '1';
+          r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
+        });
+      };
+      // Interceptar el buscador para que use data-searchHidden en vez de hidden directo
+      (function(){
+        var inp=document.getElementById('search');
+        if(!inp)return;
+        inp.addEventListener('input',function(){
+          var q=(inp.value||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+          document.querySelectorAll('tr[data-searchable]').forEach(function(r){
+            var txt=(r.textContent||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+            r.dataset.searchHidden = (!q || txt.indexOf(q)>=0) ? '' : '1';
+            r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
+          });
+        });
+      })();
+    <\/script>
     <div class="table-wrap">
       <table>
         <thead>
