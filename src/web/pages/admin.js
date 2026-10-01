@@ -94,7 +94,16 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .pill.admin{background:var(--soft);color:var(--ink)}
 .pill.analyst{background:#eef3fb;color:#3760a6}
 .pill.dev{background:var(--ink);color:var(--white)}
+.analyst-clients-toolbar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.analyst-search{position:relative;display:inline-flex;align-items:center;flex:1;min-width:200px;border:1px solid var(--line);border-radius:100px;background:var(--card);padding:.55rem 1rem;transition:border-color .15s}
+.analyst-search:focus-within{border-color:var(--pink)}
+.analyst-search svg{width:14px;height:14px;color:var(--muted);flex-shrink:0;margin-right:.5rem}
+.analyst-search input{flex:1;border:none;outline:none;background:transparent;font:500 .85rem 'Inter',sans-serif;color:var(--ink);min-width:0;padding:0}
+.analyst-clients-counter{font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.analyst-clients-counter span{color:var(--ink);font-weight:800}
+.analyst-clients-toolbar .spacer{flex:1}
 .analyst-clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem}
+.analyst-client-chip[hidden]{display:none}
 .analyst-client-chip{display:flex;align-items:center;gap:.55rem;padding:.55rem .85rem;border:1px solid var(--line);border-radius:100px;cursor:pointer;transition:border-color .15s,background .15s;font-size:.85rem}
 .analyst-client-chip:hover{border-color:var(--ink)}
 .analyst-client-chip input{margin:0;accent-color:var(--pink)}
@@ -2099,14 +2108,24 @@ function renderAnalystClientsPicker(target) {
   }
   return `
   <p style="color:var(--muted);font-size:.88rem;margin:0 0 .9rem">Seleccioná los clientes a los que el analista puede acceder (datos + informes).</p>
+  <div class="analyst-clients-toolbar">
+    <label class="analyst-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input type="text" id="analyst-client-search" placeholder="Buscar cliente&#8230;" autocomplete="off" oninput="filterAnalystClients(this.value)">
+    </label>
+    <div class="analyst-clients-counter"><span id="analyst-clients-count">${assigned.size}</span> seleccionados</div>
+    <div class="spacer"></div>
+    <button type="button" class="btn ghost" onclick="toggleAnalystClients(true)">Todos</button>
+    <button type="button" class="btn ghost" onclick="toggleAnalystClients(false)">Ninguno</button>
+  </div>
   <form method="POST" action="/admin/users/${esc(target.id)}" class="analyst-clients-form">
     <input type="hidden" name="role" value="analyst">
-    <div class="analyst-clients-grid">
+    <div class="analyst-clients-grid" id="analyst-clients-grid">
       ${allClients
         .map(
           (c) => `
-        <label class="analyst-client-chip ${assigned.has(c.slug) ? 'selected' : ''}">
-          <input type="checkbox" name="clients" value="${esc(c.slug)}" ${assigned.has(c.slug) ? 'checked' : ''}>
+        <label class="analyst-client-chip ${assigned.has(c.slug) ? 'selected' : ''}" data-name="${esc(c.name.toLowerCase())}">
+          <input type="checkbox" name="clients" value="${esc(c.slug)}" ${assigned.has(c.slug) ? 'checked' : ''} onchange="updateAnalystCount()">
           <span>${esc(c.name)}</span>
         </label>`,
         )
@@ -2115,7 +2134,32 @@ function renderAnalystClientsPicker(target) {
     <div style="display:flex;justify-content:flex-end;margin-top:1rem">
       <button type="submit" class="btn primary">Guardar accesos</button>
     </div>
-  </form>`;
+  </form>
+  <script>
+    (function(){
+      function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')}
+      window.filterAnalystClients=function(q){
+        var qn=norm(q);
+        document.querySelectorAll('#analyst-clients-grid .analyst-client-chip').forEach(function(chip){
+          var n=chip.dataset.name||'';
+          chip.hidden=qn && n.indexOf(qn)<0;
+        });
+      };
+      window.toggleAnalystClients=function(check){
+        document.querySelectorAll('#analyst-clients-grid .analyst-client-chip').forEach(function(chip){
+          if(chip.hidden)return;
+          var cb=chip.querySelector('input[type=checkbox]');
+          if(cb)cb.checked=!!check;
+        });
+        updateAnalystCount();
+      };
+      window.updateAnalystCount=function(){
+        var n=document.querySelectorAll('#analyst-clients-grid input[type=checkbox]:checked').length;
+        var el=document.getElementById('analyst-clients-count');
+        if(el)el.textContent=n;
+      };
+    })();
+  <\/script>`;
 }
 
 /* ─────────── Users ─────────── */
