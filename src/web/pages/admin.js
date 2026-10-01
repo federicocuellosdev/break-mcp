@@ -2857,25 +2857,28 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
   const body = `
     <div class="filtros">
       <input type="text" id="search" class="input-search" placeholder="Buscar cliente...">
-      <select id="clients-status-filter" class="select" onchange="filterClientsByStatus(this.value)">
-        <option value="active" selected>Activos</option>
-        <option value="paused">Pausados</option>
-        <option value="all">Todos</option>
-      </select>
+      <div class="cs-wrap" id="clients-status-cs">
+        <button type="button" class="cs-btn"><span class="cs-value">Activos</span><span class="cs-chevron"></span></button>
+        <input type="hidden" name="status" value="active">
+        <div class="cs-panel" hidden>
+          <div class="cs-opt selected" data-value="active" data-label="Activos">Activos</div>
+          <div class="cs-opt" data-value="paused" data-label="Pausados">Pausados</div>
+          <div class="cs-opt" data-value="all" data-label="Todos">Todos</div>
+        </div>
+      </div>
       <div class="spacer"></div>
       ${canCreateDelete ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
     </div>
     <script>
       window.filterClientsByStatus=function(val){
-        var rows=document.querySelectorAll('tr[data-active]');
-        rows.forEach(function(r){
+        document.querySelectorAll('tr[data-active]').forEach(function(r){
           var act=r.dataset.active==='1';
           var show = val==='all' || (val==='active' && act) || (val==='paused' && !act);
           r.dataset.statusHidden = show ? '' : '1';
           r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
         });
       };
-      // Interceptar el buscador para que use data-searchHidden en vez de hidden directo
+      // Buscador: usa data-searchHidden/statusHidden para no pisarse con el filtro
       (function(){
         var inp=document.getElementById('search');
         if(!inp)return;
@@ -2888,11 +2891,19 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
           });
         });
       })();
-      // Aplicar el filtro de estado por default (Activos) al cargar
+      // Conectar el custom dropdown de estado con filterClientsByStatus
       (function(){
-        var sel=document.getElementById('clients-status-filter');
-        if(sel && window.filterClientsByStatus) window.filterClientsByStatus(sel.value);
+        var cs=document.getElementById('clients-status-cs');
+        if(!cs)return;
+        cs.addEventListener('click',function(e){
+          var opt=e.target.closest('.cs-opt');
+          if(!opt)return;
+          // El handler genérico cs-wrap ya cambia el valor y cierra el panel; sumo el filtrado
+          setTimeout(function(){window.filterClientsByStatus(opt.dataset.value||'all')},0);
+        });
       })();
+      // Aplicar filtro Activos al cargar
+      window.filterClientsByStatus('active');
     <\/script>
     <div class="table-wrap">
       <table>
