@@ -10,6 +10,7 @@ import {
   regenerateUserPassword,
   isDev,
   isAdminOrDev,
+  allowedClientSlugs,
 } from '../users.js';
 import { listMccChildren } from '../providers/gads.js';
 import { listAccountSummaries } from '../providers/ga4.js';
@@ -165,9 +166,14 @@ export function createWebRouter() {
 
   router.post('/admin/users', requireLogin, requireAdmin, async (req, res) => {
     const { id, name, email, role, password } = req.body || {};
+    const clients = Array.isArray(req.body?.clients)
+      ? req.body.clients
+      : req.body?.clients
+      ? [req.body.clients]
+      : [];
     try {
       const created = await createUser(
-        { id, name, email, role, password },
+        { id, name, email, role, password, clients },
         { actor: res.locals.user },
       );
       const q = new URLSearchParams({
@@ -198,10 +204,15 @@ export function createWebRouter() {
 
   router.post('/admin/users/:id', requireLogin, requireAdmin, async (req, res) => {
     const { name, email, role, password } = req.body || {};
+    const clientsIn = Array.isArray(req.body?.clients)
+      ? req.body.clients
+      : req.body?.clients !== undefined
+      ? [req.body.clients]
+      : undefined;
     try {
       await updateUser(
         req.params.id,
-        { name, email, role, password },
+        { name, email, role, password, ...(clientsIn !== undefined ? { clients: clientsIn } : {}) },
         { actor: res.locals.user },
       );
       redirWithFlash(res, `/admin/users/${req.params.id}/edit`, 'ok', 'Cambios guardados.');
@@ -346,14 +357,16 @@ export function createWebRouter() {
   // -------- CLIENTS --------
   router.get('/admin/clients', requireLogin, (req, res) => {
     const user = res.locals.user;
-    const clients = listClients();
+    const allowed = allowedClientSlugs(user);
+    const all = listClients();
+    const clients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
     res
       .set('Content-Type', 'text/html; charset=utf-8')
       .send(
         renderClientsView({
           user,
           clients,
-          allowedForUser: null,
+          allowedForUser: allowed,
           flash: flashFromQuery(req),
         }),
       );
@@ -520,7 +533,9 @@ export function createWebRouter() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
     }
-    const clients = listClients().filter((c) => c.active !== false);
+    const allowed = allowedClientSlugs(res.locals.user);
+    const all = listClients().filter((c) => c.active !== false);
+    const clients = allowed === null ? all : all.filter((c) => allowed.includes(c.slug));
     try {
       const { computeInvestment } = await import('../investment.js');
       const data = await computeInvestment({ clients, from, to });

@@ -92,7 +92,13 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 /* ── Pills / badges ──────────────────────────────────────────────────── */
 .pill{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:100px}
 .pill.admin{background:var(--soft);color:var(--ink)}
+.pill.analyst{background:#eef3fb;color:#3760a6}
 .pill.dev{background:var(--ink);color:var(--white)}
+.analyst-clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem}
+.analyst-client-chip{display:flex;align-items:center;gap:.55rem;padding:.55rem .85rem;border:1px solid var(--line);border-radius:100px;cursor:pointer;transition:border-color .15s,background .15s;font-size:.85rem}
+.analyst-client-chip:hover{border-color:var(--ink)}
+.analyst-client-chip input{margin:0;accent-color:var(--pink)}
+.analyst-client-chip.selected,.analyst-client-chip:has(input:checked){border-color:var(--pink);background:var(--pink-soft)}
 .pill.ok{background:#e6f6ee;color:var(--green)}
 .pill.warn{background:var(--coral-soft);color:var(--coral)}
 .pill.all{background:var(--pink-soft);color:var(--pink)}
@@ -1535,16 +1541,17 @@ function flashBanner(flash) {
 }
 
 function sidebar(user, active) {
+  const isAnalyst = user.role === 'analyst';
   const nav = [
     { key: 'dashboard', label: 'Dashboard', href: '/admin' },
-    { key: 'users', label: 'Usuarios', href: '/admin/users' },
+    { key: 'users', label: 'Usuarios', href: '/admin/users', adminOnly: true },
     { key: 'clients', label: 'Clientes', href: '/admin/clients' },
     { key: 'investment', label: 'Inversión', href: '/admin/investment' },
     { key: 'logs', label: 'Logs', href: '/admin/logs', dev: true },
     { key: 'config', label: 'MCP', href: '/admin/config' },
   ];
   const items = nav
-    .filter((n) => !n.dev || user.role === 'dev')
+    .filter((n) => (!n.dev || user.role === 'dev') && (!n.adminOnly || !isAnalyst))
     .map(
       (n) =>
         `<a href="${n.href}" class="nav-item ${n.key === active ? 'active' : ''}">${esc(n.label)}</a>`,
@@ -2084,24 +2091,49 @@ export function renderInvestment({ user }) {
   return layout({ user, active: 'investment', title: 'Inversión', body });
 }
 
+function renderAnalystClientsPicker(target) {
+  const allClients = listClients();
+  const assigned = new Set(Array.isArray(target.clients) ? target.clients : []);
+  if (!allClients.length) {
+    return `<p style="color:var(--muted);font-size:.9rem;margin:0">No hay clientes registrados todavía.</p>`;
+  }
+  return `
+  <p style="color:var(--muted);font-size:.88rem;margin:0 0 .9rem">Seleccioná los clientes a los que el analista puede acceder (datos + informes).</p>
+  <form method="POST" action="/admin/users/${esc(target.id)}" class="analyst-clients-form">
+    <input type="hidden" name="role" value="analyst">
+    <div class="analyst-clients-grid">
+      ${allClients
+        .map(
+          (c) => `
+        <label class="analyst-client-chip ${assigned.has(c.slug) ? 'selected' : ''}">
+          <input type="checkbox" name="clients" value="${esc(c.slug)}" ${assigned.has(c.slug) ? 'checked' : ''}>
+          <span>${esc(c.name)}</span>
+        </label>`,
+        )
+        .join('')}
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+      <button type="submit" class="btn primary">Guardar accesos</button>
+    </div>
+  </form>`;
+}
+
 /* ─────────── Users ─────────── */
 function roleSelectCS(currentRole, opts_ = {}) {
-  const actorRole = opts_.actorRole || 'admin';
-  const allOpts = [
+  // Dev se asigna solo vía MCP_DEV_USERS env var; nunca aparece en el UI.
+  const opts = [
     { value: 'admin', label: 'Admin' },
-    { value: 'dev', label: 'Dev' },
+    { value: 'analyst', label: 'Analista' },
   ];
-  // Only dev users can assign the dev role; admins can only assign admin.
-  const opts = actorRole === 'dev' ? allOpts : allOpts.filter((o) => o.value !== 'dev');
-  const cur = opts.find((o) => o.value === currentRole) || opts[0];
-  const autosave = opts_.autosave ? ` data-autosave="1" data-user-id="${esc(opts_.userId || '')}"` : '';
-  const readonly = opts.length <= 1;
-  if (readonly) {
+  // Si el usuario actual es dev, mostrarlo como etiqueta readonly (sin dropdown).
+  if (currentRole === 'dev') {
     return `<div class="cs-wrap cs-readonly">
-      <button type="button" class="cs-btn" disabled><span class="cs-value">${esc(cur.label)}</span></button>
-      <input type="hidden" name="role" value="${esc(cur.value)}">
+      <button type="button" class="cs-btn" disabled><span class="cs-value">Dev</span></button>
+      <input type="hidden" name="role" value="dev">
     </div>`;
   }
+  const cur = opts.find((o) => o.value === currentRole) || opts[0];
+  const autosave = opts_.autosave ? ` data-autosave="1" data-user-id="${esc(opts_.userId || '')}"` : '';
   return `
     <div class="cs-wrap"${autosave}>
       <button type="button" class="cs-btn"><span class="cs-value">${esc(cur.label)}</span><span class="cs-chevron"></span></button>
@@ -2265,7 +2297,7 @@ export function renderUsersView({ user, users, flash }) {
           <div style="font-weight:600">${esc(u.name)}</div>
           ${u.email ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.15rem">${esc(u.email)}</div>` : ''}
         </td>
-        <td><span class="pill ${u.role === 'dev' ? 'dev' : 'admin'}">${esc(u.role)}</span></td>
+        <td><span class="pill ${esc(u.role)}">${u.role === 'analyst' ? 'Analista' : u.role === 'dev' ? 'Dev' : 'Admin'}</span></td>
         <td>
           <form class="switch-form" method="POST" action="/admin/users/${esc(u.id)}/active">
             <label class="switch" title="${u.active !== false ? 'Cuenta activa' : 'Cuenta desactivada'}">
@@ -2414,7 +2446,11 @@ export function renderUserEditView({ user, target, flash, initialPassword }) {
 
     <div class="card">
       <h2>Acceso a datos</h2>
-      <p style="color:var(--muted);font-size:.9rem;margin:0">Todos los usuarios (admin y dev) tienen acceso <strong>de solo lectura</strong> a todas las cuentas Meta, Google Ads y GA4 vinculadas al Business Manager / MCC / Service Account de Break. No hace falta configurar cuentas por usuario.</p>
+      ${
+        t.role === 'analyst'
+          ? renderAnalystClientsPicker(t)
+          : `<p style="color:var(--muted);font-size:.9rem;margin:0">Admin y dev tienen acceso <strong>de solo lectura</strong> a todas las cuentas vinculadas al Business Manager / MCC / Service Account de Break.</p>`
+      }
     </div>
   </div>`;
 

@@ -7,7 +7,8 @@ import bcrypt from 'bcryptjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PATH = resolve(__dirname, '..', 'config', 'users.json');
 
-export const ROLES = ['admin', 'dev'];
+export const ROLES = ['admin', 'analyst', 'dev'];
+export const UI_ROLES = ['admin', 'analyst']; // dev se asigna solo via MCP_DEV_USERS
 
 let cache = null;
 
@@ -23,13 +24,19 @@ function devUserIdsFromEnv() {
 function migrateRole(role, id, devIds) {
   if (devIds.has(String(id).toLowerCase())) return 'dev';
   if (role === 'dev') return 'dev';
+  if (role === 'analyst') return 'analyst';
   return 'admin';
 }
 
 function migrateUser(id, u, devIds) {
   const migrated = { ...u };
   migrated.role = migrateRole(u.role, id, devIds);
-  delete migrated.clients;
+  // analyst conserva clients (array de slugs); admin/dev no necesita
+  if (migrated.role === 'analyst') {
+    if (!Array.isArray(migrated.clients)) migrated.clients = [];
+  } else {
+    delete migrated.clients;
+  }
   delete migrated.accounts;
   return migrated;
 }
@@ -120,6 +127,7 @@ export function listAllUsers() {
       email: u.email || null,
       role: u.role,
       active: u.active !== false,
+      clients: u.role === 'analyst' ? (u.clients || []) : null,
       has_password: !!u.password_hash,
       has_token: !!u.token,
     }));
@@ -133,12 +141,22 @@ export function isAdminOrDev(user) {
   return !!user && (user.role === 'admin' || user.role === 'dev');
 }
 
-export function canAccessClient(user) {
-  return isAdminOrDev(user);
+export function hasAccess(user) {
+  return !!user && ROLES.includes(user.role);
+}
+
+export function canAccessClient(user, clientSlug) {
+  if (!user) return false;
+  if (user.role === 'admin' || user.role === 'dev') return true;
+  if (user.role === 'analyst') return Array.isArray(user.clients) && user.clients.includes(clientSlug);
+  return false;
 }
 
 export function allowedClientSlugs(user) {
-  return isAdminOrDev(user) ? null : [];
+  if (!user) return [];
+  if (user.role === 'admin' || user.role === 'dev') return null;
+  if (user.role === 'analyst') return Array.isArray(user.clients) ? user.clients : [];
+  return [];
 }
 
 export function assertAccess(user, clientSlug) {
@@ -156,6 +174,7 @@ export function assertCanAssignRole(actor, targetRole) {
   if (targetRole === 'dev' && !isDev(actor)) {
     throw new Error('Solo un usuario dev puede asignar el rol dev.');
   }
+  // admin y analyst los puede asignar cualquiera con acceso al panel
 }
 
 function persist(db) {
@@ -189,7 +208,7 @@ function slugifyId(input) {
     .replace(/^-+|-+$/g, '');
 }
 
-export async function createUser({ id, name, email, role, password }, { actor } = {}) {
+export async function createUser({ id, name, email, role, password, clients }, { actor } = {}) {
   if (!name) throw new Error('name es obligatorio');
   const finalRole = role || 'admin';
   if (actor) assertCanAssignRole(actor, finalRole);
@@ -211,6 +230,7 @@ export async function createUser({ id, name, email, role, password }, { actor } 
     active: true,
     password_hash: await bcrypt.hash(plainPassword, 10),
   };
+  if (finalRole === 'analyst') entry.clients = Array.isArray(clients) ? clients : [];
   raw.users[finalId] = entry;
   persist(raw);
   return { id: finalId, ...entry, _plain_password: plainPassword };
@@ -226,9 +246,14 @@ export async function updateUser(id, patch, { actor } = {}) {
     if (actor) assertCanAssignRole(actor, patch.role);
     else if (!ROLES.includes(patch.role)) throw new Error(`Rol inválido: ${patch.role}`);
     u.role = patch.role;
+    if (u.role === 'analyst' && !Array.isArray(u.clients)) u.clients = [];
+    if (u.role !== 'analyst') delete u.clients;
   }
   if (patch.active !== undefined) u.active = !!patch.active;
   if (patch.password) u.password_hash = await bcrypt.hash(patch.password, 10);
+  if (patch.clients !== undefined && u.role === 'analyst') {
+    u.clients = Array.isArray(patch.clients) ? patch.clients.filter(Boolean) : [];
+  }
   persist(raw);
   return { id, ...u };
 }
