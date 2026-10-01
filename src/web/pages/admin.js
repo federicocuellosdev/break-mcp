@@ -649,7 +649,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ── Config MD box ───────────────────────────────────────────────────── */
-.md-box{background:var(--ink);color:#e8e8ec;border-radius:14px;padding:1.4rem 1.6rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.8rem;line-height:1.55;white-space:pre-wrap;overflow-x:auto;max-height:500px;overflow-y:auto}
+.md-box{background:var(--ink);color:#e8e8ec;border-radius:14px;padding:1.2rem 1.4rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;white-space:pre-wrap;overflow-x:auto;overflow-y:auto;height:calc(100vh - 280px);min-height:300px}
 .actions{display:flex;gap:.6rem;margin-top:1rem}
 .token-box{background:var(--soft);border:1px solid var(--line);border-radius:100px;padding:.6rem 1rem;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.78rem;word-break:break-all;color:var(--ink);margin-top:.35rem}
 
@@ -1028,19 +1028,26 @@ const CLIENT_JS = `
     }
   };
 
-  window.regenerateUserPassword=async function(userId,btn){
-    if(!confirm('&#191;Regenerar la contrase&#241;a del usuario? La anterior deja de funcionar.'))return;
-    var original=btn.innerHTML;
-    btn.disabled=true;btn.textContent='Regenerando…';
-    try{
-      var r=await fetch('/admin/users/'+encodeURIComponent(userId)+'/regen-password',{method:'POST',headers:{'Accept':'application/json'}});
-      var d=await r.json();
-      if(!r.ok)throw new Error(d.error||r.status);
-      window.location.href='/admin/users/'+encodeURIComponent(userId)+'/edit?ok='+encodeURIComponent('Contraseña regenerada. Copiala y compartila.')+'&pw='+encodeURIComponent(d.password);
-    }catch(e){
-      showSavedToast('Error: '+e.message,'error');
-      btn.disabled=false;btn.innerHTML=original;
-    }
+  window.regenerateUserPassword=function(userId,btn){
+    askConfirm({
+      title:'Regenerar contraseña',
+      message:'¿Regenerar la contraseña del usuario? La anterior deja de funcionar.',
+      confirmLabel:'Regenerar',
+      danger:true,
+      onConfirm:async function(){
+        var original=btn.innerHTML;
+        btn.disabled=true;btn.textContent='Regenerando…';
+        try{
+          var r=await fetch('/admin/users/'+encodeURIComponent(userId)+'/regen-password',{method:'POST',headers:{'Accept':'application/json'}});
+          var d=await r.json();
+          if(!r.ok)throw new Error(d.error||r.status);
+          window.location.href='/admin/users/'+encodeURIComponent(userId)+'/edit?ok='+encodeURIComponent('Contraseña regenerada. Copiala y compartila.')+'&pw='+encodeURIComponent(d.password);
+        }catch(e){
+          showSavedToast('Error: '+e.message,'error');
+          btn.disabled=false;btn.innerHTML=original;
+        }
+      }
+    });
   };
 
   window.formatBudgetAmount=function(input){
@@ -1535,7 +1542,7 @@ const CLIENT_JS = `
       }
       window.location.href='/admin/users?ok='+encodeURIComponent('Cambios guardados.');
     }catch(e){
-      alert('Error: '+e.message);
+      showSavedToast('Error: '+e.message,'error');
       if(btn){btn.disabled=false;btn.textContent='Guardar cambios'}
     }
     return false;
@@ -2101,10 +2108,10 @@ export function renderInvestment({ user }) {
 }
 
 function renderAnalystClientsPicker(target) {
-  const allClients = listClients();
+  const allClients = listClients().filter((c) => c.active !== false);
   const assigned = new Set(Array.isArray(target.clients) ? target.clients : []);
   if (!allClients.length) {
-    return `<p style="color:var(--muted);font-size:.9rem;margin:0">No hay clientes registrados todavía.</p>`;
+    return `<p style="color:var(--muted);font-size:.9rem;margin:0">No hay clientes activos para asignar.</p>`;
   }
   return `
   <p style="color:var(--muted);font-size:.88rem;margin:0 0 .9rem">Seleccioná los clientes a los que el analista puede acceder (datos + informes).</p>
