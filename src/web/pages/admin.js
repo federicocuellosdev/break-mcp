@@ -2858,9 +2858,9 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
     <div class="filtros">
       <input type="text" id="search" class="input-search" placeholder="Buscar cliente...">
       <select id="clients-status-filter" class="select" onchange="filterClientsByStatus(this.value)">
-        <option value="all">Todos</option>
-        <option value="active">Activos</option>
+        <option value="active" selected>Activos</option>
         <option value="paused">Pausados</option>
+        <option value="all">Todos</option>
       </select>
       <div class="spacer"></div>
       ${canCreateDelete ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
@@ -2887,6 +2887,11 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
             r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
           });
         });
+      })();
+      // Aplicar el filtro de estado por default (Activos) al cargar
+      (function(){
+        var sel=document.getElementById('clients-status-filter');
+        if(sel && window.filterClientsByStatus) window.filterClientsByStatus(sel.value);
       })();
     <\/script>
     <div class="table-wrap">
