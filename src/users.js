@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -38,21 +38,32 @@ function load() {
   if (cache) return cache;
 
   const envJson = process.env.MCP_USERS_JSON;
+  const filePath = process.env.MCP_USERS_FILE || DEFAULT_PATH;
   let raw;
-  if (envJson) {
+
+  // Priority: if MCP_USERS_FILE is explicitly set, use file mode (enables CRUD).
+  // If the file does not exist yet but MCP_USERS_JSON is set, seed the file from JSON.
+  const fileExplicit = !!process.env.MCP_USERS_FILE;
+  if (fileExplicit) {
+    if (!existsSync(filePath) && envJson) {
+      mkdirSync(dirname(filePath), { recursive: true });
+      writeFileSync(filePath, envJson);
+    }
+    if (!existsSync(filePath)) {
+      throw new Error(`Users config not found. Create ${filePath} or set MCP_USERS_JSON.`);
+    }
+    raw = JSON.parse(readFileSync(filePath, 'utf8'));
+  } else if (envJson) {
     try {
       raw = JSON.parse(envJson);
     } catch {
       throw new Error('MCP_USERS_JSON is not valid JSON');
     }
   } else {
-    const path = process.env.MCP_USERS_FILE || DEFAULT_PATH;
-    if (!existsSync(path)) {
-      throw new Error(
-        `Users config not found. Set MCP_USERS_JSON or create ${path}.`,
-      );
+    if (!existsSync(filePath)) {
+      throw new Error(`Users config not found. Set MCP_USERS_JSON or create ${filePath}.`);
     }
-    raw = JSON.parse(readFileSync(path, 'utf8'));
+    raw = JSON.parse(readFileSync(filePath, 'utf8'));
   }
 
   if (!raw.users || typeof raw.users !== 'object') {
@@ -148,12 +159,14 @@ export function assertCanAssignRole(actor, targetRole) {
 }
 
 function persist(db) {
-  if (process.env.MCP_USERS_JSON) {
+  const fileExplicit = !!process.env.MCP_USERS_FILE;
+  if (!fileExplicit && process.env.MCP_USERS_JSON) {
     throw new Error(
-      'Cannot persist users when MCP_USERS_JSON env var is set (read-only mode). Use file mode for CRUD.',
+      'Cannot persist users when only MCP_USERS_JSON is set (read-only mode). Set MCP_USERS_FILE to enable CRUD.',
     );
   }
   const path = process.env.MCP_USERS_FILE || DEFAULT_PATH;
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(db, null, 2) + '\n');
   cache = null;
 }
