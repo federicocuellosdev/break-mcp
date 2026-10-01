@@ -2869,42 +2869,6 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
       <div class="spacer"></div>
       ${canCreateDelete ? '<button type="button" class="btn-fab" onclick="openClientWizard()" title="Nuevo cliente" aria-label="Nuevo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>' : ''}
     </div>
-    <script>
-      window.filterClientsByStatus=function(val){
-        document.querySelectorAll('tr[data-active]').forEach(function(r){
-          var act=r.dataset.active==='1';
-          var show = val==='all' || (val==='active' && act) || (val==='paused' && !act);
-          r.dataset.statusHidden = show ? '' : '1';
-          r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
-        });
-      };
-      // Buscador: usa data-searchHidden/statusHidden para no pisarse con el filtro
-      (function(){
-        var inp=document.getElementById('search');
-        if(!inp)return;
-        inp.addEventListener('input',function(){
-          var q=(inp.value||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
-          document.querySelectorAll('tr[data-searchable]').forEach(function(r){
-            var txt=(r.textContent||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
-            r.dataset.searchHidden = (!q || txt.indexOf(q)>=0) ? '' : '1';
-            r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
-          });
-        });
-      })();
-      // Conectar el custom dropdown de estado con filterClientsByStatus
-      (function(){
-        var cs=document.getElementById('clients-status-cs');
-        if(!cs)return;
-        cs.addEventListener('click',function(e){
-          var opt=e.target.closest('.cs-opt');
-          if(!opt)return;
-          // El handler genérico cs-wrap ya cambia el valor y cierra el panel; sumo el filtrado
-          setTimeout(function(){window.filterClientsByStatus(opt.dataset.value||'all')},0);
-        });
-      })();
-      // Aplicar filtro Activos al cargar
-      window.filterClientsByStatus('active');
-    <\/script>
     <div class="table-wrap">
       <table>
         <thead>
@@ -2920,7 +2884,35 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
       </table>
     </div>
     ${editModals}
-    ${isAdmin ? clientWizardModal() : ''}`;
+    ${isAdmin ? clientWizardModal() : ''}
+    <script>
+      window.filterClientsByStatus=function(val){
+        document.querySelectorAll('tr[data-active]').forEach(function(r){
+          var act=r.dataset.active==='1';
+          var show = val==='all' || (val==='active' && act) || (val==='paused' && !act);
+          r.dataset.statusHidden = show ? '' : '1';
+          r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
+        });
+      };
+      (function(){
+        var inp=document.getElementById('search');
+        if(inp)inp.addEventListener('input',function(){
+          var q=(inp.value||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+          document.querySelectorAll('tr[data-searchable]').forEach(function(r){
+            var txt=(r.textContent||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+            r.dataset.searchHidden = (!q || txt.indexOf(q)>=0) ? '' : '1';
+            r.hidden = r.dataset.searchHidden==='1' || r.dataset.statusHidden==='1';
+          });
+        });
+        var cs=document.getElementById('clients-status-cs');
+        if(cs)cs.addEventListener('click',function(e){
+          var opt=e.target.closest('.cs-opt');
+          if(opt)setTimeout(function(){window.filterClientsByStatus(opt.dataset.value||'all')},0);
+        });
+        // Aplicar filtro Activos al cargar (tbody ya en el DOM)
+        window.filterClientsByStatus('active');
+      })();
+    <\/script>`;
 
   return layout({ user, active: 'clients', title: 'Clientes', body, flash });
 }
