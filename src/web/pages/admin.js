@@ -137,6 +137,7 @@ td code{background:var(--soft);border:1px solid var(--line);border-radius:5px;pa
 .field.full{grid-column:1/-1}
 .field label{font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
 .field input,.field textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:100px;color:var(--ink);font:400 .9rem 'Inter',sans-serif;padding:.65rem 1.05rem;outline:none;transition:border-color .15s,box-shadow .15s}
+input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field textarea.field-invalid{border-color:var(--coral) !important;box-shadow:0 0 0 3px rgba(200,28,64,.1) !important}
 .field textarea{border-radius:14px;padding:.75rem 1rem}
 .field input:focus,.field textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,23,122,.1)}
 .field input[readonly]{background:var(--bg);color:var(--muted)}
@@ -1264,6 +1265,26 @@ const CLIENT_JS = `
       document.body.removeChild(ta);
     }
   };
+
+  // Disable native HTML5 validation globally; use custom red-border instead
+  document.querySelectorAll('form').forEach(function(f){f.setAttribute('novalidate','')});
+  document.addEventListener('submit',function(e){
+    var form=e.target;
+    if(!form||!form.matches||!form.matches('form'))return;
+    var invalid=false,firstBad=null;
+    form.querySelectorAll('[required]').forEach(function(inp){
+      var v=(inp.value||'').trim();
+      if(!v){inp.classList.add('field-invalid');invalid=true;if(!firstBad)firstBad=inp}
+      else inp.classList.remove('field-invalid');
+    });
+    if(invalid){e.preventDefault();e.stopPropagation();if(firstBad)firstBad.focus();}
+  },true);
+  document.addEventListener('input',function(e){
+    var t=e.target;
+    if(t&&t.classList&&t.classList.contains('field-invalid')){
+      if((t.value||'').trim())t.classList.remove('field-invalid');
+    }
+  },true);
 
   window.showSavedToast=function(msg,type){
     var t=document.getElementById('save-toast');

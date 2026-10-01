@@ -160,9 +160,7 @@ export function createWebRouter() {
   });
 
   router.get('/admin/users/new', requireLogin, requireAdmin, (req, res) => {
-    res
-      .set('Content-Type', 'text/html; charset=utf-8')
-      .send(renderUserNewView({ user: res.locals.user, flash: flashFromQuery(req) }));
+    res.redirect('/admin/users');
   });
 
   router.post('/admin/users', requireLogin, requireAdmin, async (req, res) => {
@@ -178,10 +176,7 @@ export function createWebRouter() {
       }).toString();
       res.redirect(`/admin/users/${created.id}/edit?${q}`);
     } catch (e) {
-      res
-        .status(400)
-        .set('Content-Type', 'text/html; charset=utf-8')
-        .send(renderUserNewView({ user: res.locals.user, flash: { type: 'err', text: e.message } }));
+      redirWithFlash(res, '/admin/users', 'err', e.message);
     }
   });
 
