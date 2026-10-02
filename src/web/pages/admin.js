@@ -52,7 +52,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
 
 /* ── Filtros toolbar ─────────────────────────────────────────────────── */
 .filtros{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:stretch}
-.input-search,.select{padding:.65rem 1.15rem;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:.88rem;color:var(--ink);outline:none;background:var(--card);transition:border-color .2s,box-shadow .2s}
+.input-search,.select{padding:.65rem 1.15rem;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:.88rem;color:var(--ink);outline:none;background:var(--card);transition:border-color .2s,box-shadow .2s;box-sizing:border-box;min-height:42px}
 .input-search{flex:1;min-width:220px}
 .input-search:focus,.select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,23,122,.1)}
 .select{appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='%236b6b80'><path fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/></svg>");background-repeat:no-repeat;background-position:right 14px center;background-color:var(--card);padding-right:36px;cursor:pointer;min-width:170px}
@@ -247,7 +247,8 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 
 /* ── Custom select (pill dropdown) ───────────────────────────────────── */
 .cs-wrap{position:relative;display:flex;flex-direction:column}
-.cs-btn{width:100%;padding:.65rem 1.05rem;padding-right:2.5rem;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:.9rem;outline:none;background:var(--card);cursor:pointer;color:var(--ink);text-align:left;display:inline-flex;align-items:center;justify-content:space-between;gap:.6rem;transition:all .15s;min-height:38px}
+.cs-btn{width:100%;padding:.65rem 1.05rem;padding-right:2.5rem;border:1px solid var(--line);border-radius:100px;font-family:inherit;font-size:.9rem;outline:none;background:var(--card);cursor:pointer;color:var(--ink);text-align:left;display:inline-flex;align-items:center;justify-content:space-between;gap:.6rem;transition:all .15s;min-height:38px;box-sizing:border-box}
+#clients-status-cs .cs-btn{min-height:42px;padding:.65rem 1.15rem;padding-right:2.5rem;font-size:.88rem}
 .cs-btn:hover{border-color:#bdbdbd}
 .cs-wrap.open .cs-btn{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,23,122,.1)}
 .cs-value{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -613,6 +614,9 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .wizard-help strong{color:var(--ink)}
 
 .wizard-picker{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wizard-picker-search{display:flex;align-items:center;gap:.5rem;padding:.6rem .9rem;background:var(--card);border-bottom:1px solid var(--line)}
+.wizard-picker-search svg{width:14px;height:14px;color:var(--muted);flex-shrink:0}
+.wizard-picker-search input{flex:1;border:none;outline:none;background:transparent;font:500 .85rem 'Inter',sans-serif;color:var(--ink);min-width:0;padding:.1rem 0}
 .wizard-picker-cols{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:var(--bg);border-bottom:2px solid var(--line);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .wizard-picker-cols .wpc-radio{width:16px;flex-shrink:0}
 .wizard-picker-cols .wpc-name{flex:1}
@@ -769,10 +773,17 @@ const CLIENT_JS = `
       if(!r.ok||data.error){list.innerHTML='<div class="accounts-loading err" style="padding:1.4rem;text-align:center;color:var(--coral);font-size:.85rem">Error: '+(data.error||r.status)+'</div>';return}
       var accounts=data.accounts||[];
       if(!accounts.length){list.innerHTML='<div class="accounts-loading warn" style="padding:1.4rem;text-align:center;color:#8a6d00;font-size:.85rem;background:#fff8e1">'+(data.notice||'No hay cuentas disponibles.')+'</div>';return}
+      // Ordenar alfabéticamente por nombre (case/acento-insensitive)
+      accounts.sort(function(a,b){
+        var na=(a.name||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+        var nb=(b.name||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+        return na.localeCompare(nb,'es');
+      });
       list.innerHTML=accounts.map(function(a,i){
         var st=a.status||'';
         var stCell=st?'<span class="status-pill '+st.toLowerCase()+'">'+(STATUS_LABEL[st]||st)+'</span>':'<span class="muted" style="font-size:.75rem">&#8212;</span>';
-        return '<label class="wizard-picker-row" data-status="'+st+'">'
+        var nameNorm=(a.name||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+        return '<label class="wizard-picker-row" data-status="'+st+'" data-name="'+nameNorm+'">'
           +'<input type="radio" name="wz-'+platform+'" value="'+a.id+'">'
           +'<span class="wp-name">'+(a.name||'sin nombre')+'</span>'
           +'<span class="wp-status">'+stCell+'</span>'
@@ -796,6 +807,21 @@ const CLIENT_JS = `
     }catch(e){list.innerHTML='<div class="accounts-loading err" style="padding:1.4rem;text-align:center;color:var(--coral)">Error: '+e.message+'</div>'}
   }
 
+  window.wzFilterPicker=function(inp){
+    var picker=inp.closest('.wizard-picker');
+    if(!picker)return;
+    var q=(inp.value||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var statusActive=(picker.querySelector('.col-status-opt.selected')||{}).dataset||{};
+    var status=statusActive.value||'';
+    picker.querySelectorAll('.wizard-picker-row').forEach(function(row){
+      var name=row.dataset.name||'';
+      var s=row.dataset.status||'';
+      var okText=!q||name.indexOf(q)>=0;
+      var okStatus=!status||s===status;
+      row.style.display=(okText&&okStatus)?'':'none';
+    });
+  };
+
   window.wzToggleStatusDropdown=function(ev,btn){
     ev.stopPropagation();
     var d=btn.closest('.col-status-dropdown');
@@ -812,14 +838,18 @@ const CLIENT_JS = `
     opt.classList.add('selected');
     d.querySelector('.wz-status-label').textContent=opt.dataset.label||'Estado';
     d.classList.remove('open');d.querySelector('.col-status-menu').hidden=true;
-    var status=opt.dataset.value||'';
-    // Filter rows in the sibling list
+    // Reaplicar filtro combinado (texto + estado) desde el input del buscador
     var picker=d.closest('.wizard-picker');
     if(picker){
-      picker.querySelectorAll('.wizard-picker-row').forEach(function(row){
-        var s=row.dataset.status||'';
-        row.style.display=(!status||s===status)?'':'none';
-      });
+      var inp=picker.querySelector('.wizard-picker-search input');
+      if(inp && window.wzFilterPicker) window.wzFilterPicker(inp);
+      else {
+        var status=opt.dataset.value||'';
+        picker.querySelectorAll('.wizard-picker-row').forEach(function(row){
+          var s=row.dataset.status||'';
+          row.style.display=(!status||s===status)?'':'none';
+        });
+      }
     }
   };
   window.wizardBack=function(){if(wizState.step>1)goToStep(wizState.step-1)};
@@ -2931,6 +2961,10 @@ export function renderClientsView({ user, clients, allowedForUser, flash }) {
 function wizardPickerBlock(platform) {
   return `
   <div class="wizard-picker" data-platform="${platform}">
+    <div class="wizard-picker-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input type="text" placeholder="Buscar cuenta..." autocomplete="off" oninput="wzFilterPicker(this)">
+    </div>
     <div class="wizard-picker-cols">
       <span class="wpc-radio"></span>
       <span class="wpc-name">Nombre de cuenta</span>
