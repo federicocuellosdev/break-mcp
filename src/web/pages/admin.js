@@ -1966,14 +1966,17 @@ export function renderDashboard({ user }) {
                 : 'Consumo cerca del l&#237;mite: '+fmt(p.spend,p.currency)+' de '+fmt(p.budget,p.currency)+' ('+pct+'%).';
               items.push({cls:p.status,slug:c.slug,name:c.name,plat:meta,txt:txt,sortKey:pct,kind:'budget'});
             }
-            // Billing errors (rojo)
+            // Billing issues (bad = rojo, warn = amarillo)
             if(billing&&billing[pk]&&billing[pk].accounts){
               var accIds = pk==='meta' ? (c.meta_ad_accounts||[]) : (c.gads_customers||[]);
-              var badReasons=[];
+              var badReasons=[],warnReasons=[];
               accIds.forEach(function(id){
                 var acc=billing[pk].accounts[id];
-                if(acc && acc.billing==='bad'){
+                if(!acc)return;
+                if(acc.billing==='bad'){
                   badReasons.push(acc.serving_issue||acc.disable_reason||acc.billing_setup||acc.status||'problema de pago');
+                } else if(acc.billing==='warn'){
+                  warnReasons.push(acc.serving_issue||acc.disable_reason||acc.billing_setup||acc.status||'revisar billing');
                 }
               });
               if(badReasons.length){
@@ -1985,6 +1988,16 @@ export function renderDashboard({ user }) {
                   txt:'Problema de pago detectado en la cuenta: '+badReasons[0]+'. Revis&#225; el billing antes de que se corte la pauta.',
                   sortKey:9999,
                   kind:'billing'
+                });
+              } else if(warnReasons.length){
+                items.push({
+                  cls:'warn',
+                  slug:c.slug,
+                  name:c.name,
+                  plat:meta,
+                  txt:'Revis&#225; la cuenta: '+warnReasons[0]+'.',
+                  sortKey:8000,
+                  kind:'billing-warn'
                 });
               }
             }
@@ -2260,9 +2273,7 @@ export function renderInvestment({ user }) {
           if(!ids.length){chip.className='plat-billing-chip hidden';chip.textContent='';chip.hidden=true;return}
           var lbl=billingLabel(platform,ids,summary);
           chip.className='plat-billing-chip '+lbl.flag;
-          var text=FLAG_LABEL[lbl.flag]||'Sin datos';
-          if(lbl.flag==='warn' && lbl.servingIssue) text=text+' · 0 imp.';
-          chip.textContent=text;
+          chip.textContent=FLAG_LABEL[lbl.flag]||'Sin datos';
           if(lbl.detail)chip.title=lbl.detail; else chip.removeAttribute('title');
         });
       }
