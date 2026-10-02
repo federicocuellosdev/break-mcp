@@ -1655,14 +1655,14 @@ export function renderDashboard({ user }) {
           <div class="dash-section-title">Noticias</div>
           <div class="news-feed">
             <div class="news-item">
-              <div class="news-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--pink)"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
+              <div class="news-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--pink)"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
               <div class="news-body">
                 <div class="news-head">
-                  <span class="news-tag">Nuevo</span>
-                  <span class="news-date">30 de septiembre de 2026</span>
+                  <span class="news-tag">Hito</span>
+                  <span class="news-date">1 de octubre de 2026</span>
                 </div>
-                <h3 class="news-title">Nueva secci&#243;n Inversi&#243;n</h3>
-                <p class="news-text">Ahora pod&#233;s ver el gasto real de cada cliente por plataforma y compararlo contra el presupuesto configurado en su ficha. Filtr&#225; por mes, &#250;ltimos 7/30 d&#237;as o rango custom, y buscador por nombre. Las alertas de consumo (warn/over) impactan directo en el dashboard.</p>
+                <h3 class="news-title">Lanzamiento del piloto (MVP)</h3>
+                <p class="news-text">Termin&#233; de acomodar los detalles para lanzar el piloto (MVP).</p>
               </div>
             </div>
             <div class="news-item">
@@ -1670,21 +1670,32 @@ export function renderDashboard({ user }) {
               <div class="news-body">
                 <div class="news-head">
                   <span class="news-tag">Nuevo</span>
+                  <span class="news-date">30 de septiembre de 2026</span>
+                </div>
+                <h3 class="news-title">Integraci&#243;n de Meta Ads</h3>
+                <p class="news-text">Realic&#233; las configuraciones necesarias para incluir Meta Ads.</p>
+              </div>
+            </div>
+            <div class="news-item">
+              <div class="news-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--pink)"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
+              <div class="news-body">
+                <div class="news-head">
+                  <span class="news-tag">Nuevo</span>
                   <span class="news-date">29 de septiembre de 2026</span>
                 </div>
-                <h3 class="news-title">Meta Ads ya est&#225; integrado</h3>
-                <p class="news-text">Pod&#233;s asociar cuentas de Meta Ads a cada cliente desde la ficha, con estado (habilitada / suspendida / cerrada) visible en el pill del ID. Las consultas de campa&#241;as, ad sets, ads e insights ya andan v&#237;a la Marketing API.</p>
+                <h3 class="news-title">Rediseño de Inversi&#243;n y Clientes</h3>
+                <p class="news-text">Cambios en la UX/UI: Secci&#243;n Inversi&#243;n y Clientes.</p>
               </div>
             </div>
             <div class="news-item">
               <div class="news-icon">${GADS_ICON}</div>
               <div class="news-body">
                 <div class="news-head">
-                  <span class="news-tag">Nuevo</span>
+                  <span class="news-tag">Cambio</span>
                   <span class="news-date">25 de septiembre de 2026</span>
                 </div>
-                <h3 class="news-title">Google Ads ya est&#225; integrado</h3>
-                <p class="news-text">Pod&#233;s asociar cuentas de Google Ads a cada cliente desde la ficha del cliente, y darle acceso por cuenta a cada usuario. Las consultas ya andan (campa&#241;as, performance y GAQL read-only).</p>
+                <h3 class="news-title">Integraci&#243;n de Google Ads actualizada</h3>
+                <p class="news-text">Cambi&#233; la integraci&#243;n por cambios en las pol&#237;ticas de gesti&#243;n de token de Google Ads.</p>
               </div>
             </div>
           </div>
