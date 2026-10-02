@@ -284,10 +284,6 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .acc-list-id-pill.canceled,.acc-list-id-pill.closed{background:var(--soft);color:var(--muted)}
 .acc-list-id-pill.billing-bad{background:var(--coral);color:#fff}
 .acc-list-id-pill.billing-warn{background:#fff6d6;color:#8a6d00}
-.acc-list-issue{grid-column:1/-1;display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:10px;font-size:.78rem;line-height:1.35;margin-top:.4rem}
-.acc-list-issue svg{width:14px;height:14px;flex-shrink:0}
-.acc-list-issue.bad{background:var(--coral-soft);color:var(--coral)}
-.acc-list-issue.warn{background:#fff6d6;color:#8a6d00}
 .acc-list-empty{padding:1.2rem 1rem;text-align:center;color:var(--muted);font-size:.8rem;background:var(--soft);flex:1;display:flex;align-items:center;justify-content:center}
 @media (max-width:1100px){.acc-list-container{grid-template-columns:1fr}}
 
@@ -318,7 +314,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .budget-head .budget-save.err{background:var(--coral)}
 .budget-head .budget-save svg{width:16px;height:16px}
 .budget-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.budget-platform-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
+.budget-platform-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
 .budget-platform-toggle svg{width:14px;height:14px}
 .budget-platform-toggle:hover{border-color:var(--ink);color:var(--ink)}
 .budget-card.platform-inactive .budget-platform-toggle{background:var(--soft);color:var(--muted)}
@@ -1060,14 +1056,6 @@ const CLIENT_JS = `
               if(visibleDetail)tooltip+=' · '+visibleDetail;
             }
             pillEl.title=tooltip;
-            // Agregar línea visible con el detalle del issue
-            if(visibleDetail && !row.querySelector('.acc-list-issue')){
-              var issueLine=document.createElement('div');
-              issueLine.className='acc-list-issue '+(b.billing==='bad'?'bad':'warn');
-              issueLine.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span></span>';
-              issueLine.querySelector('span').textContent=visibleDetail;
-              row.appendChild(issueLine);
-            }
           }
         });
       }catch(e){}
@@ -1344,6 +1332,69 @@ const CLIENT_JS = `
   }
   window.paintBudgetBar=paintBudgetBar;
 
+  async function loadClientAlerts(){
+    var box=document.getElementById('client-alerts');
+    if(!box)return;
+    var editor=document.getElementById('client-editor');
+    if(!editor)return;
+    var slug=editor.dataset.clientSlug;
+    var PLAT_META={meta:{label:'Meta Ads',icon:${JSON.stringify(META_ICON)}},gads:{label:'Google Ads',icon:${JSON.stringify(GADS_ICON)}}};
+    function curSym(c){return c==='USD'?'US$':c==='EUR'?'€':'$'}
+    function fmt(n,c){if(n==null)return '—';return curSym(c)+' '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
+    var now=new Date();
+    var from=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+    var to=now.toISOString().slice(0,10);
+    try{
+      var res=await Promise.all([
+        fetch('/admin/api/investment?from='+from+'&to='+to).then(function(r){return r.json()}),
+        fetch('/admin/api/billing-summary').then(function(r){return r.json()}).catch(function(){return null})
+      ]);
+      var d=res[0];var billing=res[1];
+      var c=(d.clients||[]).find(function(x){return x.slug===slug});
+      if(!c){box.innerHTML='<div class="alerts-empty">Sin alertas.</div>';return}
+      var items=[];
+      Object.keys(c.platforms||{}).forEach(function(pk){
+        if(c.platforms_active && c.platforms_active[pk]===false)return;
+        var p=c.platforms[pk];
+        var meta=PLAT_META[pk]||{label:pk,icon:''};
+        if(p.status==='warn'||p.status==='over'){
+          var pct=p.pct==null?0:Math.round(p.pct);
+          var txt=p.status==='over'
+            ? 'Super&#243; el presupuesto del mes: '+fmt(p.spend,p.currency)+' de '+fmt(p.budget,p.currency)+' ('+pct+'%).'
+            : 'Consumo cerca del l&#237;mite: '+fmt(p.spend,p.currency)+' de '+fmt(p.budget,p.currency)+' ('+pct+'%).';
+          items.push({cls:p.status,plat:meta,txt:txt,sortKey:pct,kind:'budget'});
+        }
+        if(billing&&billing[pk]&&billing[pk].accounts){
+          var accIds = pk==='meta' ? (c.meta_ad_accounts||[]) : (c.gads_customers||[]);
+          var badReasons=[],warnReasons=[];
+          accIds.forEach(function(id){
+            var acc=billing[pk].accounts[id];
+            if(!acc)return;
+            if(acc.billing==='bad') badReasons.push(acc.serving_issue||acc.disable_reason||acc.billing_setup||acc.status||'problema de pago');
+            else if(acc.billing==='warn') warnReasons.push(acc.serving_issue||acc.disable_reason||acc.billing_setup||acc.status||'revisar billing');
+          });
+          if(badReasons.length) items.push({cls:'billing',plat:meta,txt:'Problema de pago detectado en la cuenta: '+badReasons[0]+'. Revis&#225; el billing antes de que se corte la pauta.',sortKey:9999,kind:'billing'});
+          else if(warnReasons.length) items.push({cls:'warn',plat:meta,txt:'Revis&#225; la cuenta: '+warnReasons[0]+'.',sortKey:8000,kind:'billing-warn'});
+        }
+      });
+      if(!items.length){box.innerHTML='<div class="alerts-empty">Sin alertas para este cliente.</div>';return}
+      var order={billing:0,over:1,warn:2};
+      items.sort(function(a,b){return (order[a.cls]-order[b.cls]) || b.sortKey-a.sortKey});
+      box.innerHTML='<div class="alerts-list">'+items.map(function(a){
+        var pillText=a.cls==='billing'?'error pago':a.cls==='over'?'excedido':'alerta';
+        return '<div class="alert-item '+a.cls+'">'
+          +'<div class="alert-icon">'+a.plat.icon+'</div>'
+          +'<div class="alert-body"><div class="alert-title">'+a.plat.label+'</div><div class="alert-text">'+a.txt+'</div></div>'
+          +'<span class="alert-pill '+a.cls+'">'+pillText+'</span>'
+          +'</div>';
+      }).join('')+'</div>';
+    }catch(e){box.innerHTML='<div class="alerts-empty">No se pudieron cargar las alertas: '+e.message+'</div>'}
+  }
+  if(document.getElementById('client-alerts')){
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadClientAlerts);
+    else loadClientAlerts();
+  }
+
   window.togglePlatformActive=async function(btn,slug,platform){
     var card=btn.closest('[data-budget-card]');
     if(!card)return;
@@ -1359,6 +1410,7 @@ const CLIENT_JS = `
       card.dataset.platformActive=newActive?'1':'0';
       card.classList.toggle('platform-inactive',!newActive);
       showSavedToast(newActive?'Plataforma activada':'Plataforma pausada');
+      if(typeof loadClientAlerts==='function')loadClientAlerts();
     }catch(e){showSavedToast('Error: '+e.message,'error')}
     btn.disabled=false;
   };
@@ -2858,6 +2910,11 @@ export function renderClientEditView({ user, target, flash }) {
     </div>
 
     <div class="card">
+      <h2>Alertas</h2>
+      <div id="client-alerts"><div class="alerts-empty">Cargando alertas&#8230;</div></div>
+    </div>
+
+    <div class="card">
       <h2>Inversi&#243;n publicitaria</h2>
       <div class="budget-grid">
         ${[
@@ -2873,12 +2930,12 @@ export function renderClientEditView({ user, target, flash }) {
               <div class="budget-head">
                 <div class="budget-icon">${p.icon}</div>
                 <div class="budget-label">${esc(p.label)}</div>
+                <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
                 <button type="button" class="budget-platform-toggle" data-role="toggle-platform" onclick="togglePlatformActive(this,'${esc(t.slug)}','${p.key}')" title="Pausar/activar plataforma" aria-label="Pausar/activar">
                   <svg data-role="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                   <svg data-role="play-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                </button>
-                <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 </button>
               </div>
               <div class="budget-progress">
