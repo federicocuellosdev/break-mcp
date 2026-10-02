@@ -284,6 +284,10 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .acc-list-id-pill.canceled,.acc-list-id-pill.closed{background:var(--soft);color:var(--muted)}
 .acc-list-id-pill.billing-bad{background:var(--coral);color:#fff}
 .acc-list-id-pill.billing-warn{background:#fff6d6;color:#8a6d00}
+.acc-list-issue{grid-column:1/-1;display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:10px;font-size:.78rem;line-height:1.35;margin-top:.4rem}
+.acc-list-issue svg{width:14px;height:14px;flex-shrink:0}
+.acc-list-issue.bad{background:var(--coral-soft);color:var(--coral)}
+.acc-list-issue.warn{background:#fff6d6;color:#8a6d00}
 .acc-list-empty{padding:1.2rem 1rem;text-align:center;color:var(--muted);font-size:.8rem;background:var(--soft);flex:1;display:flex;align-items:center;justify-content:center}
 @media (max-width:1100px){.acc-list-container{grid-template-columns:1fr}}
 
@@ -1036,16 +1040,25 @@ const CLIENT_JS = `
             }
             // Sobreescribir color si billing es bad o warn
             var b=billingMap[String(id)];
+            var visibleDetail=null;
             if(b && b.billing==='bad'){
               pillEl.classList.add('billing-bad');
-              var detail=b.serving_issue||b.disable_reason||b.billing_setup||b.status;
-              if(detail)tooltip+=' · '+detail;
+              visibleDetail=b.serving_issue||b.disable_reason||b.billing_setup||b.status;
+              if(visibleDetail)tooltip+=' · '+visibleDetail;
             } else if(b && b.billing==='warn'){
               pillEl.classList.add('billing-warn');
-              var dw=b.disable_reason||b.billing_setup||b.status;
-              if(dw)tooltip+=' · '+dw;
+              visibleDetail=b.serving_issue||b.disable_reason||b.billing_setup||b.status;
+              if(visibleDetail)tooltip+=' · '+visibleDetail;
             }
             pillEl.title=tooltip;
+            // Agregar línea visible con el detalle del issue
+            if(visibleDetail && !row.querySelector('.acc-list-issue')){
+              var issueLine=document.createElement('div');
+              issueLine.className='acc-list-issue '+(b.billing==='bad'?'bad':'warn');
+              issueLine.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span></span>';
+              issueLine.querySelector('span').textContent=visibleDetail;
+              row.appendChild(issueLine);
+            }
           }
         });
       }catch(e){}
@@ -2230,8 +2243,11 @@ export function renderInvestment({ user }) {
           var statuses=hit.filter(function(h){return h.billing==='bad'}).map(function(h){return h.serving_issue||h.disable_reason||h.billing_setup||h.status});
           detail=statuses[0]||'problema de pago';
         } else if(flag==='warn'){
-          var ws=hit.filter(function(h){return h.billing==='warn'}).map(function(h){return h.disable_reason||h.billing_setup||h.status});
+          var warnHits=hit.filter(function(h){return h.billing==='warn'});
+          var ws=warnHits.map(function(h){return h.serving_issue||h.disable_reason||h.billing_setup||h.status});
           detail=ws[0]||'revisar billing';
+          var servingIssue=warnHits.some(function(h){return !!h.serving_issue});
+          return {flag:flag,detail:detail,servingIssue:servingIssue};
         }
         return {flag:flag,detail:detail};
       }
@@ -2244,7 +2260,9 @@ export function renderInvestment({ user }) {
           if(!ids.length){chip.className='plat-billing-chip hidden';chip.textContent='';chip.hidden=true;return}
           var lbl=billingLabel(platform,ids,summary);
           chip.className='plat-billing-chip '+lbl.flag;
-          chip.textContent=FLAG_LABEL[lbl.flag]||'Sin datos';
+          var text=FLAG_LABEL[lbl.flag]||'Sin datos';
+          if(lbl.flag==='warn' && lbl.servingIssue) text=text+' · 0 imp.';
+          chip.textContent=text;
           if(lbl.detail)chip.title=lbl.detail; else chip.removeAttribute('title');
         });
       }

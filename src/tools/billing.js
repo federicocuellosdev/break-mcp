@@ -91,8 +91,9 @@ async function checkMeta() {
         const row = (j.data || [])[0];
         const imp = Number(row?.impressions || 0);
         if (imp === 0) {
-          a.serving_issue = '0 impresiones en los últimos 7 días (posible pago vencido o cuenta frenada)';
-          if (a.billing === 'ok') a.billing = 'bad';
+          a.serving_issue = '0 impresiones en los últimos 7 días (revisar: pago vencido, segmentación o campañas pausadas)';
+          // No sabemos si es billing o decisión del user; dejamos "revisar" (warn) en lugar de error
+          if (a.billing === 'ok') a.billing = 'warn';
         }
       } catch {}
     }),
@@ -184,9 +185,9 @@ async function checkGads() {
       let billingFlag = 'ok';
       if (c.status === 'SUSPENDED' || c.status === 'CLOSED' || c.status === 'CANCELED') billingFlag = 'bad';
       else if (billingStatus === 'NONE' || billingStatus === 'CANCELLED') billingFlag = 'bad';
-      else if (servingIssue) billingFlag = 'bad';
       else if (billingStatus === 'PENDING' || billingStatus === 'APPROVED_HELD') billingFlag = 'warn';
       else if (billingStatus === 'ERROR') billingFlag = 'warn';
+      else if (servingIssue) billingFlag = 'warn';
 
       return {
         id: cid,
