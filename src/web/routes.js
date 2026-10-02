@@ -385,6 +385,18 @@ export function createWebRouter() {
       );
   });
 
+  router.get('/admin/api/clients/check', requireLogin, requireAdmin, (req, res) => {
+    const raw = String(req.query.slug || '').toLowerCase().trim();
+    const slug = raw.replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!slug) return res.json({ slug, exists: false, valid: false, reason: 'slug vacío' });
+    try {
+      const existing = getClient(slug);
+      return res.json({ slug, exists: true, valid: true, name: existing.name });
+    } catch {
+      return res.json({ slug, exists: false, valid: true });
+    }
+  });
+
   router.post('/admin/clients', requireLogin, requireAdmin, (req, res) => {
     const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
     const { slug, name, meta_ad_account_id, gads_customer_id, ga4_property_id } = req.body || {};

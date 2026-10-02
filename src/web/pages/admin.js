@@ -861,9 +861,32 @@ const CLIENT_JS = `
   };
   window.wizardNext=async function(){
     if(wizState.step===1){
-      var v=document.getElementById('wz-name').value.trim();
-      if(!v){showSavedToast('Ingres&#225; un nombre','error');return}
+      var nameInp=document.getElementById('wz-name');
+      var v=nameInp.value.trim();
+      if(!v){nameInp.classList.add('field-invalid');showSavedToast('Ingres&#225; un nombre','error');return}
+      var slug=v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'');
+      if(!slug){nameInp.classList.add('field-invalid');showSavedToast('Nombre inv&#225;lido para slug','error');return}
+      // Verificar disponibilidad del slug antes de avanzar
+      var btn=document.getElementById('wz-next');
+      btn.disabled=true;btn.textContent='Verificando...';
+      try{
+        var r=await fetch('/admin/api/clients/check?slug='+encodeURIComponent(slug),{headers:{Accept:'application/json'}});
+        var d=await r.json();
+        if(d && d.exists){
+          nameInp.classList.add('field-invalid');
+          showSavedToast('Ya existe un cliente con el slug "'+d.slug+'"'+(d.name?' ('+d.name+')':''),'error');
+          btn.disabled=false;btn.textContent='Siguiente';
+          return;
+        }
+      }catch(e){
+        showSavedToast('No se pudo verificar el slug: '+e.message,'error');
+        btn.disabled=false;btn.textContent='Siguiente';
+        return;
+      }
+      nameInp.classList.remove('field-invalid');
+      btn.disabled=false;
       wizState.name=v;
+      wizState.slug=slug;
       goToStep(2);return;
     }
     if(wizState.step<4){goToStep(wizState.step+1);return}
@@ -873,7 +896,7 @@ const CLIENT_JS = `
     var btn=document.getElementById('wz-next');
     btn.disabled=true;btn.textContent='Creando...';
     var body=new URLSearchParams();
-    body.append('slug',wizState.name.toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,''));
+    body.append('slug',wizState.slug||wizState.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,''));
     body.append('name',wizState.name);
     if(wizState.gads)body.append('gads_customer_id',wizState.gads);
     if(wizState.meta)body.append('meta_ad_account_id',wizState.meta);
