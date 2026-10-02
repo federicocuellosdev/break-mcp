@@ -728,7 +728,8 @@ const CLIENT_JS = `
     document.querySelectorAll('.wizard-step').forEach(function(s){s.classList.toggle('active',s.dataset.step==='1')});
     document.querySelectorAll('.wp-step').forEach(function(s){s.classList.remove('active','done');if(s.dataset.idx==='1')s.classList.add('active')});
     document.getElementById('wz-name').value='';
-    document.querySelectorAll('.wizard-picker-list').forEach(function(l){l.innerHTML=''});
+    document.querySelectorAll('.wizard-picker-list').forEach(function(l){l.innerHTML='';delete l.dataset.loaded});
+    document.querySelectorAll('.wizard-picker-search input').forEach(function(i){i.value=''});
     updateWizardButtons();
     openModal('wizard-modal');
     setTimeout(function(){document.getElementById('wz-name').focus()},100);
