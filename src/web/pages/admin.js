@@ -200,6 +200,10 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .btn-save-icon:hover{filter:brightness(1.1)}
 .accounts-divider{height:1px;background:var(--line);margin:0}
 .accounts-modal-note{color:var(--muted);font-size:.85rem;line-height:1.5;margin:0}
+.cap-search{display:flex;align-items:center;gap:.5rem;border:1px solid var(--line);border-radius:100px;padding:.55rem 1rem;background:var(--card);margin-top:.9rem;transition:border-color .15s}
+.cap-search:focus-within{border-color:var(--pink)}
+.cap-search svg{width:14px;height:14px;color:var(--muted);flex-shrink:0}
+.cap-search input{flex:1;border:none;outline:none;background:transparent;font:500 .85rem 'Inter',sans-serif;color:var(--ink);min-width:0;padding:0}
 .accounts-modal-columns{display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;background:var(--bg);border-bottom:2px solid var(--line);border-radius:10px 10px 0 0;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;margin-top:.4rem}
 .accounts-modal-columns input[type=checkbox]{width:18px;height:18px;accent-color:var(--pink);cursor:pointer;flex-shrink:0;margin:0}
 .accounts-modal-columns .col-name{flex:1}
@@ -858,7 +862,7 @@ const CLIENT_JS = `
     opt.classList.add('selected');
     d.querySelector('.wz-status-label').textContent=opt.dataset.label||'Estado';
     d.classList.remove('open');d.querySelector('.col-status-menu').hidden=true;
-    // Reaplicar filtro combinado (texto + estado) desde el input del buscador
+    // Reaplicar filtro combinado (texto + estado) según el contexto
     var picker=d.closest('.wizard-picker');
     if(picker){
       var inp=picker.querySelector('.wizard-picker-search input');
@@ -870,6 +874,12 @@ const CLIENT_JS = `
           row.style.display=(!status||s===status)?'':'none';
         });
       }
+    }
+    // Modal "Agregar cuenta" del cliente (comparte el dropdown)
+    var capModal=d.closest('#client-acc-modal');
+    if(capModal){
+      capFilters.status=opt.dataset.value||'';
+      capApplyFilters();
     }
   };
   window.wizardBack=function(){if(wizState.step>1)goToStep(wizState.step-1)};
@@ -1055,6 +1065,9 @@ const CLIENT_JS = `
     if(!container){showSavedToast('Contexto no v&#225;lido','error');return}
     capState.platform=platform;
     capState.selected=new Set();
+    capFilters.search='';capFilters.status='';
+    var searchInp=document.getElementById('cap-search');
+    if(searchInp)searchInp.value='';
     // Collect existing account IDs for this platform (to prevent duplicates)
     var block=document.querySelector('.acc-list-block[data-platform="'+platform+'"]');
     capState.existing=new Set([].map.call(block.querySelectorAll('.acc-list-row'),function(r){return r.dataset.accountId}));
@@ -1092,6 +1105,21 @@ const CLIENT_JS = `
       }).join('');
     }catch(e){list.innerHTML='<div class="accounts-loading err">Error: '+e.message+'</div>'}
   };
+
+  var capFilters={search:'',status:''};
+  function capApplyFilters(){
+    var q=capFilters.search.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var st=capFilters.status;
+    document.querySelectorAll('#cap-list .account-row').forEach(function(row){
+      var name=(row.querySelector('.a-name')?.textContent||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      var id=(row.querySelector('.a-id')?.textContent||'').toLowerCase();
+      var rowStatus=row.dataset.status||'';
+      var okText=!q || name.indexOf(q)>=0 || id.indexOf(q)>=0;
+      var okStatus=!st || rowStatus===st;
+      row.style.display=(okText&&okStatus)?'':'none';
+    });
+  }
+  window.capFilterSearch=function(v){capFilters.search=(v||'').trim();capApplyFilters()};
 
   window.capOnCheck=function(cb){
     if(cb.checked)capState.selected.add(cb.value);else capState.selected.delete(cb.value);
@@ -2847,6 +2875,10 @@ function clientAccountPickerModal() {
       </div>
       <div class="accounts-divider"></div>
       <p class="accounts-modal-note">Se&#241;al&#225; qu&#233; cuentas quer&#233;s asociar al cliente. Pod&#233;s elegir m&#225;s de una.</p>
+      <div class="cap-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="text" id="cap-search" placeholder="Buscar cuenta por nombre o ID..." autocomplete="off" oninput="capFilterSearch(this.value)">
+      </div>
     </div>
     <div class="accounts-modal-columns">
       <input type="checkbox" id="cap-select-all" onchange="capToggleAll(this.checked)" title="Seleccionar todas">
