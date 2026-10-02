@@ -134,11 +134,42 @@ async function checkGads() {
         billingStatus = 'ERROR';
         billingNote = e.message;
       }
+
+      // Detectar "pago vencido": Google Ads sigue mostrando el customer como ENABLED
+      // y el billing_setup como APPROVED aunque haya deuda. La única señal visible via
+      // API es que las campañas marcadas ENABLED no están sirviendo (serving_status
+      // SUSPENDED, ENDED o NONE), lo cual se puede inspeccionar en campaign.
+      let servingIssue = null;
+      try {
+        const camp = await runSearch({
+          customerId: cid,
+          query: `
+            SELECT campaign.id, campaign.status, campaign.serving_status
+            FROM campaign
+            WHERE campaign.status = 'ENABLED'
+            LIMIT 100
+          `,
+        });
+        const campRows = (camp.results || []).map((r) => r.campaign).filter(Boolean);
+        if (campRows.length) {
+          const notServing = campRows.filter((cp) => {
+            const ss = cp.servingStatus || cp.serving_status;
+            return ss && ss !== 'SERVING';
+          });
+          // Si la mayoría (>=80%) de campañas enabled no están sirviendo, es señal de billing issue
+          if (notServing.length && notServing.length / campRows.length >= 0.8) {
+            servingIssue = `${notServing.length}/${campRows.length} campañas no están sirviendo (posible pago vencido)`;
+          }
+        }
+      } catch {}
+
       let billingFlag = 'ok';
       if (c.status === 'SUSPENDED' || c.status === 'CLOSED' || c.status === 'CANCELED') billingFlag = 'bad';
       else if (billingStatus === 'NONE' || billingStatus === 'CANCELLED') billingFlag = 'bad';
+      else if (servingIssue) billingFlag = 'bad';
       else if (billingStatus === 'PENDING' || billingStatus === 'APPROVED_HELD') billingFlag = 'warn';
       else if (billingStatus === 'ERROR') billingFlag = 'warn';
+
       return {
         id: cid,
         name: c.descriptiveName || c.descriptive_name || '',
@@ -147,6 +178,7 @@ async function checkGads() {
         billing: billingFlag,
         billing_setup_status: billingStatus,
         billing_account: billingNote,
+        serving_issue: servingIssue,
       };
     }),
   );
@@ -174,6 +206,7 @@ export async function checkBillingSummary() {
       billing: a.billing,
       billing_setup: a.billing_setup_status,
       funding: a.billing_account,
+      serving_issue: a.serving_issue || null,
     };
   }
   return {

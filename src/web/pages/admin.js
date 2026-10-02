@@ -1910,7 +1910,7 @@ export function renderDashboard({ user }) {
               accIds.forEach(function(id){
                 var acc=billing[pk].accounts[id];
                 if(acc && acc.billing==='bad'){
-                  badReasons.push(acc.disable_reason||acc.billing_setup||acc.status||'problema de pago');
+                  badReasons.push(acc.serving_issue||acc.disable_reason||acc.billing_setup||acc.status||'problema de pago');
                 }
               });
               if(badReasons.length){
@@ -2177,7 +2177,7 @@ export function renderInvestment({ user }) {
           var funding=hit.map(function(h){return h.funding}).filter(Boolean)[0];
           detail=funding?shortFunding(funding):'';
         } else if(flag==='bad'){
-          var statuses=hit.filter(function(h){return h.billing==='bad'}).map(function(h){return h.disable_reason||h.billing_setup||h.status});
+          var statuses=hit.filter(function(h){return h.billing==='bad'}).map(function(h){return h.serving_issue||h.disable_reason||h.billing_setup||h.status});
           detail=statuses[0]||'problema de pago';
         } else if(flag==='warn'){
           var ws=hit.filter(function(h){return h.billing==='warn'}).map(function(h){return h.disable_reason||h.billing_setup||h.status});
