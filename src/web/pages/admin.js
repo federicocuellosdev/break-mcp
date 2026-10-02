@@ -306,7 +306,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .budget-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
 .budget-card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.75rem}
 .budget-head{display:flex;align-items:center;gap:.6rem;min-height:34px}
-.budget-head .budget-save{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:var(--ink);color:#fff;border:none;border-radius:50%;cursor:pointer;transition:opacity .15s,background .15s,visibility 0s;padding:0;visibility:hidden}
+.budget-head .budget-save{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:var(--ink);color:#fff;border:none;border-radius:50%;cursor:pointer;transition:opacity .15s,background .15s,visibility 0s;padding:0;visibility:hidden}
 .budget-card.dirty .budget-head .budget-save,.budget-head .budget-save.saved,.budget-head .budget-save.err{visibility:visible}
 .budget-head .budget-save:hover{opacity:.85}
 .budget-head .budget-save:disabled{opacity:.5;cursor:default}
@@ -314,7 +314,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .budget-head .budget-save.err{background:var(--coral)}
 .budget-head .budget-save svg{width:16px;height:16px}
 .budget-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.budget-platform-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
+.budget-platform-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
 .budget-platform-toggle svg{width:14px;height:14px}
 .budget-platform-toggle:hover{border-color:var(--ink);color:var(--ink)}
 .budget-card.platform-inactive .budget-platform-toggle{background:var(--soft);color:var(--muted)}
@@ -2930,12 +2930,12 @@ export function renderClientEditView({ user, target, flash }) {
               <div class="budget-head">
                 <div class="budget-icon">${p.icon}</div>
                 <div class="budget-label">${esc(p.label)}</div>
-                <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                </button>
                 <button type="button" class="budget-platform-toggle" data-role="toggle-platform" onclick="togglePlatformActive(this,'${esc(t.slug)}','${p.key}')" title="Pausar/activar plataforma" aria-label="Pausar/activar">
                   <svg data-role="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                   <svg data-role="play-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                </button>
+                <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 </button>
               </div>
               <div class="budget-progress">
