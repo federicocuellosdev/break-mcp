@@ -73,13 +73,31 @@ async function checkMeta() {
       funding_source: funding,
     };
   };
-  return {
-    configured: true,
-    accounts: [
-      ...(owned.data || []).map(map('owned')),
-      ...(client.data || []).map(map('client')),
-    ],
-  };
+  const baseAccounts = [
+    ...(owned.data || []).map(map('owned')),
+    ...(client.data || []).map(map('client')),
+  ];
+  // Chequear impresiones de los últimos 2 días por cada cuenta ACTIVE. Si hay 0
+  // impresiones es una señal fuerte de bloqueo (pago vencido, review, etc.).
+  const activeAccounts = baseAccounts.filter((a) => a.status === 'ACTIVE');
+  await Promise.all(
+    activeAccounts.map(async (a) => {
+      try {
+        const j = await metaGraph(`/${a.id}/insights`, {
+          fields: 'impressions',
+          date_preset: 'last_7d',
+          level: 'account',
+        });
+        const row = (j.data || [])[0];
+        const imp = Number(row?.impressions || 0);
+        if (imp === 0) {
+          a.serving_issue = '0 impresiones en los últimos 7 días (posible pago vencido o cuenta frenada)';
+          if (a.billing === 'ok') a.billing = 'bad';
+        }
+      } catch {}
+    }),
+  );
+  return { configured: true, accounts: baseAccounts };
 }
 
 async function checkGads() {
@@ -135,30 +153,30 @@ async function checkGads() {
         billingNote = e.message;
       }
 
-      // Detectar "pago vencido": Google Ads sigue mostrando el customer como ENABLED
-      // y el billing_setup como APPROVED aunque haya deuda. La única señal visible via
-      // API es que las campañas marcadas ENABLED no están sirviendo (serving_status
-      // SUSPENDED, ENDED o NONE), lo cual se puede inspeccionar en campaign.
+      // Detectar "pago vencido" u otros bloqueos: si la cuenta tiene campañas
+      // ENABLED pero 0 impresiones en los últimos 2 días → algo la detuvo
+      // (billing, review, etc.). Es más confiable que mirar customer.status.
       let servingIssue = null;
       try {
-        const camp = await runSearch({
+        const r = await runSearch({
           customerId: cid,
           query: `
-            SELECT campaign.id, campaign.status, campaign.serving_status
+            SELECT campaign.id, metrics.impressions
             FROM campaign
             WHERE campaign.status = 'ENABLED'
-            LIMIT 100
+              AND segments.date DURING LAST_7_DAYS
           `,
         });
-        const campRows = (camp.results || []).map((r) => r.campaign).filter(Boolean);
-        if (campRows.length) {
-          const notServing = campRows.filter((cp) => {
-            const ss = cp.servingStatus || cp.serving_status;
-            return ss && ss !== 'SERVING';
-          });
-          // Si la mayoría (>=80%) de campañas enabled no están sirviendo, es señal de billing issue
-          if (notServing.length && notServing.length / campRows.length >= 0.8) {
-            servingIssue = `${notServing.length}/${campRows.length} campañas no están sirviendo (posible pago vencido)`;
+        const rows = r.results || [];
+        if (rows.length) {
+          // Agrupar por campaign y sumar impressions globalmente
+          const totalImp = rows.reduce(
+            (acc, row) => acc + Number(row.metrics?.impressions || 0),
+            0,
+          );
+          if (totalImp === 0) {
+            const enabledCount = new Set(rows.map((x) => x.campaign?.id)).size;
+            servingIssue = `${enabledCount} campaña${enabledCount === 1 ? '' : 's'} activa${enabledCount === 1 ? '' : 's'} con 0 impresiones en los últimos 7 días`;
           }
         }
       } catch {}
@@ -197,6 +215,7 @@ export async function checkBillingSummary() {
       billing: a.billing,
       funding: a.funding_source,
       disable_reason: a.disable_reason,
+      serving_issue: a.serving_issue || null,
     };
   }
   const gadsMap = {};
