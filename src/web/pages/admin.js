@@ -1659,7 +1659,7 @@ export function renderDashboard({ user }) {
               <div class="news-body">
                 <div class="news-head">
                   <span class="news-tag">Nuevo</span>
-                  <span class="news-date">28 de septiembre de 2026</span>
+                  <span class="news-date">30 de septiembre de 2026</span>
                 </div>
                 <h3 class="news-title">Nueva secci&#243;n Inversi&#243;n</h3>
                 <p class="news-text">Ahora pod&#233;s ver el gasto real de cada cliente por plataforma y compararlo contra el presupuesto configurado en su ficha. Filtr&#225; por mes, &#250;ltimos 7/30 d&#237;as o rango custom, y buscador por nombre. Las alertas de consumo (warn/over) impactan directo en el dashboard.</p>
@@ -1670,7 +1670,7 @@ export function renderDashboard({ user }) {
               <div class="news-body">
                 <div class="news-head">
                   <span class="news-tag">Nuevo</span>
-                  <span class="news-date">25 de septiembre de 2026</span>
+                  <span class="news-date">29 de septiembre de 2026</span>
                 </div>
                 <h3 class="news-title">Meta Ads ya est&#225; integrado</h3>
                 <p class="news-text">Pod&#233;s asociar cuentas de Meta Ads a cada cliente desde la ficha, con estado (habilitada / suspendida / cerrada) visible en el pill del ID. Las consultas de campa&#241;as, ad sets, ads e insights ya andan v&#237;a la Marketing API.</p>
