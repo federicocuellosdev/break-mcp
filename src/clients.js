@@ -69,8 +69,20 @@ export function listClients() {
       ga4_properties: ga4Ids,
       sheets: c.sheets || {},
       budgets: c.budgets || {},
+      platforms_active: c.platforms_active || {},
     };
   });
+}
+
+export function updateClientPlatformActive(slug, platform, active) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  if (!['meta', 'gads', 'ga4'].includes(platform)) throw new Error(`platform inválida: ${platform}`);
+  if (!c.platforms_active) c.platforms_active = {};
+  c.platforms_active[platform] = !!active;
+  persist(db);
+  return c.platforms_active;
 }
 
 const PLATFORM_FIELDS = {

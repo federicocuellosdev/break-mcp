@@ -318,6 +318,13 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .budget-head .budget-save.err{background:var(--coral)}
 .budget-head .budget-save svg{width:16px;height:16px}
 .budget-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.budget-platform-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
+.budget-platform-toggle svg{width:14px;height:14px}
+.budget-platform-toggle:hover{border-color:var(--ink);color:var(--ink)}
+.budget-card.platform-inactive .budget-platform-toggle{background:var(--soft);color:var(--muted)}
+.budget-card.platform-inactive .budget-platform-toggle [data-role=pause-icon]{display:none}
+.budget-card.platform-inactive .budget-platform-toggle [data-role=play-icon]{display:inline !important}
+.budget-card.platform-inactive .budget-icon,.budget-card.platform-inactive .budget-label,.budget-card.platform-inactive .budget-progress,.budget-card.platform-inactive .budget-editor{opacity:.4;filter:grayscale(.6)}
 .budget-icon img,.budget-icon svg{width:100%;height:100%;object-fit:contain}
 .budget-label{font:600 .9rem 'Inter',sans-serif;color:var(--ink)}
 .budget-input-wrap{position:relative;display:flex;align-items:center;border:1px solid var(--line);border-radius:100px;padding:.35rem .55rem .35rem 1rem;transition:border-color .15s}
@@ -460,7 +467,9 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .plat-billing-chip.ok{background:#e6f6ee;color:var(--green)}
 .plat-billing-chip.warn{background:#fff6d6;color:#8a6d00}
 .plat-billing-chip.bad{background:var(--coral-soft);color:var(--coral)}
-.plat-billing-chip.loading,.plat-billing-chip.unknown,.plat-billing-chip.missing{background:var(--soft);color:var(--muted)}
+.plat-billing-chip.loading,.plat-billing-chip.unknown,.plat-billing-chip.missing,.plat-billing-chip.inactive{background:var(--soft);color:var(--muted)}
+.inv-block-row.inv-platform-inactive{opacity:.55;filter:grayscale(.5)}
+.inv-block-row.inv-platform-inactive .inv-bar-fill{background:var(--muted) !important}
 .plat-billing-chip.hidden{display:none}
 .inv-block-cell .inv-cell-platform .ic{width:20px;height:20px;display:inline-flex;flex-shrink:0}
 .inv-block-cell .inv-cell-platform .ic img,.inv-block-cell .inv-cell-platform .ic svg{width:100%;height:100%;object-fit:contain}
@@ -1335,6 +1344,25 @@ const CLIENT_JS = `
   }
   window.paintBudgetBar=paintBudgetBar;
 
+  window.togglePlatformActive=async function(btn,slug,platform){
+    var card=btn.closest('[data-budget-card]');
+    if(!card)return;
+    var newActive=card.dataset.platformActive==='0';
+    btn.disabled=true;
+    try{
+      var r=await fetch('/admin/clients/'+encodeURIComponent(slug)+'/platform-active',{
+        method:'POST',
+        headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({platform:platform,active:newActive})
+      });
+      if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||r.status)}
+      card.dataset.platformActive=newActive?'1':'0';
+      card.classList.toggle('platform-inactive',!newActive);
+      showSavedToast(newActive?'Plataforma activada':'Plataforma pausada');
+    }catch(e){showSavedToast('Error: '+e.message,'error')}
+    btn.disabled=false;
+  };
+
   (function loadBudgetSpend(){
     var editor=document.getElementById('client-editor');
     if(!editor)return;
@@ -1957,6 +1985,8 @@ export function renderDashboard({ user }) {
         var items=[];
         (d.clients||[]).forEach(function(c){
           Object.keys(c.platforms).forEach(function(pk){
+            // Si la plataforma está pausada manualmente para este cliente, skip todas las alertas
+            if(c.platforms_active && c.platforms_active[pk]===false) return;
             var p=c.platforms[pk];
             var meta=PLAT[pk]||{label:pk,icon:''};
             if(p.status==='warn'||p.status==='over'){
@@ -2210,11 +2240,13 @@ export function renderInvestment({ user }) {
             var accIds = pk==='meta' ? (c.meta_ad_accounts||(c.meta_ad_account_id?[c.meta_ad_account_id]:[]))
                        : pk==='gads' ? (c.gads_customers||(c.gads_customer_id?[c.gads_customer_id]:[]))
                        : [];
-            var platAttrs = ' data-platform="'+pk+'" data-account-ids="'+accIds.join(',')+'"';
-            return '<div class="inv-block-row"'+platAttrs+'>'
+            var platformActive = !(c.platforms_active && c.platforms_active[pk]===false);
+            var inactiveCls = platformActive ? '' : ' inv-platform-inactive';
+            var platAttrs = ' data-platform="'+pk+'" data-account-ids="'+accIds.join(',')+'" data-platform-active="'+(platformActive?'1':'0')+'"';
+            return '<div class="inv-block-row'+inactiveCls+'"'+platAttrs+'>'
               +'<div class="inv-block-cell">'+(idx===0?clientCell:'')+'</div>'
               +'<div class="inv-block-cell"><span class="inv-cell-platform"><span class="ic">'+m.icon+'</span>'+m.label+'</span></div>'
-              +'<div class="inv-block-cell"><span class="plat-billing-chip loading" data-role="billing-chip">&#8230;</span></div>'
+              +'<div class="inv-block-cell">'+(platformActive?'<span class="plat-billing-chip loading" data-role="billing-chip">&#8230;</span>':'<span class="plat-billing-chip inactive">Inactivo</span>')+'</div>'
               +'<div class="inv-block-cell right inv-num">'+spendText+'</div>'
               +'<div class="inv-block-cell right inv-num muted">'+budgetText+'</div>'
               +'<div class="inv-block-cell"><div class="inv-progress-cell"><div class="inv-bar-wrap"><div class="inv-bar-fill '+barCls+'" style="width:'+pctNum+'%"></div></div><span class="inv-pct '+pctLabel+'">'+pctText+'</span></div></div>'
@@ -2266,6 +2298,7 @@ export function renderInvestment({ user }) {
       }
       function paintChips(summary){
         list.querySelectorAll('.inv-block-row[data-platform]').forEach(function(row){
+          if(row.dataset.platformActive==='0')return; // Inactiva: ya tiene chip "Inactivo"
           var chip=row.querySelector('[data-role=billing-chip]');
           if(!chip)return;
           var platform=row.dataset.platform;
@@ -2836,10 +2869,14 @@ export function renderClientEditView({ user, target, flash }) {
             const entry = raw == null ? { amount: '', alert_pct: 80 } : (typeof raw === 'number' ? { amount: raw, alert_pct: 80 } : { amount: raw.amount ?? '', alert_pct: raw.alert_pct ?? 80 });
             const amountDisplay = entry.amount === '' || entry.amount == null ? '' : Number(entry.amount).toLocaleString('es-AR');
             return `
-            <div class="budget-card" data-budget-card data-platform="${p.key}" data-limit="${esc(String(entry.amount ?? ''))}">
+            <div class="budget-card${t.platforms_active && t.platforms_active[p.key] === false ? ' platform-inactive' : ''}" data-budget-card data-platform="${p.key}" data-limit="${esc(String(entry.amount ?? ''))}" data-platform-active="${t.platforms_active && t.platforms_active[p.key] === false ? '0' : '1'}">
               <div class="budget-head">
                 <div class="budget-icon">${p.icon}</div>
                 <div class="budget-label">${esc(p.label)}</div>
+                <button type="button" class="budget-platform-toggle" data-role="toggle-platform" onclick="togglePlatformActive(this,'${esc(t.slug)}','${p.key}')" title="Pausar/activar plataforma" aria-label="Pausar/activar">
+                  <svg data-role="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  <svg data-role="play-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                </button>
                 <button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 </button>

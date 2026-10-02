@@ -21,6 +21,7 @@ import {
   updateClientRecord,
   updateClientAccounts,
   updateClientBudget,
+  updateClientPlatformActive,
   deleteClientRecord,
 } from '../clients.js';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
@@ -459,6 +460,16 @@ export function createWebRouter() {
     try {
       const saved = updateClientAccounts(req.params.slug, platform, ids || []);
       res.json({ ok: true, accounts: saved });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/clients/:slug/platform-active', requireLogin, requireAdmin, express.json(), (req, res) => {
+    const { platform, active } = req.body || {};
+    try {
+      const saved = updateClientPlatformActive(req.params.slug, platform, active);
+      res.json({ ok: true, platforms_active: saved });
     } catch (e) {
       res.status(400).json({ error: e.message });
     }

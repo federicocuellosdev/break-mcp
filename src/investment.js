@@ -136,6 +136,7 @@ export async function computeInvestment({ clients, from, to }) {
         name: c.name,
         meta_ad_accounts: metaAccs,
         gads_customers: gadsAccs,
+        platforms_active: c.platforms_active || {},
         platforms,
       };
     }),
