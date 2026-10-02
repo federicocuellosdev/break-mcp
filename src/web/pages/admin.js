@@ -609,6 +609,17 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 @keyframes wizFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .wizard-input-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.55rem}
 .wizard-input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:100px;color:var(--ink);font:400 1rem 'Inter',sans-serif;padding:.75rem 1.15rem;outline:none;transition:border-color .15s,box-shadow .15s}
+.wz-slug-row{display:flex;align-items:center;border:1px solid var(--line);border-radius:100px;padding:.1rem .1rem .1rem 1rem;background:var(--card);transition:border-color .15s,box-shadow .15s}
+.wz-slug-row:focus-within{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,23,122,.1)}
+.wz-slug-row.err{border-color:var(--coral);box-shadow:0 0 0 3px rgba(200,28,64,.1)}
+.wz-slug-row.ok{border-color:var(--green)}
+.wz-slug-prefix{color:var(--muted);font-size:.85rem;font-family:'SF Mono',Menlo,Consolas,monospace;white-space:nowrap;user-select:none}
+.wz-slug-input{border:none !important;box-shadow:none !important;padding:.65rem .9rem !important;flex:1;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.9rem;min-width:0;background:transparent !important}
+.wz-slug-input:focus{border:none !important;box-shadow:none !important}
+.wz-slug-status{font-size:.78rem;margin-top:.5rem;min-height:1.1rem;padding-left:1.1rem}
+.wz-slug-status.err{color:var(--coral);font-weight:600}
+.wz-slug-status.ok{color:var(--green);font-weight:600}
+.wz-slug-status.loading{color:var(--muted)}
 .wizard-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,23,122,.1)}
 .wizard-help{color:var(--muted);font-size:.88rem;margin:0 0 1rem;line-height:1.55}
 .wizard-help strong{color:var(--ink)}
@@ -728,6 +739,12 @@ const CLIENT_JS = `
     document.querySelectorAll('.wizard-step').forEach(function(s){s.classList.toggle('active',s.dataset.step==='1')});
     document.querySelectorAll('.wp-step').forEach(function(s){s.classList.remove('active','done');if(s.dataset.idx==='1')s.classList.add('active')});
     document.getElementById('wz-name').value='';
+    var slugInp=document.getElementById('wz-slug');
+    if(slugInp)slugInp.value='';
+    wzSlugState.userEdited=false;
+    wzSlugState.available=null;
+    wzSlugState.token++;
+    updateSlugStatus('','');
     document.querySelectorAll('.wizard-picker-list').forEach(function(l){l.innerHTML='';delete l.dataset.loaded});
     document.querySelectorAll('.wizard-picker-search input').forEach(function(i){i.value=''});
     updateWizardButtons();
@@ -859,33 +876,88 @@ const CLIENT_JS = `
     if(m[wizState.step])wizState[m[wizState.step]]='';
     if(wizState.step===4)finishWizard();else goToStep(wizState.step+1);
   };
+  function slugify(s){
+    return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  var wzSlugState={userEdited:false,token:0,available:null};
+  function updateSlugStatus(cls,msg){
+    var el=document.getElementById('wz-slug-status');
+    var row=document.querySelector('.wz-slug-row');
+    if(!el||!row)return;
+    el.className='wz-slug-status '+cls;
+    el.textContent=msg||'';
+    row.classList.remove('err','ok');
+    if(cls==='err')row.classList.add('err');
+    else if(cls==='ok')row.classList.add('ok');
+  }
+  async function checkSlugAvailability(slug){
+    if(!slug){updateSlugStatus('err','Elegí un slug válido');wzSlugState.available=false;return}
+    var my=++wzSlugState.token;
+    updateSlugStatus('loading','Verificando disponibilidad…');
+    wzSlugState.available=null;
+    try{
+      var r=await fetch('/admin/api/clients/check?slug='+encodeURIComponent(slug),{headers:{Accept:'application/json'}});
+      var d=await r.json();
+      if(my!==wzSlugState.token)return;
+      if(d && d.exists){
+        updateSlugStatus('err','Ya existe un cliente con slug "'+d.slug+'"'+(d.name?' ('+d.name+')':''));
+        wzSlugState.available=false;
+      }else{
+        updateSlugStatus('ok','Slug disponible: mcp.breakmkt.com.ar/'+slug);
+        wzSlugState.available=true;
+      }
+    }catch(e){
+      if(my!==wzSlugState.token)return;
+      updateSlugStatus('err','No se pudo verificar: '+e.message);
+      wzSlugState.available=false;
+    }
+  }
+  var wzSlugDebounce=null;
+  function scheduleSlugCheck(){
+    clearTimeout(wzSlugDebounce);
+    wzSlugDebounce=setTimeout(function(){
+      var slug=document.getElementById('wz-slug').value.trim();
+      checkSlugAvailability(slug);
+    },350);
+  }
+  document.addEventListener('input',function(e){
+    if(e.target.id==='wz-name'){
+      if(!wzSlugState.userEdited){
+        var s=slugify(e.target.value);
+        var slugInp=document.getElementById('wz-slug');
+        if(slugInp){slugInp.value=s;scheduleSlugCheck()}
+      }
+    }
+    if(e.target.id==='wz-slug'){
+      wzSlugState.userEdited=true;
+      // Normalizar al vuelo pero preservar guiones del usuario
+      var raw=e.target.value;
+      var norm=slugify(raw);
+      if(norm!==raw)e.target.value=norm;
+      scheduleSlugCheck();
+    }
+  });
+
   window.wizardNext=async function(){
     if(wizState.step===1){
       var nameInp=document.getElementById('wz-name');
-      var v=nameInp.value.trim();
-      if(!v){nameInp.classList.add('field-invalid');showSavedToast('Ingres&#225; un nombre','error');return}
-      var slug=v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'');
-      if(!slug){nameInp.classList.add('field-invalid');showSavedToast('Nombre inv&#225;lido para slug','error');return}
-      // Verificar disponibilidad del slug antes de avanzar
-      var btn=document.getElementById('wz-next');
-      btn.disabled=true;btn.textContent='Verificando...';
-      try{
-        var r=await fetch('/admin/api/clients/check?slug='+encodeURIComponent(slug),{headers:{Accept:'application/json'}});
-        var d=await r.json();
-        if(d && d.exists){
-          nameInp.classList.add('field-invalid');
-          showSavedToast('Ya existe un cliente con el slug "'+d.slug+'"'+(d.name?' ('+d.name+')':''),'error');
-          btn.disabled=false;btn.textContent='Siguiente';
-          return;
-        }
-      }catch(e){
-        showSavedToast('No se pudo verificar el slug: '+e.message,'error');
-        btn.disabled=false;btn.textContent='Siguiente';
+      var slugInp=document.getElementById('wz-slug');
+      var name=nameInp.value.trim();
+      var slug=slugify(slugInp.value.trim());
+      if(!name){nameInp.classList.add('field-invalid');showSavedToast('Ingresá un nombre','error');return}
+      if(!slug){slugInp.classList.add('field-invalid');updateSlugStatus('err','Elegí un slug válido');return}
+      // Si todavía no se verificó, verificar ahora
+      if(wzSlugState.available===null){
+        await checkSlugAvailability(slug);
+      }
+      if(wzSlugState.available===false){
+        showSavedToast('El slug "'+slug+'" ya está en uso. Cambialo para continuar.','error');
+        slugInp.focus();
         return;
       }
       nameInp.classList.remove('field-invalid');
-      btn.disabled=false;
-      wizState.name=v;
+      slugInp.classList.remove('field-invalid');
+      wizState.name=name;
       wizState.slug=slug;
       goToStep(2);return;
     }
@@ -3041,6 +3113,12 @@ function clientWizardModal() {
       <div class="wizard-step active" data-step="1">
         <label class="wizard-input-label">Nombre del cliente</label>
         <input type="text" id="wz-name" class="wizard-input" placeholder="Ej: Preston" autocomplete="off">
+        <label class="wizard-input-label" style="margin-top:1rem">URL del cliente (slug)</label>
+        <div class="wz-slug-row">
+          <span class="wz-slug-prefix">mcp.breakmkt.com.ar/</span>
+          <input type="text" id="wz-slug" class="wizard-input wz-slug-input" placeholder="preston" autocomplete="off">
+        </div>
+        <div id="wz-slug-status" class="wz-slug-status"></div>
       </div>
       <div class="wizard-step" data-step="2">
         <p class="wizard-help">Eleg&#237; la cuenta de <strong>Google Ads</strong> asociada al cliente.</p>
