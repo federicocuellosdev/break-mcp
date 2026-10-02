@@ -278,6 +278,8 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .acc-list-id-pill.enabled{background:#e6f6ee;color:var(--green)}
 .acc-list-id-pill.suspended{background:var(--coral-soft);color:var(--coral)}
 .acc-list-id-pill.canceled,.acc-list-id-pill.closed{background:var(--soft);color:var(--muted)}
+.acc-list-id-pill.billing-bad{background:var(--coral);color:#fff}
+.acc-list-id-pill.billing-warn{background:#fff6d6;color:#8a6d00}
 .acc-list-empty{padding:1.2rem 1rem;text-align:center;color:var(--muted);font-size:.8rem;background:var(--soft);flex:1;display:flex;align-items:center;justify-content:center}
 @media (max-width:1100px){.acc-list-container{grid-template-columns:1fr}}
 
@@ -992,6 +994,9 @@ const CLIENT_JS = `
   var ENRICH_STATUS_LABEL={ENABLED:'Habilitada',SUSPENDED:'Suspendida',CANCELED:'Cancelada',CLOSED:'Cerrada'};
   async function enrichClientAccounts(){
     var blocks=document.querySelectorAll('.acc-list-block');
+    if(!blocks.length)return;
+    // Billing summary se carga una vez y se comparte entre todos los bloques
+    var billingPromise=fetch('/admin/api/billing-summary',{headers:{Accept:'application/json'}}).then(function(r){return r.json()}).catch(function(){return null});
     blocks.forEach(async function(block){
       var platform=block.dataset.platform;
       var rows=block.querySelectorAll('.acc-list-row');
@@ -1001,6 +1006,8 @@ const CLIENT_JS = `
         var data=await r.json();
         if(!r.ok||!data.accounts)return;
         var map=new Map(data.accounts.map(function(a){return [String(a.id),a]}));
+        var billing=await billingPromise;
+        var billingMap=(billing&&billing[platform]&&billing[platform].accounts)||{};
         rows.forEach(function(row){
           var id=row.dataset.accountId;
           var a=map.get(String(id));
@@ -1011,9 +1018,24 @@ const CLIENT_JS = `
             return;
           }
           if(nameEl)nameEl.textContent=a.name||'sin nombre';
-          if(pillEl && a.status){
-            pillEl.classList.add(a.status.toLowerCase());
-            pillEl.title=id+' · '+(ENRICH_STATUS_LABEL[a.status]||a.status);
+          if(pillEl){
+            var tooltip=id;
+            if(a.status){
+              pillEl.classList.add(a.status.toLowerCase());
+              tooltip+=' · '+(ENRICH_STATUS_LABEL[a.status]||a.status);
+            }
+            // Sobreescribir color si billing es bad o warn
+            var b=billingMap[String(id)];
+            if(b && b.billing==='bad'){
+              pillEl.classList.add('billing-bad');
+              var detail=b.serving_issue||b.disable_reason||b.billing_setup||b.status;
+              if(detail)tooltip+=' · '+detail;
+            } else if(b && b.billing==='warn'){
+              pillEl.classList.add('billing-warn');
+              var dw=b.disable_reason||b.billing_setup||b.status;
+              if(dw)tooltip+=' · '+dw;
+            }
+            pillEl.title=tooltip;
           }
         });
       }catch(e){}
