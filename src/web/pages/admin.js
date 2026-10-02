@@ -878,14 +878,15 @@ const CLIENT_JS = `
     if(wizState.meta)body.append('meta_ad_account_id',wizState.meta);
     if(wizState.ga4)body.append('ga4_property_id',wizState.ga4);
     try{
-      var r=await fetch('/admin/clients',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body,redirect:'manual'});
-      if(r.ok||r.status===0||(r.status>=300&&r.status<400)){
+      var r=await fetch('/admin/clients',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:body});
+      if(r.ok){
         closeModal('wizard-modal');
         showSavedToast('Cliente "'+wizState.name+'" creado');
         setTimeout(function(){window.location.reload()},900);
       }else{
-        var t=await r.text();
-        showSavedToast('Error al crear','error');
+        var msg='Error al crear';
+        try{var d=await r.json();if(d&&d.error)msg='Error: '+d.error}catch(_){}
+        showSavedToast(msg,'error');
         btn.disabled=false;btn.textContent='Crear cliente';
       }
     }catch(e){showSavedToast('Error: '+e.message,'error');btn.disabled=false;btn.textContent='Crear cliente'}

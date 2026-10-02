@@ -386,6 +386,7 @@ export function createWebRouter() {
   });
 
   router.post('/admin/clients', requireLogin, requireAdmin, (req, res) => {
+    const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
     const { slug, name, meta_ad_account_id, gads_customer_id, ga4_property_id } = req.body || {};
     try {
       const created = createClientRecord({
@@ -395,8 +396,10 @@ export function createWebRouter() {
         gads_customer_id,
         ga4_property_id,
       });
+      if (wantsJson) return res.json({ ok: true, slug: created.slug, name: created.name });
       redirWithFlash(res, '/admin/clients', 'ok', `Cliente "${created.slug}" creado.`);
     } catch (e) {
+      if (wantsJson) return res.status(400).json({ ok: false, error: e.message });
       res
         .status(400)
         .set('Content-Type', 'text/html; charset=utf-8')
