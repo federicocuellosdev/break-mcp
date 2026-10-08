@@ -21,6 +21,11 @@
           "amount": 255850,
           "alert_pct": 80
         }
+      },
+      "kommo": {
+        "subdomain": "contactoprestoncomar",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjdhMTBiNWRmN2ZjMTBmNjFlN2NkMjY0M2NhNzE5MDRkYjFkM2ZiMjBiNDliMWU2OTgzOGJkNjEyOTRjNDlhY2Y5YjE0ZDVlZWU1MGU3NDdiIn0.eyJhdWQiOiI4NjhlZjZjYS1lOWQ4LTQ0NDUtOGQ1Yy02NGU1ZGQ1MWYxN2MiLCJqdGkiOiI3YTEwYjVkZjdmYzEwZjYxZTdjZDI2NDNjYTcxOTA0ZGIxZDNmYjIwYjQ5YjFlNjk4MzhiZDYxMjk0YzQ5YWNmOWIxNGQ1ZWVlNTBlNzQ3YiIsImlhdCI6MTc2NDExNDI5OCwibmJmIjoxNzY0MTE0Mjk4LCJleHAiOjE4MzUzOTUyMDAsInN1YiI6IjExMjM1MzM5IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjMyODIyNDE1LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiZmZmZjU0ZGMtNTBjNC00NjI3LTk1NTctMzhjODIzZDhmZjYyIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1nLmtvbW1vLmNvbSJ9.WjTXmtsMD3WGyvj0LSDHf4mabyfEsNPaZ63djXN1Y3jXzwOmYapqy-dwNyNM_xFrBg0vBnU4onKPt7qcttSTNJ0fdRWZz45czZVH2Bll2PDaurwdP20esf2ZCSM8SvABrM5f-YAc8zaylZ6sJC6VNMZUxtDP7Yqtqh6LxJaG9Tede7WJVI7QNVUNoqaBaAKpAY5nI803FdnHIV0BZfwrMbuFxZVOraAtAjjKi85h2HMA_2R-hOUJ4-L0_fUz14gMn1vgKpkfOsXcZs9pHPbUX0Qb0k-5mf7Y1uUckhk0annrfQh1ZiyiXkQsflCdl03BWS3mVSsTSK0Y-F2ud6n-QQ",
+        "token_exp": 1835395200
       }
     },
     "previnca": {
@@ -32,7 +37,12 @@
       "meta_ad_accounts": [],
       "gads_customers": [
         "2451808484"
-      ]
+      ],
+      "kommo": {
+        "subdomain": "previncaholding\r",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjQ2YzUxNjA2YWYwMGVkNmVjODc3NTlhODI4NTEyODlkMmRlZmI2ZGYzNmNmN2Q4Y2NjNmJiMDkxZmEwZTdhZTAwMmIzZGIxMDg0ODEyMmU5In0.eyJhdWQiOiJmMzYwMDE0Ni1iOGY4LTRiMzAtYTFiMS1jOTk5Yjg5ODU4OGUiLCJqdGkiOiI0NmM1MTYwNmFmMDBlZDZlYzg3NzU5YTgyODUxMjg5ZDJkZWZiNmRmMzZjZjdkOGNjYzZiYjA5MWZhMGU3YWUwMDJiM2RiMTA4NDgxMjJlOSIsImlhdCI6MTc2ODY3MjgzOSwibmJmIjoxNzY4NjcyODM5LCJleHAiOjE4NzIyMDE2MDAsInN1YiI6IjEzNzcxMjg4IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM1MTIxOTg0LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiNjU3NTA3MWYtNzI4ZS00NTZhLThiYjgtY2UyMWFiYjVkOTllIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.Cd-dibksQGlMglyZmywAOhoQ3BrzJOpNwGWPZHI0HycyOAb3yD1VyHXCf2ESMFDXzEyV_THaalfm-b6AYHAX0NFaNYzYVW3D99q5naScfGHg0WIRzK9PIMJ4i890U5nCF_doYxXR11qqElOnKYBWXeZ7su0-H4cgPsFYJ_VlMikmWx1pzWwayHMzLdKi9mgiRDJnowLbKRMjBCbUSYJIILKJEv7UUc2S99DaqmfqufpKnSGx-cXKCOnq6wNI5X9b4qE7YM83mAq1rYf7BlhnJsJDU6q7rIKlkY2sZ9QASqIJy7fEOS7OooDp0PezUf8797PnhYbbiSFus64oQj7Yrg\r",
+        "token_exp": 1872201600
+      }
     },
     "azahares": {
       "name": "Azahares",
@@ -55,6 +65,11 @@
           "amount": 150500,
           "alert_pct": 80
         }
+      },
+      "kommo": {
+        "subdomain": "azaharesdelparan",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjZkNTlhNzEzMjAwYWM0N2QxNDRiMTljNGYzZTVjNDU3ZjEwNjA2ZTI5ZGE5ZmI5NmYyYWMyNzhmZWZjYjBhYTkwNDRmZDE1NTlmMzE1OTZhIn0.eyJhdWQiOiJhODdlYmQ5OC1lNWE1LTQ5NjEtOGM1OC0wODI1OGNiNjU4OTkiLCJqdGkiOiI2ZDU5YTcxMzIwMGFjNDdkMTQ0YjE5YzRmM2U1YzQ1N2YxMDYwNmUyOWRhOWZiOTZmMmFjMjc4ZmVmY2IwYWE5MDQ0ZmQxNTU5ZjMxNTk2YSIsImlhdCI6MTc4ODk3NDI1NywibmJmIjoxNzg4OTc0MjU3LCJleHAiOjE4MjIyNjI0MDAsInN1YiI6IjExMDg5Mjg3IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjMyNjc5NTUxLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiZWI3MGRhNjQtYzkyYi00OTE5LTllYjItMzgwYmI3NjMyYzgxIiwiYXBpX2RvbWFpbiI6ImFwaS1nLmtvbW1vLmNvbSJ9.GuO5wsvj9rzy-BlHtF18XJY92umHDV5xDAXxCpd9NMFUhRIck7tgZEnuJwve5yg5G0pPueYc_Kb4fI_9GjqzPZWtDPHGAFl8l6hy8e9UkUYpiU-oV8qDgJv_IEqCkoomUbt2aQXmPEPx11oShzm7Gahb3FhGab3PNa-yDaFb4S_wqu4RbO5aKo3f-2DQEe39MgOsewJX_ix25_cbgCu3piOef7MRFo4u7uW8rvN2QHoKBwgdcCAdLQkEXoN-ITYQGR_CkqGpVIOiQL5GDb_lNDWn_LuBbCdI_WZ_sq52bjIfHkWbVuPbqGnuAV4ChmXTw0Ovu1KB9SLQ2qOoAkD31Q",
+        "token_exp": 1822262400
       }
     },
     "demo": {
@@ -122,7 +137,12 @@
       "gads_customers": [
         "7827353739"
       ],
-      "sheets": {}
+      "sheets": {},
+      "kommo": {
+        "subdomain": "soporteyafuear",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjdjYzY1M2IyZGQ1OTY3Nzg4NjU5MWY4N2Q5MmU5Njc5NTAzMjEyYzNmOGI2ZDBmYTRlMTVjN2YwNzNhODg4ZTBlNGZkMmFhZWM0MDgyNjRlIn0.eyJhdWQiOiIyODg5MzI1Zi0zOGNlLTQzYmMtYjAwMy1mNTdkY2Y0ZWIwMWUiLCJqdGkiOiI3Y2M2NTNiMmRkNTk2Nzc4ODY1OTFmODdkOTJlOTY3OTUwMzIxMmMzZjhiNmQwZmE0ZTE1YzdmMDczYTg4OGUwZTRmZDJhYWVjNDA4MjY0ZSIsImlhdCI6MTc4NzY3MjMyNiwibmJmIjoxNzg3NjcyMzI2LCJleHAiOjE4Nzc0NzIwMDAsInN1YiI6IjE0NDg4OTM5IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM1Nzk4MTgzLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiMGZjNzA0ZjgtMjc1NC00MWNhLTgwNGQtYWU0M2E1OGY2MDhlIiwiYXBpX2RvbWFpbiI6ImFwaS1nLmtvbW1vLmNvbSJ9.QzmJDr31paFZwWycY9bPWP3riIp1QPIgNUk5FEBmCaEyzEQAtQ4FAuC7XforxAyVbNPvhh32NxBjPmjLdnyhaM5WfD34O3sd9cXWWSRah19BPrELZGyVxLkOVNJIjTrNK-DCIjPdbBstdV3rTPJ294EJqCg3xbdcwossP4t5Er9L0mN7zVPBf3Y0Jp31bU9xA3CV_zJ_AOsrjzRHBgf4N6muIIka-GO0o_2EpxPTJKeDszyNHAPEytaDrfCePqM1Ve3uLoE2A57Xk0E5guh2rq0gVHkhj-juoCsV5Nimzydyl-aBJKZopYA9OHmz5J94AjKKSagkQPIBJnAThODBtw",
+        "token_exp": 1877472000
+      }
     },
     "leandro-galindez": {
       "name": "Leandro Galindez",
@@ -220,7 +240,12 @@
       "gads_customers": [
         "3686868701"
       ],
-      "sheets": {}
+      "sheets": {},
+      "kommo": {
+        "subdomain": "marketingcoassaludcom",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImViNjNkNjc1NDE0ZTg5MGJlZDM3NGU2MmExOTdiM2E3YTg0MWEyYWU1OTYzZmRkNTUyN2M2OGE0ZjVlMDM1ZDU4Mjc2ZTg2YmViNjViMjZhIn0.eyJhdWQiOiIxZTExYzFhNS1mNWFkLTQ4OGQtODAzZC0xMmI2NzVlNWY5YjAiLCJqdGkiOiJlYjYzZDY3NTQxNGU4OTBiZWQzNzRlNjJhMTk3YjNhN2E4NDFhMmFlNTk2M2ZkZDU1MjdjNjhhNGY1ZTAzNWQ1ODI3NmU4NmJlYjY1YjI2YSIsImlhdCI6MTc2Mjk4MTcyNiwibmJmIjoxNzYyOTgxNzI2LCJleHAiOjE4MzAyOTc2MDAsInN1YiI6IjEzMDUyMjg3IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM0NDY2NzQ3LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiMzg5ZDNiNTYtNjAzYy00YTliLThkMGYtZDUwYjZhMTUzZjIxIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.NSyNNVNbN-1AmMlrGw2OYnHSosUcKksQYzVDjSvDfB5ojtbLPM4chrpXQEa_NR2SuL8C3EQEMEE3Uq3b6PvTyADUwB2HewFfKbQmAPeJ__b7fS3DZrsfvQFeaIVIUqXzu9gLMiex65ErI2vpcE5AOcWqYnbz4xKVYusxe68GlCDbdtyKaLrqXJsBufsX6sF8ILUIZAf86HzmyzfItWsA6Q1n5gJpEzaOji3Ue3ocDbdR3xmSTjzONxkALGauXcV0dvodl2G061mRVKxCOAfGmwaXsoi-mYG0H5VtwZWf4YMclZ1l0IqBGBQ8cUMeGilStIydDXQtaZMeK5PPCWFdbA",
+        "token_exp": 1830297600
+      }
     },
     "ampip": {
       "name": "AMPIP",
@@ -362,7 +387,12 @@
       ],
       "gads_customers": [],
       "sheets": {},
-      "active": false
+      "active": false,
+      "kommo": {
+        "subdomain": "breaktalent",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImExYjEyMDk3YWQzN2U3YjJjZGM2NGYzMmM3YzRhZDA4MDhhNmI1NmQzMWI4MDdlNjZjYTY1ZGZhZTczN2Q4ZWJhYWYxMDJjZWNjZDI2NjkyIn0.eyJhdWQiOiI1MGYzZjZiMy05NGJiLTRiM2MtOTJmNC01ODgyM2ViNTRjYWMiLCJqdGkiOiJhMWIxMjA5N2FkMzdlN2IyY2RjNjRmMzJjN2M0YWQwODA4YTZiNTZkMzFiODA3ZTY2Y2E2NWRmYWU3MzdkOGViYWFmMTAyY2VjY2QyNjY5MiIsImlhdCI6MTc2Njc2OTUzOCwibmJmIjoxNzY2NzY5NTM4LCJleHAiOjE4MzI5NzYwMDAsInN1YiI6IjEwODk0ODM5IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM1NDM3MDk5LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiM2VjYzM0NDUtMDM5MC00OWM2LWEzYTktZThiZWE5OWJkZGZmIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.QOrsxo1ZyRIJPMYpyAAeadfgEfUfCa24wG9l3CYGy-A_7PC9Wvn9fnNIxNPT1gzE05t4nYvEwMQgoJtU8UTOMUWPV9xv7ze1Peai2wVbwefOJUtCjb_xywmFUDOXLwztpvL67zVRZN8gwY4_VGQa98iEt3Y8mCIxgvAsdH-pTr6pokgmOwegPhfrXIQr84spq0UBkKIei5201YWUEdtw1V_X9ccFpz-Fai9EK_dengJNkTd1BYx3KdCSgA94yaAz9_bzcnJF0m7vBhtvbVYaBLKF9SVImeW75u75qIm6Zw7sEL3V0Vbj3rzAnCoceMP2i4mafx3OgGqMkXUOe6GLgw",
+        "token_exp": 1832976000
+      }
     },
     "cam-luminarias": {
       "name": "CAM Luminarias",
