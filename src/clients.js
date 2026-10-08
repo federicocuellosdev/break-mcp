@@ -74,6 +74,38 @@ export function listClients() {
   });
 }
 
+function decodeJwtExp(token) {
+  try {
+    const parts = String(token).split('.');
+    if (parts.length !== 3) return null;
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(Buffer.from(pad, 'base64').toString('utf8'));
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+export function updateClientKommo(slug, { subdomain, token }) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  const sub = String(subdomain || '').toLowerCase().trim().replace(/\.kommo\.com\/?$/, '').replace(/^https?:\/\//, '').replace(/[^a-z0-9-]/g, '');
+  const tok = String(token || '').trim();
+  if (!sub && !tok) {
+    delete c.kommo;
+    persist(db);
+    return null;
+  }
+  if (!sub) throw new Error('Subdominio obligatorio');
+  if (!tok) throw new Error('Token obligatorio');
+  const exp = decodeJwtExp(tok);
+  c.kommo = { subdomain: sub, token: tok, token_exp: exp };
+  persist(db);
+  return c.kommo;
+}
+
 export function updateClientPlatformActive(slug, platform, active) {
   const db = load();
   const c = db.clients[slug];

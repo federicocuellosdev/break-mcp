@@ -22,6 +22,7 @@ import {
   updateClientAccounts,
   updateClientBudget,
   updateClientPlatformActive,
+  updateClientKommo,
   deleteClientRecord,
 } from '../clients.js';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
@@ -42,6 +43,13 @@ import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog } from '../logs.js';
 
 const TOOLS_COUNT = 18;
+
+function maskToken(tok) {
+  if (!tok) return '';
+  const s = String(tok);
+  if (s.length <= 14) return s;
+  return s.slice(0, 10) + '...' + s.slice(-4);
+}
 
 function mcpUrlFrom(req) {
   if (process.env.MCP_URL) return process.env.MCP_URL.replace(/\/+$/, '') + '/mcp';
@@ -470,6 +478,21 @@ export function createWebRouter() {
     try {
       const saved = updateClientPlatformActive(req.params.slug, platform, active);
       res.json({ ok: true, platforms_active: saved });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/clients/:slug/kommo', requireLogin, requireAdmin, express.json(), (req, res) => {
+    const { subdomain, token } = req.body || {};
+    try {
+      const saved = updateClientKommo(req.params.slug, { subdomain, token });
+      res.json({
+        ok: true,
+        kommo: saved
+          ? { subdomain: saved.subdomain, token_exp: saved.token_exp, token_mask: maskToken(saved.token) }
+          : null,
+      });
     } catch (e) {
       res.status(400).json({ error: e.message });
     }

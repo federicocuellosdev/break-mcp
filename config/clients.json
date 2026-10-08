@@ -104,7 +104,12 @@
         "3514893354",
         "1084565846"
       ],
-      "sheets": {}
+      "sheets": {},
+      "kommo": {
+        "subdomain": "argenway",
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjNmMWY0ZGIxNmYzZjQxYTk3NjA0ZTcxMDdjMGJjZWE4ZWE2ZTYzOTNmMjZiZTBkODRiYzJjODM5YWZiNmY2YzY4YmVmM2IyN2Q0YTkxN2Q1In0.eyJhdWQiOiJjYjdjNWI4ZS1mMWE5LTQ3YjQtYjE2Mi1iZWJiMWQ5NTUwMzMiLCJqdGkiOiIzZjFmNGRiMTZmM2Y0MWE5NzYwNGU3MTA3YzBiY2VhOGVhNmU2MzkzZjI2YmUwZDg0YmMyYzgzOWFmYjZmNmM2OGJlZjNiMjdkNGE5MTdkNSIsImlhdCI6MTc5MTM4NjY3MSwibmJmIjoxNzkxMzg2NjcxLCJleHAiOjE5MDM3Mzc2MDAsInN1YiI6IjEzMzI0OTY3IiwiYmFzZV9kb21haW4iOiJrb21tby5jb20iLCJ2ZXJzaW9uIjoyLCJzY29wZXMiOlsicHVzaF9ub3RpZmljYXRpb25zIiwiZmlsZXMiLCJjcm0iLCJmaWxlc19kZWxldGUiLCJub3RpZmljYXRpb25zIl0sImhhc2hfdXVpZCI6ImVmMDYwNWRmLWI0YmItNGUyYS1hMTczLTMxYTAxY2VjNjYwZSIsImFwaV9kb21haW4iOiJhcGktZy5rb21tby5jb20ifQ.NLQkmaYSmUhcgt0LgV2n1wC2FuhiGBrLMFPmKiqBAuqLkQ1RHxHKtFiieLp3NAgK-Qqe9PqDF5FD4hyKvtldwfD3-ZGtJF1jc2CU4wUi8VYa-kbL6z21x9b9wV6ofGtQ7B-eIsKWpgqLfrPc5VJ3s-FQqrAJKnYeAimGhHY0xEUe7fHLyLMj5uH6JMqNMZfl8N4MorhFVwaHcr4PDGqfGo2vtBbA3hEs4kFvPJC73SlDBTGDKMKoNFw9LYV55tPQ0J9f5Ow9NZ_PIcD8xmYxdSMQ3ABBZ75bHsG4yWTqLg3zyyDbZBPEqRJDSvm0UzrZrAWm_SA0DfsvlnEvfHQL3A",
+        "token_exp": 1903737600
+      }
     },
     "yafue": {
       "name": "Yafue",
@@ -683,6 +688,24 @@
       "gads_customers": [],
       "sheets": {},
       "active": false
+    },
+    "huapi": {
+      "name": "Huapi",
+      "meta_ad_account_id": null,
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [],
+      "sheets": {}
+    },
+    "tannery": {
+      "name": "Tannery",
+      "meta_ad_account_id": null,
+      "gads_customer_id": null,
+      "ga4_property_id": null,
+      "meta_ad_accounts": [],
+      "gads_customers": [],
+      "sheets": {}
     }
   }
 }
