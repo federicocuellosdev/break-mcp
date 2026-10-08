@@ -1,6 +1,11 @@
 import { esc, FONT_LINK, FAVICON } from './common.js';
 import { listClients } from '../../clients.js';
 
+const META_ICON = `<img src="/public/img/platforms/meta-ads.png" alt="Meta Ads">`;
+const GADS_ICON = `<img src="/public/img/platforms/google-ads.svg" alt="Google Ads">`;
+const GA4_ICON = `<img src="/public/img/platforms/google-analytics-4.svg" alt="Google Analytics 4">`;
+const KOMMO_ICON = `<img src="/public/img/platforms/kommo.png" alt="Kommo">`;
+
 const CSS = `
 :root{
   --black:#1B1B1D; --ink:#1a1a1e; --white:#FFFFFF;
@@ -2499,11 +2504,6 @@ function roleSelectCS(currentRole, opts_ = {}) {
       </div>
     </div>`;
 }
-
-const META_ICON = `<img src="/public/img/platforms/meta-ads.png" alt="Meta Ads">`;
-const GADS_ICON = `<img src="/public/img/platforms/google-ads.svg" alt="Google Ads">`;
-const GA4_ICON = `<img src="/public/img/platforms/google-analytics-4.svg" alt="Google Analytics 4">`;
-const KOMMO_ICON = `<img src="/public/img/platforms/kommo.png" alt="Kommo">`;
 
 function maskKommoToken(tok) {
   if (!tok) return '';
