@@ -152,6 +152,34 @@ export function generateUserMd({ user, mcpUrl }) {
 > - El \`title\` va en la card pública. La \`description\` es una línea corta de resumen (opcional pero recomendada).
 > - El autor se completa solo desde tu token, no lo mandes vos.
 >
+> **Dónde queda publicado (ruta pública por cliente):**
+>
+> | Elemento | URL |
+> |----------|-----|
+> | Galería del cliente | \`${mcpUrl.replace(/\/mcp$/, '')}/{cliente}\` |
+> | Informe individual | \`${mcpUrl.replace(/\/mcp$/, '')}/{cliente}/{slug}\` |
+>
+> El cliente ve solo su galería (una card por informe con título, descripción, chips de fuentes y fecha). No necesita login — es una URL pública con \`noindex\`. Si querés listar lo publicado, llamá \`list_published_reports({ client })\`.
+>
+> **Diseño del informe (plantilla \`render_report\`):**
+>
+> El HTML sigue un estilo deck de 7 slides, dark mode, tipografía Inter, con la paleta de Break (gradient azul → violeta → rosa). Usá los 6 \`kind\` de slide ya probados, en este orden recomendado:
+>
+> 1. \`portada\` — eyebrow + titular en dos líneas (la 2ª en \`grad-text\`) + lede + 4 KPIs cards. Numeradores grandes (bold 900), labels chicos uppercase, sub con variación vs período previo (verde si baja un costo, rojo si sube).
+> 2. \`embudo\` — 3 columnas: costo acumulado por etapa (derecha-alineado) · bands (rectángulos sólidos con el nombre + número adentro, van del gris claro al pink) · tasa/paso (izquierda-alineado). Cerrar con un \`key.pill\` + \`key.text\` que diga la conclusión en una frase con **bolds**.
+> 3. \`pauta\` (comparación) — tabla de etapas con mini-barra de reparto por canal (Meta azul · Google pink) + columna "Referencia / costo unitario". Útil para mostrar "cuánto aporta cada canal en cada etapa".
+> 4. \`pauta\` (dos canales) — 2 cards grandes lado a lado (Meta · Google) con % de inversión, objetivo, 3-4 métricas, variación vs mes anterior. Debajo, 4 mini-cards con hallazgos específicos ("Por qué no se comparan por CPA", "Oportunidad sin explotar", "Actividad web · GA4", etc).
+> 5. \`pauta\` (campañas) — 3 KPIs arriba (volumen, costo medio, costo medio sin reconocimiento) + barras horizontales por campaña con **el monto adentro de la barra**, meta a la derecha (leads, costo por lead, CPM). Variantes: \`best\` (gradient), \`cold\` (azul-violeta), \`ghost\` (gris para 0 leads). Cierre con "Descubrimientos y sugerencias" (lista con **bolds**).
+> 6. \`pauta\` (canal secundario, ej. Google) — mismo patrón pero más chico (3 KPIs + 2 barras + sugerencias).
+> 7. \`proximos\` — 2 columnas: izquierda la lista de acciones con chip de color (**Urgente** rojo, **A vigilar** amarillo, **Oportunidad** verde) + título + descripción; derecha card oscura "Para definir con dirección" con preguntas abiertas. Al final, bloque de **Fuentes** + **Notas de transparencia** numeradas.
+>
+> **Reglas de datos:**
+> - Nada de "s/d" si podés pullearlo de Kommo, Sheets o la propia plataforma antes. "s/d" solo cuando la plataforma no lo expone (ej. alcance de Google Ads).
+> - Siempre absolutos + variación vs período anterior (porcentaje con flecha ↑/↓).
+> - Formato argentino: \`$ 1.234.567\`, \`4,32%\`, miles con punto, decimales con coma.
+> - Si combinás Kommo con plataformas: aclarar la base de cada métrica (ej. "costo por calificado" usa denominador Kommo, no Looker).
+> - El bloque **Clave** del embudo cierra con una frase. En la ficha de campañas, los hallazgos van en bullets de 1 línea.
+>
 > ---
 >
 > **PROTOCOLO DE REPORTE DE PROBLEMAS** — cuándo llamar \`report_issue\`

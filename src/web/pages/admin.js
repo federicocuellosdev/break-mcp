@@ -2503,6 +2503,19 @@ function roleSelectCS(currentRole, opts_ = {}) {
 const META_ICON = `<img src="/public/img/platforms/meta-ads.png" alt="Meta Ads">`;
 const GADS_ICON = `<img src="/public/img/platforms/google-ads.svg" alt="Google Ads">`;
 const GA4_ICON = `<img src="/public/img/platforms/google-analytics-4.svg" alt="Google Analytics 4">`;
+const KOMMO_ICON = `<img src="/public/img/platforms/kommo.png" alt="Kommo">`;
+
+// Reads the Kommo subdomain configured for a client via env var.
+// Convention: KOMMO_<SLUG_UPPER>_SUBDOMAIN (new) or KOMMO_<SLUG_UPPER>_SUBDOMINIO (legacy, from break/api).
+function getKommoSubdomain(slug) {
+  if (!slug) return null;
+  const key = String(slug).toUpperCase().replace(/-/g, '_');
+  return (
+    process.env[`KOMMO_${key}_SUBDOMAIN`] ||
+    process.env[`KOMMO_${key}_SUBDOMINIO`] ||
+    null
+  );
+}
 
 const PLATFORMS = [
   { key: 'meta', label: 'Meta Ads', icon: META_ICON },
@@ -2843,33 +2856,49 @@ export function renderClientEditView({ user, target, flash }) {
   const shortUrl = publicUrl.replace(/^https?:\/\//, '');
   const active = t.active !== false;
 
+  const kommoSub = getKommoSubdomain(t.slug);
   const platformsForClient = [
     { key: 'meta', label: 'Meta Ads', icon: META_ICON, ids: t.meta_ad_accounts || [] },
     { key: 'gads', label: 'Google Ads', icon: GADS_ICON, ids: t.gads_customers || [] },
     { key: 'ga4', label: 'Google Analytics 4', icon: GA4_ICON, ids: t.ga4_properties || [] },
+    {
+      key: 'kommo',
+      label: 'Kommo',
+      icon: KOMMO_ICON,
+      ids: kommoSub ? [kommoSub] : [],
+      readonly: true,
+      emptyText: 'Sin token Kommo configurado. Agregar <code>KOMMO_&lt;SLUG&gt;_SUBDOMAIN</code> y <code>KOMMO_&lt;SLUG&gt;_TOKEN</code> al vault.',
+      idLink: kommoSub ? `https://${kommoSub}.kommo.com` : null,
+    },
   ];
   const platformsHtml = platformsForClient
     .map((p) => {
       const rows = p.ids.length
         ? p.ids
-            .map(
-              (id) => `
-              <div class="acc-list-row" data-account-id="${esc(id)}">
-                <span class="acc-list-name" data-role="name"><span class="muted" style="font-weight:400">Cargando&#8230;</span></span>
-                <span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${esc(String(id).replace(/^act_/, ''))}</span>
-                <button type="button" class="icon-action danger" onclick="removeClientAccount(this,'${esc(p.key)}','${esc(id)}')" title="Quitar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              </div>`,
-            )
+            .map((id) => {
+              const idLabel = esc(String(id).replace(/^act_/, ''));
+              const idPill = p.idLink
+                ? `<a href="${esc(p.idLink)}" target="_blank" rel="noopener" class="acc-list-id-pill" title="${esc(id)}">${idLabel}</a>`
+                : `<span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${idLabel}</span>`;
+              const nameCell = p.readonly
+                ? `<span class="acc-list-name"><span class="muted" style="font-weight:400">${esc(p.label)} &#183; conectado</span></span>`
+                : `<span class="acc-list-name" data-role="name"><span class="muted" style="font-weight:400">Cargando&#8230;</span></span>`;
+              const action = p.readonly
+                ? ''
+                : `<button type="button" class="icon-action danger" onclick="removeClientAccount(this,'${esc(p.key)}','${esc(id)}')" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`;
+              return `<div class="acc-list-row" data-account-id="${esc(id)}">${nameCell}${idPill}${action}</div>`;
+            })
             .join('')
-        : `<div class="acc-list-empty">Sin cuentas asociadas todav&#237;a.</div>`;
+        : `<div class="acc-list-empty">${p.emptyText || 'Sin cuentas asociadas todav&#237;a.'}</div>`;
+      const addBtn = p.readonly
+        ? ''
+        : `<button type="button" class="btn-row" onclick="openClientAccountPicker('${esc(p.key)}')">+ Agregar</button>`;
       return `
       <div class="acc-list-block" data-platform="${p.key}">
         <div class="acc-list-head">
           <div class="acc-list-head-icon">${p.icon}</div>
           <div class="acc-list-head-name">${esc(p.label)}</div>
-          <button type="button" class="btn-row" onclick="openClientAccountPicker('${esc(p.key)}')">+ Agregar</button>
+          ${addBtn}
         </div>
         <div class="acc-list-rows">${rows}</div>
       </div>`;
