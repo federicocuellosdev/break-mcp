@@ -2517,18 +2517,11 @@ function kommoExpInfo(exp) {
   const now = Math.floor(Date.now() / 1000);
   const days = Math.round((exp - now) / 86400);
   const date = new Date(exp * 1000);
-  const dstr = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  const dstr = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   let state = 'ok';
-  let label = `vence ${dstr}`;
-  if (days < 0) {
-    state = 'expired';
-    label = `vencido hace ${-days} d&#237;as (${dstr})`;
-  } else if (days <= 30) {
-    state = 'soon';
-    label = `vence en ${days} d&#237;as (${dstr})`;
-  } else {
-    label = `vence ${dstr} &#183; ${days} d&#237;as`;
-  }
+  if (days < 0) state = 'expired';
+  else if (days <= 30) state = 'soon';
+  const label = `${days < 0 ? 'vencido' : 'vence'} ${dstr}`;
   return { state, label, days, dstr };
 }
 
