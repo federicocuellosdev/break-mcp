@@ -2904,48 +2904,61 @@ export function renderClientEditView({ user, target, flash }) {
     })
     .join('');
 
-  // Kommo (CRM) — editable per client
+  // Kommo (CRM) — same shape/height as other platform cards; edit via modal
   const km = t.kommo || {};
   const kmConfigured = !!(km.subdomain && km.token);
   const kmMasked = kmConfigured ? maskKommoToken(km.token) : '';
   const kmExp = kmConfigured ? kommoExpInfo(km.token_exp) : null;
+  const kommoRows = kmConfigured
+    ? `<div class="acc-list-row" data-account-id="${esc(km.subdomain)}">
+         <span class="acc-list-name"><a href="https://${esc(km.subdomain)}.kommo.com" target="_blank" rel="noopener">${esc(km.subdomain)}.kommo.com</a></span>
+         <span class="acc-list-id-pill" title="${esc(kmMasked)}" style="font-family:ui-monospace,monospace">${kmMasked}</span>
+         ${kmExp ? `<span class="kommo-exp-chip kommo-exp-${kmExp.state}" title="${kmExp.label}">${kmExp.label}</span>` : '<span class="kommo-exp-chip kommo-exp-unknown">sin fecha</span>'}
+       </div>`
+    : `<div class="acc-list-empty">Sin cuenta Kommo asociada todav&#237;a.</div>`;
   const kommoHtml = `
     <div class="acc-list-block" data-platform="kommo">
       <div class="acc-list-head">
         <div class="acc-list-head-icon">${KOMMO_ICON}</div>
         <div class="acc-list-head-name">Kommo</div>
-        <button type="button" class="btn-row" data-role="kommo-edit-btn" onclick="kommoEdit()">${kmConfigured ? 'Editar' : '+ Agregar'}</button>
+        <button type="button" class="btn-row" onclick="openKommoModal()">${kmConfigured ? 'Editar' : '+ Agregar'}</button>
       </div>
-      <div class="acc-list-rows" data-role="kommo-view" ${kmConfigured ? '' : 'hidden'}>
-        <div class="acc-list-row">
-          <span class="acc-list-name"><span class="muted" style="font-weight:400">Subdominio</span></span>
-          ${kmConfigured ? `<a href="https://${esc(km.subdomain)}.kommo.com" target="_blank" rel="noopener" class="acc-list-id-pill">${esc(km.subdomain)}.kommo.com</a>` : ''}
+      <div class="acc-list-rows">${kommoRows}</div>
+    </div>`;
+
+  const kommoModal = `
+    <div class="modal-overlay" id="kommo-modal" hidden>
+      <div class="modal" style="max-width:560px">
+        <div class="accounts-modal-head">
+          <div class="accounts-modal-title">
+            <h3>${kmConfigured ? 'Editar' : 'Agregar'} cuenta Kommo</h3>
+            <button type="button" class="btn-close" onclick="closeModal('kommo-modal')" title="Cerrar" aria-label="Cerrar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="accounts-divider"></div>
+          <p class="accounts-modal-note">Pegalos tal como los copiaste. Se limpia la URL si viene completa y se decodifica el JWT para mostrar la fecha de expiraci&#243;n.</p>
         </div>
-        <div class="acc-list-row">
-          <span class="acc-list-name"><span class="muted" style="font-weight:400">Token</span></span>
-          <span class="acc-list-id-pill" style="font-family:ui-monospace,monospace">${kmMasked}</span>
-          ${kmExp ? `<span class="kommo-exp-chip kommo-exp-${kmExp.state}">${kmExp.label}</span>` : '<span class="kommo-exp-chip kommo-exp-unknown">sin fecha de expiraci&#243;n detectada</span>'}
-        </div>
-      </div>
-      <div class="acc-list-rows" data-role="kommo-edit" ${kmConfigured ? 'hidden' : ''}>
-        <div class="kommo-form">
-          <div class="kommo-field">
+        <div class="kommo-form" style="padding:0;background:none">
+          <div class="kommo-field full">
             <label>Subdominio</label>
             <div class="kommo-sub-wrap">
-              <input type="text" data-role="kommo-sub" value="${esc(km.subdomain || '')}" placeholder="argenway" autocomplete="off">
+              <input type="text" id="kommo-mod-sub" value="${esc(km.subdomain || '')}" placeholder="argenway  o  https://argenway.kommo.com/..." autocomplete="off" oninput="kommoCleanSub(this)" onpaste="setTimeout(()=>kommoCleanSub(this),0)">
               <span class="kommo-sub-suffix">.kommo.com</span>
             </div>
+            <span class="hint">Pod&eacute;s pegar la URL completa (ej. <code>https://argenway.kommo.com/settings/widgets/</code>) y se extrae solo el subdominio.</span>
           </div>
           <div class="kommo-field full">
             <label>Long-lived API Token</label>
-            <textarea data-role="kommo-tok" rows="3" placeholder="eyJ0eXAiOiJKV1QiLC..." autocomplete="off" spellcheck="false">${esc(km.token || '')}</textarea>
-            <span class="hint">Se decodifica el JWT para extraer la fecha de expiraci&#243;n.</span>
+            <textarea id="kommo-mod-tok" rows="4" placeholder="eyJ0eXAiOiJKV1QiLC..." autocomplete="off" spellcheck="false">${esc(km.token || '')}</textarea>
+            <span class="hint">Lo gener&aacute;s en Kommo &rarr; Integraciones &rarr; API &rarr; Long-lived token.</span>
           </div>
-          <div class="kommo-actions">
-            <button type="button" class="btn ghost" onclick="kommoCancel()">Cancelar</button>
-            <div class="spacer"></div>
-            <button type="button" class="btn primary" data-role="kommo-save" onclick="kommoSave('${esc(t.slug)}')">Guardar</button>
-          </div>
+        </div>
+        <div class="form-actions" style="border-top:1px solid var(--line);padding-top:1rem;margin-top:1rem">
+          <button type="button" class="btn ghost" onclick="closeModal('kommo-modal')">Cancelar</button>
+          <div class="spacer"></div>
+          ${kmConfigured ? `<button type="button" class="btn ghost" onclick="kommoModalRemove('${esc(t.slug)}')" style="color:var(--pink)">Desvincular</button>` : ''}
+          <button type="button" class="btn primary" id="kommo-mod-save" onclick="kommoModalSave('${esc(t.slug)}')">Guardar</button>
         </div>
       </div>
     </div>`;
@@ -3046,60 +3059,60 @@ export function renderClientEditView({ user, target, flash }) {
       <h2>Cuentas conectadas</h2>
       <div class="acc-list-container">${platformsHtml}${kommoHtml}</div>
     </div>
+    ${kommoModal}
   </div>
   <style>
-    .kommo-exp-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .6rem;border-radius:999px;font-size:.72rem;font-weight:600;letter-spacing:.01em;margin-left:.6rem;white-space:nowrap}
+    .kommo-exp-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .6rem;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.01em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
     .kommo-exp-ok{background:rgba(43,191,125,.12);color:#1f8f5a;border:1px solid rgba(43,191,125,.3)}
     .kommo-exp-soon{background:rgba(246,178,58,.14);color:#9a6b00;border:1px solid rgba(246,178,58,.35)}
     .kommo-exp-expired{background:rgba(238,57,77,.14);color:#c22237;border:1px solid rgba(238,57,77,.35)}
     .kommo-exp-unknown{background:rgba(0,0,0,.04);color:var(--muted,#656467);border:1px solid rgba(0,0,0,.08);font-weight:500}
-    .kommo-form{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem;background:rgba(0,0,0,.02);border-radius:6px}
+    .kommo-form{display:grid;grid-template-columns:1fr;gap:1rem}
     .kommo-field{display:flex;flex-direction:column;gap:.35rem}
     .kommo-field.full{grid-column:1/-1}
     .kommo-field label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#656467)}
-    .kommo-field input,.kommo-field textarea{padding:.6rem .75rem;border:1px solid var(--border,#ddd);border-radius:4px;font-family:inherit;font-size:.9rem;background:#fff;width:100%}
-    .kommo-field textarea{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.78rem;line-height:1.4;resize:vertical;min-height:72px}
-    .kommo-field input:focus,.kommo-field textarea:focus{outline:none;border-color:var(--pink,#e13b7d)}
-    .kommo-field .hint{font-size:.74rem;color:var(--muted,#656467);margin-top:.2rem}
-    .kommo-sub-wrap{display:flex;align-items:stretch;border:1px solid var(--border,#ddd);border-radius:4px;background:#fff;overflow:hidden}
-    .kommo-sub-wrap:focus-within{border-color:var(--pink,#e13b7d)}
+    .kommo-field input,.kommo-field textarea{padding:.65rem .8rem;border:1px solid var(--line);border-radius:4px;font-family:inherit;font-size:.92rem;background:var(--card);color:var(--ink);width:100%}
+    .kommo-field textarea{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.78rem;line-height:1.5;resize:vertical;min-height:92px;word-break:break-all}
+    .kommo-field input:focus,.kommo-field textarea:focus{outline:none;border-color:var(--pink)}
+    .kommo-field .hint{font-size:.74rem;color:var(--muted);margin-top:.2rem}
+    .kommo-field .hint code{background:var(--soft);padding:.08rem .3rem;border-radius:3px;font-size:.76rem}
+    .kommo-sub-wrap{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:4px;background:var(--card);overflow:hidden}
+    .kommo-sub-wrap:focus-within{border-color:var(--pink)}
     .kommo-sub-wrap input{border:none;border-radius:0}
     .kommo-sub-wrap input:focus{border:none}
-    .kommo-sub-suffix{display:inline-flex;align-items:center;padding:0 .75rem;background:rgba(0,0,0,.03);color:var(--muted,#656467);font-size:.86rem;border-left:1px solid var(--border,#ddd)}
-    .kommo-actions{grid-column:1/-1;display:flex;align-items:center;gap:.6rem}
-    .kommo-actions .spacer{flex:1}
-    @media (max-width:720px){.kommo-form{grid-template-columns:1fr}}
+    .kommo-sub-suffix{display:inline-flex;align-items:center;padding:0 .9rem;background:var(--soft);color:var(--muted);font-size:.86rem;border-left:1px solid var(--line);white-space:nowrap}
   </style>
   <script>
   (function(){
-    const slug=${JSON.stringify(t.slug)};
-    const block=()=>document.querySelector('[data-platform="kommo"]');
-    window.kommoEdit=function(){
-      const b=block();if(!b)return;
-      b.querySelector('[data-role="kommo-view"]').hidden=true;
-      b.querySelector('[data-role="kommo-edit"]').hidden=false;
-      b.querySelector('[data-role="kommo-edit-btn"]').style.visibility='hidden';
-      const sub=b.querySelector('[data-role="kommo-sub"]');
-      if(sub)sub.focus();
+    window.kommoCleanSub=function(input){
+      const raw=input.value;
+      let s=String(raw||'').trim().toLowerCase();
+      s=s.replace(/^https?:\\/\\//,'');
+      // if it looks like <sub>.kommo.com/... extract <sub>
+      const m=s.match(/^([a-z0-9-]+)\\.kommo\\.com/);
+      if(m)s=m[1];
+      else s=s.split(/[\\/\\?\\#\\.\\s]/)[0];
+      s=s.replace(/[^a-z0-9-]/g,'');
+      if(s!==raw)input.value=s;
     };
-    window.kommoCancel=function(){
-      const b=block();if(!b)return;
-      // Only hide if there is a configured view; otherwise reset the fields
-      const viewHasRows=b.querySelector('[data-role="kommo-view"] .acc-list-id-pill');
-      if(viewHasRows){
-        b.querySelector('[data-role="kommo-view"]').hidden=false;
-        b.querySelector('[data-role="kommo-edit"]').hidden=true;
-      }
-      b.querySelector('[data-role="kommo-edit-btn"]').style.visibility='';
+    window.openKommoModal=function(){
+      const m=document.getElementById('kommo-modal');
+      if(!m)return;
+      m.hidden=false;document.body.style.overflow='hidden';
+      setTimeout(()=>{const s=document.getElementById('kommo-mod-sub');if(s)s.focus();},50);
     };
-    window.kommoSave=async function(s){
-      const b=block();if(!b)return;
-      const sub=b.querySelector('[data-role="kommo-sub"]').value.trim();
-      const tok=b.querySelector('[data-role="kommo-tok"]').value.trim();
-      const save=b.querySelector('[data-role="kommo-save"]');
+    window.kommoModalSave=async function(slug){
+      const subEl=document.getElementById('kommo-mod-sub');
+      const tokEl=document.getElementById('kommo-mod-tok');
+      kommoCleanSub(subEl);
+      const sub=subEl.value.trim();
+      const tok=tokEl.value.trim();
+      if(!sub){alert('El subdominio es obligatorio.');subEl.focus();return;}
+      if(!tok){alert('El token es obligatorio.');tokEl.focus();return;}
+      const save=document.getElementById('kommo-mod-save');
       save.disabled=true;save.textContent='Guardando...';
       try{
-        const r=await fetch('/admin/clients/'+encodeURIComponent(s)+'/kommo',{
+        const r=await fetch('/admin/clients/'+encodeURIComponent(slug)+'/kommo',{
           method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
           body:JSON.stringify({subdomain:sub,token:tok})
         });
@@ -3110,6 +3123,17 @@ export function renderClientEditView({ user, target, flash }) {
         save.disabled=false;save.textContent='Guardar';
         alert('No se pudo guardar Kommo: '+e.message);
       }
+    };
+    window.kommoModalRemove=async function(slug){
+      if(!confirm('&iquest;Desvincular la cuenta Kommo de este cliente? El token quedar&aacute; borrado.'.replace(/&[a-z]+;/g,m=>({'&iquest;':'¿','&aacute;':'á'}[m]||m))))return;
+      try{
+        const r=await fetch('/admin/clients/'+encodeURIComponent(slug)+'/kommo',{
+          method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+          body:JSON.stringify({subdomain:'',token:''})
+        });
+        if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.error||'HTTP '+r.status);}
+        location.reload();
+      }catch(e){alert('No se pudo desvincular: '+e.message);}
     };
   })();
   </script>`;
