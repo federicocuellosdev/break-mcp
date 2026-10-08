@@ -2937,21 +2937,18 @@ export function renderClientEditView({ user, target, flash }) {
             </button>
           </div>
           <div class="accounts-divider"></div>
-          <p class="accounts-modal-note">Pegalos tal como los copiaste. Se limpia la URL si viene completa y se decodifica el JWT para mostrar la fecha de expiraci&#243;n.</p>
         </div>
         <div class="kommo-form" style="padding:0;background:none">
           <div class="kommo-field full">
             <label>Subdominio</label>
             <div class="kommo-sub-wrap">
-              <input type="text" id="kommo-mod-sub" value="${esc(km.subdomain || '')}" placeholder="argenway  o  https://argenway.kommo.com/..." autocomplete="off" oninput="kommoCleanSub(this)" onpaste="setTimeout(()=>kommoCleanSub(this),0)">
+              <input type="text" id="kommo-mod-sub" value="${esc(km.subdomain || '')}" placeholder="argenway" autocomplete="off" oninput="kommoCleanSub(this)" onpaste="setTimeout(()=>kommoCleanSub(this),0)">
               <span class="kommo-sub-suffix">.kommo.com</span>
             </div>
-            <span class="hint">Pod&eacute;s pegar la URL completa (ej. <code>https://argenway.kommo.com/settings/widgets/</code>) y se extrae solo el subdominio.</span>
           </div>
           <div class="kommo-field full">
-            <label>Long-lived API Token</label>
+            <label>Token</label>
             <textarea id="kommo-mod-tok" rows="4" placeholder="eyJ0eXAiOiJKV1QiLC..." autocomplete="off" spellcheck="false">${esc(km.token || '')}</textarea>
-            <span class="hint">Lo gener&aacute;s en Kommo &rarr; Integraciones &rarr; API &rarr; Long-lived token.</span>
           </div>
         </div>
         <div class="form-actions" style="border-top:1px solid var(--line);padding-top:1rem;margin-top:1rem">
