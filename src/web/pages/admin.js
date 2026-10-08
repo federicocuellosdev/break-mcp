@@ -2904,8 +2904,7 @@ export function renderClientEditView({ user, target, flash }) {
   const kmExp = kmConfigured ? kommoExpInfo(km.token_exp) : null;
   const kommoRows = kmConfigured
     ? `<div class="acc-list-row" data-account-id="${esc(km.subdomain)}">
-         <span class="acc-list-name"><a href="https://${esc(km.subdomain)}.kommo.com" target="_blank" rel="noopener">${esc(km.subdomain)}.kommo.com</a></span>
-         <span class="acc-list-id-pill" title="${esc(kmMasked)}" style="font-family:ui-monospace,monospace">${kmMasked}</span>
+         <span class="acc-list-name">${esc(km.subdomain)}.kommo.com</span>
          ${kmExp ? `<span class="kommo-exp-chip kommo-exp-${kmExp.state}" title="${kmExp.label}">${kmExp.label}</span>` : '<span class="kommo-exp-chip kommo-exp-unknown">sin fecha</span>'}
        </div>`
     : `<div class="acc-list-empty">Sin cuenta Kommo asociada todav&#237;a.</div>`;
