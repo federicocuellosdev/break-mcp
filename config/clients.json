@@ -688,24 +688,6 @@
       "gads_customers": [],
       "sheets": {},
       "active": false
-    },
-    "huapi": {
-      "name": "Huapi",
-      "meta_ad_account_id": null,
-      "gads_customer_id": null,
-      "ga4_property_id": null,
-      "meta_ad_accounts": [],
-      "gads_customers": [],
-      "sheets": {}
-    },
-    "tannery": {
-      "name": "Tannery",
-      "meta_ad_account_id": null,
-      "gads_customer_id": null,
-      "ga4_property_id": null,
-      "meta_ad_accounts": [],
-      "gads_customers": [],
-      "sheets": {}
     }
   }
 }
