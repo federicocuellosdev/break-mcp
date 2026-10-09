@@ -3048,8 +3048,35 @@ export function renderClientEditView({ user, target, flash }) {
       <h2>Cuentas conectadas</h2>
       <div class="acc-list-container">${platformsHtml}${kommoHtml}</div>
     </div>
+
+    <div class="card">
+      <h2>Principales puntos</h2>
+      <div class="notes-list">
+        <div class="note-item">
+          <div class="note-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/>
+              <line x1="10" y1="22" x2="14" y2="22"/>
+            </svg>
+          </div>
+          <div class="note-body">
+            <div class="note-title">Ejemplo de punto a destacar</div>
+            <div class="note-desc">Ac&aacute; va una breve descripci&oacute;n del punto. Pod&eacute;s usarlo para dejar contexto importante del cliente: alertas internas, c&oacute;mo tratarlo, acuerdos verbales, etc.</div>
+          </div>
+        </div>
+      </div>
+    </div>
     ${kommoModal}
   </div>
+  <style>
+    .notes-list{display:flex;flex-direction:column;gap:.8rem}
+    .note-item{display:grid;grid-template-columns:48px 1fr;gap:1rem;align-items:flex-start;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+    .note-icon{width:40px;height:40px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+    .note-icon svg{width:22px;height:22px}
+    .note-body{min-width:0}
+    .note-title{font-weight:700;font-size:.98rem;color:var(--ink);margin-bottom:.25rem}
+    .note-desc{font-size:.88rem;color:var(--muted);line-height:1.5}
+  </style>
   <style>
     .kommo-exp-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .6rem;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.01em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
     .kommo-exp-ok{background:rgba(43,191,125,.12);color:#1f8f5a;border:1px solid rgba(43,191,125,.3)}
