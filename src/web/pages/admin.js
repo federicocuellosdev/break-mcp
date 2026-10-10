@@ -319,10 +319,10 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .budget-head .budget-save.err{background:var(--coral)}
 .budget-head .budget-save svg{width:16px;height:16px}
 .budget-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.budget-platform-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:all .15s;padding:0}
+.budget-platform-toggle{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:background .15s,color .15s,border-color .15s,transform .35s cubic-bezier(.4,0,.2,1);padding:0}
 .budget-platform-toggle svg{width:14px;height:14px}
 .budget-platform-toggle:hover{border-color:var(--ink);color:var(--ink)}
-.budget-card.platform-inactive .budget-platform-toggle{background:var(--soft);color:var(--muted)}
+.budget-card.platform-inactive .budget-platform-toggle{background:var(--soft);color:var(--muted);transform:translateX(calc(34px + .4rem))}
 .budget-card.platform-inactive .budget-platform-toggle [data-role=pause-icon]{display:none}
 .budget-card.platform-inactive .budget-platform-toggle [data-role=play-icon]{display:inline !important}
 .budget-card.platform-inactive .budget-icon,.budget-card.platform-inactive .budget-label,.budget-card.platform-inactive .budget-progress,.budget-card.platform-inactive .budget-editor{opacity:.4;filter:grayscale(.6)}
@@ -566,6 +566,50 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .inv-plat-empty a:hover{text-decoration:underline}
 .inv-empty{border:1px dashed var(--line);border-radius:14px;padding:1.5rem;text-align:center;color:var(--muted);font-size:.85rem;background:var(--card)}
 .inv-loading{padding:1.2rem;text-align:center;color:var(--muted);font-size:.8rem}
+
+/* ── Budget inline edit (icon + modal) ───────────────────────────────── */
+.inv-budget-cell{display:inline-flex;align-items:center;gap:.5rem;justify-content:flex-end}
+.inv-budget-edit{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--soft);border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:all .15s;padding:0;flex-shrink:0;opacity:.85}
+.inv-budget-edit:hover{color:#fff;background:var(--pink);border-color:var(--pink);opacity:1}
+.inv-budget-edit svg{width:13px;height:13px}
+.inv-modal-overlay{position:fixed;inset:0;background:rgba(16,24,40,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:200;padding:1.4rem}
+.inv-modal-overlay.open{display:flex;animation:invFadeIn .15s ease-out}
+@keyframes invFadeIn{from{opacity:0}to{opacity:1}}
+.inv-modal{background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;max-width:460px;max-height:90vh;overflow:auto;box-shadow:0 20px 48px rgba(16,24,40,.18);display:flex;flex-direction:column}
+.inv-modal.inv-modal-wide{max-width:860px}
+.budget-missing-tag{margin-left:auto;font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--soft);border:1px solid var(--line);padding:.28rem .55rem;border-radius:100px}
+.budget-card.platform-missing{opacity:.6}
+.inv-modal-head{padding:1.1rem 1.3rem .9rem;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.inv-modal-head h3{font:700 1.02rem 'Inter',sans-serif;color:var(--ink);margin:0;letter-spacing:-.01em}
+.inv-modal-head .sub{display:inline-flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted);margin-top:.25rem;font-weight:500}
+.inv-modal-head .sub .ic{width:14px;height:14px;display:inline-flex}
+.inv-modal-head .sub .ic img,.inv-modal-head .sub .ic svg{width:100%;height:100%;object-fit:contain}
+.inv-modal-close{width:28px;height:28px;background:transparent;border:none;color:var(--muted);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.inv-modal-close:hover{background:var(--soft);color:var(--ink)}
+.inv-modal-close svg{width:14px;height:14px}
+.inv-modal-body{padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:1rem}
+.inv-modal-acc-list{display:flex;flex-direction:column;gap:.3rem}
+.inv-modal-acc-list .lbl{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.inv-modal-acc-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.inv-modal-acc-chip{font:600 .7rem 'SF Mono',Menlo,Consolas,monospace;letter-spacing:.01em;color:var(--muted);padding:.3rem .6rem;background:var(--soft);border:1px solid var(--line);border-radius:100px}
+.inv-modal-acc-chip.none{font-family:'Inter',sans-serif;font-style:italic;background:transparent}
+.inv-modal-field{display:flex;flex-direction:column;gap:.35rem}
+.inv-modal-field .lbl{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.inv-modal-input-wrap{display:flex;align-items:center;border:1px solid var(--line);border-radius:100px;padding:.4rem .55rem .4rem .9rem;transition:border-color .15s;background:var(--card)}
+.inv-modal-input-wrap:focus-within{border-color:var(--pink)}
+.inv-modal-input-wrap .prefix{color:var(--muted);font:600 .8rem 'Inter',sans-serif;margin-right:.3rem}
+.inv-modal-input-wrap input{flex:1;border:none;outline:none;background:transparent;font:600 .9rem 'Inter',sans-serif;color:var(--ink);min-width:0;padding:.3rem 0;-moz-appearance:textfield}
+.inv-modal-input-wrap input::-webkit-outer-spin-button,.inv-modal-input-wrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.inv-modal-input-wrap .suffix{color:var(--muted);font:500 .7rem 'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-left:.35rem}
+.inv-modal-hint{font-size:.72rem;color:var(--muted)}
+.inv-modal-foot{padding:.85rem 1.3rem 1.1rem;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:.5rem;align-items:center}
+.inv-modal-err{margin-right:auto;color:var(--coral);font-size:.78rem;font-weight:500;display:none}
+.inv-modal-err.show{display:inline}
+.inv-modal-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:.55rem 1rem;border-radius:100px;font:600 .78rem 'Inter',sans-serif;cursor:pointer;letter-spacing:.02em;transition:all .15s}
+.inv-modal-btn:hover{border-color:var(--ink)}
+.inv-modal-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.inv-modal-btn.primary:hover{opacity:.88}
+.inv-modal-btn:disabled{opacity:.5;cursor:default}
 
 /* ── Credenciales one-shot ───────────────────────────────────────────── */
 .creds-card{border-color:var(--pink);background:linear-gradient(180deg,var(--pink-soft) 0%,var(--card) 60%)}
@@ -1448,9 +1492,10 @@ const CLIENT_JS = `
 
   window.saveBudgetCard=async function(btn){
     var card=btn.closest('[data-budget-card]');
-    var editor=document.getElementById('client-editor');
-    if(!card||!editor)return;
-    var slug=editor.dataset.clientSlug;
+    if(!card)return;
+    var scope=card.closest('[data-client-slug]')||document.getElementById('client-editor');
+    if(!scope)return;
+    var slug=scope.dataset.clientSlug;
     var platform=card.dataset.platform;
     var amountInput=card.querySelector('input[data-role=amount]');
     var pctInput=card.querySelector('input[data-role=alert_pct]');
@@ -2112,6 +2157,7 @@ export function renderDashboard({ user }) {
 }
 
 export function renderInvestment({ user }) {
+  const canEdit = user && (user.role === 'admin' || user.role === 'dev');
   const body = `
     <div class="inv-toolbar">
       <label class="inv-search">
@@ -2137,10 +2183,26 @@ export function renderInvestment({ user }) {
       <input type="hidden" id="inv-to">
     </div>
     <div id="inv-list" class="inv-list"><div class="inv-loading">Cargando&#8230;</div></div>
+    <div class="inv-modal-overlay" id="inv-budget-modal" onclick="if(event.target===this)closeBudgetModal()">
+      <div class="inv-modal inv-modal-wide" role="dialog" aria-modal="true" aria-labelledby="inv-budget-title">
+        <div class="inv-modal-head">
+          <div>
+            <h3 id="inv-budget-title">Inversi&#243;n publicitaria</h3>
+            <div class="sub"><span data-role="modal-client-name"></span></div>
+          </div>
+          <button type="button" class="inv-modal-close" onclick="closeBudgetModal()" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="inv-modal-body" data-role="modal-body"></div>
+      </div>
+    </div>
     <script>
     (function(){
       var list=document.getElementById('inv-list');
       if(!list)return;
+      var CAN_EDIT=${canEdit ? 'true' : 'false'};
+      var EDIT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
       var fromEl=document.getElementById('inv-from');
       var toEl=document.getElementById('inv-to');
       function iso(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
@@ -2260,7 +2322,6 @@ export function renderInvestment({ user }) {
           list.innerHTML='<div class="inv-empty">No hay clientes registrados todav&#237;a.</div>';
           return;
         }
-        var EDIT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
         var header='<div class="inv-block-head">'
           +'<span>Cliente</span>'
           +'<span>Plataforma</span>'
@@ -2299,13 +2360,21 @@ export function renderInvestment({ user }) {
                        : [];
             var platformActive = !(c.platforms_active && c.platforms_active[pk]===false);
             var inactiveCls = platformActive ? '' : ' inv-platform-inactive';
-            var platAttrs = ' data-platform="'+pk+'" data-account-ids="'+accIds.join(',')+'" data-platform-active="'+(platformActive?'1':'0')+'"';
+            var budgetVal = p.budget||0;
+            var alertPct = (p.alert_pct==null?80:p.alert_pct);
+            var curCode = p.currency||'';
+            var platAttrs = ' data-platform="'+pk+'" data-account-ids="'+accIds.join(',')+'" data-platform-active="'+(platformActive?'1':'0')+'"'
+              +' data-slug="'+c.slug+'" data-client-name="'+c.name.replace(/"/g,'&quot;')+'" data-platform-label="'+m.label+'"'
+              +' data-budget="'+budgetVal+'" data-alert-pct="'+alertPct+'" data-currency="'+curCode+'"';
+            var budgetCell = CAN_EDIT
+              ? '<div class="inv-block-cell right inv-num muted"><span class="inv-budget-cell"><span data-role="budget-text">'+budgetText+'</span><button type="button" class="inv-budget-edit" data-role="edit-budget" title="Editar presupuesto" aria-label="Editar presupuesto">'+EDIT_ICON+'</button></span></div>'
+              : '<div class="inv-block-cell right inv-num muted">'+budgetText+'</div>';
             return '<div class="inv-block-row'+inactiveCls+'"'+platAttrs+'>'
               +'<div class="inv-block-cell">'+(idx===0?clientCell:'')+'</div>'
               +'<div class="inv-block-cell"><span class="inv-cell-platform"><span class="ic">'+m.icon+'</span>'+m.label+'</span></div>'
               +'<div class="inv-block-cell">'+(platformActive?'<span class="plat-billing-chip loading" data-role="billing-chip">&#8230;</span>':'<span class="plat-billing-chip inactive">Inactivo</span>')+'</div>'
               +'<div class="inv-block-cell right inv-num">'+spendText+'</div>'
-              +'<div class="inv-block-cell right inv-num muted">'+budgetText+'</div>'
+              +budgetCell
               +'<div class="inv-block-cell"><div class="inv-progress-cell"><div class="inv-bar-wrap"><div class="inv-bar-fill '+barCls+'" style="width:'+pctNum+'%"></div></div><span class="inv-pct '+pctLabel+'">'+pctText+'</span></div></div>'
               +'</div>';
           }).join('');
@@ -2412,6 +2481,108 @@ export function renderInvestment({ user }) {
       fromEl.value=init.from;toEl.value=init.to;
       rpState.from=parseISO(init.from);rpState.to=parseISO(init.to);
       updateTrigger();setActive('mtd');reload();
+
+      // ─── Budget edit modal (per-client) ────────────────────────────
+      var modal=document.getElementById('inv-budget-modal');
+      function modalEl(role){return modal.querySelector('[data-role="'+role+'"]')}
+      function fmtAmt(n){return Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
+      var META_ICON_STR=${JSON.stringify(META_ICON)};
+      var GADS_ICON_STR=${JSON.stringify(GADS_ICON)};
+      var PLAT_ICON={meta:META_ICON_STR,gads:GADS_ICON_STR};
+      var PLAT_LABEL={meta:'Meta Ads',gads:'Google Ads'};
+      list.addEventListener('click',function(e){
+        var btn=e.target.closest('[data-role=edit-budget]');
+        if(!btn)return;
+        e.preventDefault();
+        var row=btn.closest('.inv-block-row[data-platform]');
+        if(!row)return;
+        var block=row.closest('.inv-block');
+        if(!block)return;
+        openBudgetModal(block);
+      });
+      window.openBudgetModal=function(block){
+        if(!CAN_EDIT||!modal)return;
+        var rows=block.querySelectorAll('.inv-block-row[data-platform]');
+        if(!rows.length)return;
+        var slug=rows[0].dataset.slug;
+        var clientName=rows[0].dataset.clientName||'';
+        modalEl('modal-client-name').textContent=clientName;
+        var byPk={};
+        rows.forEach(function(r){byPk[r.dataset.platform]=r});
+        var body=modalEl('modal-body');
+        var html='<div class="budget-grid" data-client-slug="'+slug+'">';
+        ['meta','gads'].forEach(function(pk){
+          var r=byPk[pk];
+          var budget=r?Number(r.dataset.budget||0):0;
+          var alertPct=r?(r.dataset.alertPct||'80'):'80';
+          var active=r?r.dataset.platformActive!=='0':true;
+          var disabled=!r;
+          var cur=r?r.dataset.currency:'';
+          var amountDisplay=budget>0?fmtAmt(budget):'';
+          html+='<div class="budget-card'+(active?'':' platform-inactive')+(disabled?' platform-missing':'')+'" data-budget-card data-platform="'+pk+'" data-limit="'+budget+'" data-platform-active="'+(active?'1':'0')+'">'
+            +'<div class="budget-head">'
+            +'<div class="budget-icon">'+PLAT_ICON[pk]+'</div>'
+            +'<div class="budget-label">'+PLAT_LABEL[pk]+'</div>'
+            +(disabled?'<span class="budget-missing-tag">sin cuenta</span>':
+              '<button type="button" class="budget-platform-toggle" data-role="toggle-platform" onclick="togglePlatformActive(this,\\''+slug+'\\',\\''+pk+'\\')" title="Pausar/activar plataforma" aria-label="Pausar/activar">'
+              +'<svg data-role="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+              +'<svg data-role="play-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><polygon points="6 4 20 12 6 20 6 4"/></svg>'
+              +'</button>'
+              +'<button type="button" class="budget-save" data-role="save-budget" title="Guardar presupuesto" aria-label="Guardar">'
+              +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>'
+              +'</button>')
+            +'</div>'
+            +'<div class="budget-progress">'
+              +'<div class="budget-bar"><div class="budget-bar-fill" data-role="bar-fill" style="width:0%"></div></div>'
+              +'<div class="budget-usage">'
+                +'<span data-role="usage-line"><span class="spend" data-role="spend-txt">&#8212;</span> <span class="limit" data-role="limit-txt">'+(budget>0?'/ '+curSym(cur)+' '+fmtAmt(budget):'/ sin presupuesto')+' &#183; alerta al '+alertPct+'%</span></span>'
+                +'<span class="pct" data-role="pct-txt">'+(budget>0?'&#8212;':'')+'</span>'
+              +'</div>'
+            +'</div>'
+            +'<div class="budget-editor">'
+              +'<div class="budget-field">'
+                +'<label class="budget-sublabel">Presupuesto mensual</label>'
+                +'<div class="budget-input-wrap">'
+                  +'<span class="prefix">$</span>'
+                  +'<input type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="'+amountDisplay+'" data-role="amount" data-initial="'+(budget||'')+'" oninput="formatBudgetAmount(this)"'+(disabled?' disabled':'')+'>'
+                  +'<span class="suffix">/mes</span>'
+                +'</div>'
+              +'</div>'
+              +'<div class="budget-field">'
+                +'<label class="budget-sublabel">Alertar al</label>'
+                +'<div class="budget-input-wrap">'
+                  +'<input type="number" min="1" max="100" step="1" placeholder="80" value="'+alertPct+'" data-role="alert_pct" data-initial="'+alertPct+'" oninput="markBudgetDirty(this)"'+(disabled?' disabled':'')+'>'
+                  +'<span class="suffix">% consumido</span>'
+                +'</div>'
+              +'</div>'
+            +'</div>'
+          +'</div>';
+        });
+        html+='</div>';
+        body.innerHTML=html;
+        // Paint existing spend into bars
+        rows.forEach(function(r){
+          var pk=r.dataset.platform;
+          var card=body.querySelector('.budget-card[data-platform="'+pk+'"]');
+          if(!card)return;
+          var spendCell=r.children[3];
+          var spendRaw=spendCell?(spendCell.textContent||'').replace(/[^0-9]/g,''):'';
+          var spend=spendRaw?Number(spendRaw):0;
+          var limit=Number(r.dataset.budget||0);
+          if(typeof window.paintBudgetBar==='function')window.paintBudgetBar(card,spend,limit);
+        });
+        modal.classList.add('open');
+      };
+      window.closeBudgetModal=function(){
+        if(!modal)return;
+        modal.classList.remove('open');
+        var body=modalEl('modal-body');if(body)body.innerHTML='';
+        // Reload to reflect any budget change back into the table
+        reload();
+      };
+      document.addEventListener('keydown',function(e){
+        if(e.key==='Escape'&&modal&&modal.classList.contains('open'))closeBudgetModal();
+      });
     })();
     <\/script>`;
   return layout({ user, active: 'investment', title: 'Inversión', body });
@@ -3049,34 +3220,8 @@ export function renderClientEditView({ user, target, flash }) {
       <div class="acc-list-container">${platformsHtml}${kommoHtml}</div>
     </div>
 
-    <div class="card">
-      <h2>Principales puntos</h2>
-      <div class="notes-list">
-        <div class="note-item">
-          <div class="note-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/>
-              <line x1="10" y1="22" x2="14" y2="22"/>
-            </svg>
-          </div>
-          <div class="note-body">
-            <div class="note-title">Ejemplo de punto a destacar</div>
-            <div class="note-desc">Ac&aacute; va una breve descripci&oacute;n del punto. Pod&eacute;s usarlo para dejar contexto importante del cliente: alertas internas, c&oacute;mo tratarlo, acuerdos verbales, etc.</div>
-          </div>
-        </div>
-      </div>
-    </div>
     ${kommoModal}
   </div>
-  <style>
-    .notes-list{display:flex;flex-direction:column;gap:.8rem}
-    .note-item{display:grid;grid-template-columns:48px 1fr;gap:1rem;align-items:flex-start;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:6px;background:var(--card)}
-    .note-icon{width:40px;height:40px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--muted)}
-    .note-icon svg{width:22px;height:22px}
-    .note-body{min-width:0}
-    .note-title{font-weight:700;font-size:.98rem;color:var(--ink);margin-bottom:.25rem}
-    .note-desc{font-size:.88rem;color:var(--muted);line-height:1.5}
-  </style>
   <style>
     .kommo-exp-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .6rem;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.01em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
     .kommo-exp-ok{background:rgba(43,191,125,.12);color:#1f8f5a;border:1px solid rgba(43,191,125,.3)}
