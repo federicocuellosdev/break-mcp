@@ -1524,6 +1524,7 @@ const CLIENT_JS = `
       var spendTxt=card.querySelector('[data-role=spend-txt]');
       var spend=spendTxt?Number((spendTxt.textContent||'').replace(/[^0-9]/g,''))||0:0;
       if(typeof window.paintBudgetBar==='function')window.paintBudgetBar(card,spend,amount);
+      card.dispatchEvent(new CustomEvent('budget-saved',{bubbles:true,detail:{slug:slug,platform:platform,amount:amount,alert_pct:pct,spend:spend}}));
       setBudgetBtnState(btn,'saved','Guardado');
       setTimeout(function(){setBudgetBtnState(btn,'idle','Guardar');btn.classList.remove('saved','err');card.classList.remove('editing')},1200);
     }catch(e){
@@ -2571,14 +2572,44 @@ export function renderInvestment({ user }) {
           var limit=Number(r.dataset.budget||0);
           if(typeof window.paintBudgetBar==='function')window.paintBudgetBar(card,spend,limit);
         });
+        // Patch invest table row in-place on each successful save (no full reload)
+        body.addEventListener('budget-saved',function(ev){
+          var d=ev.detail||{};
+          var targetRow=byPk[d.platform];
+          if(!targetRow)return;
+          targetRow.dataset.budget=String(d.amount);
+          targetRow.dataset.alertPct=String(d.alert_pct);
+          var cur=targetRow.dataset.currency||'';
+          var budgetTxt=targetRow.querySelector('[data-role=budget-text]');
+          if(budgetTxt)budgetTxt.innerHTML=d.amount>0?fmt(d.amount,cur):'&#8212;';
+          var spend=Number(d.spend)||0;
+          var pctNum=d.amount>0?Math.min(100,Math.round((spend/d.amount)*100)):0;
+          var barFill=targetRow.querySelector('.inv-bar-fill');
+          var pctSpan=targetRow.querySelector('.inv-pct');
+          if(barFill){
+            barFill.style.width=pctNum+'%';
+            barFill.classList.remove('warn','over','neutral');
+            if(d.amount<=0)barFill.classList.add('neutral');
+            else if(spend>=d.amount)barFill.classList.add('over');
+            else if((spend/d.amount)*100>=d.alert_pct)barFill.classList.add('warn');
+          }
+          if(pctSpan){
+            pctSpan.classList.remove('ok','warn','over','muted');
+            if(d.amount<=0){pctSpan.textContent='sin presup.';pctSpan.classList.add('muted')}
+            else{
+              pctSpan.textContent=pctNum+'%';
+              if(spend>=d.amount)pctSpan.classList.add('over');
+              else if((spend/d.amount)*100>=d.alert_pct)pctSpan.classList.add('warn');
+              else pctSpan.classList.add('ok');
+            }
+          }
+        });
         modal.classList.add('open');
       };
       window.closeBudgetModal=function(){
         if(!modal)return;
         modal.classList.remove('open');
         var body=modalEl('modal-body');if(body)body.innerHTML='';
-        // Reload to reflect any budget change back into the table
-        reload();
       };
       document.addEventListener('keydown',function(e){
         if(e.key==='Escape'&&modal&&modal.classList.contains('open'))closeBudgetModal();
