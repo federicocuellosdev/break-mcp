@@ -42,7 +42,7 @@ import {
 import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
 
-const TOOLS_COUNT = 20;
+const TOOLS_COUNT = 28;
 
 function maskToken(tok) {
   if (!tok) return '';

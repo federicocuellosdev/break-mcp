@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { assertAccess } from '../users.js';
-import { listPipelines, listLeads } from '../providers/kommo.js';
+import {
+  listPipelines,
+  listLeads,
+  listNotes,
+  listContacts,
+  getLeadDetail,
+} from '../providers/kommo.js';
 
 const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
 
@@ -60,6 +66,106 @@ export function registerKommoTools(server, ctx) {
         page: page ?? 1,
         limit: limit ?? 250,
         with_contacts: !!with_contacts,
+      });
+      return asText({ client, ...data });
+    },
+  );
+
+  server.registerTool(
+    'kommo_list_notes',
+    {
+      title: 'Listar notas de Kommo (del timeline de leads, contactos o compañías)',
+      description:
+        'Devuelve notas del Kommo del cliente. Las notas son los mensajes/comentarios/llamadas que quedan registrados en el timeline de cada entidad. Si pasás lead_id trae solo las notas de ese lead; si no, trae notas de todos los leads filtradas por fecha de update. Cada nota incluye id, note_type, text (ya normalizado), created_at, created_by, responsible_user_id.',
+      inputSchema: {
+        client: z.string().describe('Slug del cliente'),
+        entity: z
+          .enum(['leads', 'contacts', 'companies'])
+          .optional()
+          .describe('Entidad dueña de las notas. Default "leads".'),
+        lead_id: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe('ID del lead cuyas notas querés. Shortcut cuando entity="leads".'),
+        entity_id: z
+          .union([z.string(), z.number()])
+          .optional()
+          .describe('ID de la entidad (usar si entity != "leads").'),
+        note_type: z
+          .string()
+          .optional()
+          .describe('Filtra por tipo: common | call_in | call_out | service_message | sms_in | sms_out | attachment | invoice_paid | geolocation | message_cashier | extended_service_message'),
+        updated_from: z.string().optional().describe('Fecha update desde: YYYY-MM-DD o unix seg'),
+        updated_to: z.string().optional().describe('Fecha update hasta: YYYY-MM-DD o unix seg'),
+        page: z.number().int().min(1).optional(),
+        limit: z.number().int().min(1).max(250).optional(),
+      },
+    },
+    async ({ client, entity, lead_id, entity_id, note_type, updated_from, updated_to, page, limit }) => {
+      assertAccess(ctx.user, client);
+      const data = await listNotes({
+        clientSlug: client,
+        entity: entity || 'leads',
+        lead_id,
+        entity_id,
+        note_type,
+        updated_from,
+        updated_to,
+        page: page ?? 1,
+        limit: limit ?? 250,
+      });
+      return asText({ client, ...data });
+    },
+  );
+
+  server.registerTool(
+    'kommo_list_contacts',
+    {
+      title: 'Listar contactos de Kommo del cliente',
+      description:
+        'Devuelve contactos del CRM con sus custom fields (ej. teléfono, email, DNI). Soporta búsqueda por query y filtro por fecha de creación.',
+      inputSchema: {
+        client: z.string().describe('Slug del cliente'),
+        query: z.string().optional().describe('Texto a buscar en nombre, teléfono, email, etc'),
+        created_from: z.string().optional().describe('YYYY-MM-DD o unix seg'),
+        created_to: z.string().optional().describe('YYYY-MM-DD o unix seg'),
+        page: z.number().int().min(1).optional(),
+        limit: z.number().int().min(1).max(250).optional(),
+      },
+    },
+    async ({ client, query, created_from, created_to, page, limit }) => {
+      assertAccess(ctx.user, client);
+      const data = await listContacts({
+        clientSlug: client,
+        query,
+        created_from,
+        created_to,
+        page: page ?? 1,
+        limit: limit ?? 250,
+      });
+      return asText({ client, ...data });
+    },
+  );
+
+  server.registerTool(
+    'kommo_lead_detail',
+    {
+      title: 'Detalle completo de un lead de Kommo',
+      description:
+        'Devuelve un lead con pipeline/stage, tags, custom fields, contactos y compañías vinculados, loss_reason y (por default) todas sus notas del timeline. Útil para contexto profundo de un lead específico.',
+      inputSchema: {
+        client: z.string().describe('Slug del cliente'),
+        lead_id: z.union([z.string(), z.number()]).describe('ID del lead'),
+        include_notes: z
+          .boolean()
+          .optional()
+          .describe('Si false, saltea el fetch de notas (más rápido). Default true.'),
+      },
+    },
+    async ({ client, lead_id, include_notes }) => {
+      assertAccess(ctx.user, client);
+      const data = await getLeadDetail(client, lead_id, {
+        include_notes: include_notes !== false,
       });
       return asText({ client, ...data });
     },
