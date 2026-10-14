@@ -42,7 +42,8 @@
         "subdomain": "previncaholding\r",
         "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjQ2YzUxNjA2YWYwMGVkNmVjODc3NTlhODI4NTEyODlkMmRlZmI2ZGYzNmNmN2Q4Y2NjNmJiMDkxZmEwZTdhZTAwMmIzZGIxMDg0ODEyMmU5In0.eyJhdWQiOiJmMzYwMDE0Ni1iOGY4LTRiMzAtYTFiMS1jOTk5Yjg5ODU4OGUiLCJqdGkiOiI0NmM1MTYwNmFmMDBlZDZlYzg3NzU5YTgyODUxMjg5ZDJkZWZiNmRmMzZjZjdkOGNjYzZiYjA5MWZhMGU3YWUwMDJiM2RiMTA4NDgxMjJlOSIsImlhdCI6MTc2ODY3MjgzOSwibmJmIjoxNzY4NjcyODM5LCJleHAiOjE4NzIyMDE2MDAsInN1YiI6IjEzNzcxMjg4IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM1MTIxOTg0LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiNjU3NTA3MWYtNzI4ZS00NTZhLThiYjgtY2UyMWFiYjVkOTllIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.Cd-dibksQGlMglyZmywAOhoQ3BrzJOpNwGWPZHI0HycyOAb3yD1VyHXCf2ESMFDXzEyV_THaalfm-b6AYHAX0NFaNYzYVW3D99q5naScfGHg0WIRzK9PIMJ4i890U5nCF_doYxXR11qqElOnKYBWXeZ7su0-H4cgPsFYJ_VlMikmWx1pzWwayHMzLdKi9mgiRDJnowLbKRMjBCbUSYJIILKJEv7UUc2S99DaqmfqufpKnSGx-cXKCOnq6wNI5X9b4qE7YM83mAq1rYf7BlhnJsJDU6q7rIKlkY2sZ9QASqIJy7fEOS7OooDp0PezUf8797PnhYbbiSFus64oQj7Yrg\r",
         "token_exp": 1872201600
-      }
+      },
+      "budgets": {}
     },
     "azahares": {
       "name": "Azahares",
@@ -105,7 +106,13 @@
       "gads_customers": [
         "6654807949"
       ],
-      "sheets": {}
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 195650,
+          "alert_pct": 80
+        }
+      }
     },
     "argenway": {
       "name": "Argenway",
@@ -124,6 +131,16 @@
         "subdomain": "argenway",
         "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjNmMWY0ZGIxNmYzZjQxYTk3NjA0ZTcxMDdjMGJjZWE4ZWE2ZTYzOTNmMjZiZTBkODRiYzJjODM5YWZiNmY2YzY4YmVmM2IyN2Q0YTkxN2Q1In0.eyJhdWQiOiJjYjdjNWI4ZS1mMWE5LTQ3YjQtYjE2Mi1iZWJiMWQ5NTUwMzMiLCJqdGkiOiIzZjFmNGRiMTZmM2Y0MWE5NzYwNGU3MTA3YzBiY2VhOGVhNmU2MzkzZjI2YmUwZDg0YmMyYzgzOWFmYjZmNmM2OGJlZjNiMjdkNGE5MTdkNSIsImlhdCI6MTc5MTM4NjY3MSwibmJmIjoxNzkxMzg2NjcxLCJleHAiOjE5MDM3Mzc2MDAsInN1YiI6IjEzMzI0OTY3IiwiYmFzZV9kb21haW4iOiJrb21tby5jb20iLCJ2ZXJzaW9uIjoyLCJzY29wZXMiOlsicHVzaF9ub3RpZmljYXRpb25zIiwiZmlsZXMiLCJjcm0iLCJmaWxlc19kZWxldGUiLCJub3RpZmljYXRpb25zIl0sImhhc2hfdXVpZCI6ImVmMDYwNWRmLWI0YmItNGUyYS1hMTczLTMxYTAxY2VjNjYwZSIsImFwaV9kb21haW4iOiJhcGktZy5rb21tby5jb20ifQ.NLQkmaYSmUhcgt0LgV2n1wC2FuhiGBrLMFPmKiqBAuqLkQ1RHxHKtFiieLp3NAgK-Qqe9PqDF5FD4hyKvtldwfD3-ZGtJF1jc2CU4wUi8VYa-kbL6z21x9b9wV6ofGtQ7B-eIsKWpgqLfrPc5VJ3s-FQqrAJKnYeAimGhHY0xEUe7fHLyLMj5uH6JMqNMZfl8N4MorhFVwaHcr4PDGqfGo2vtBbA3hEs4kFvPJC73SlDBTGDKMKoNFw9LYV55tPQ0J9f5Ow9NZ_PIcD8xmYxdSMQ3ABBZ75bHsG4yWTqLg3zyyDbZBPEqRJDSvm0UzrZrAWm_SA0DfsvlnEvfHQL3A",
         "token_exp": 1903737600
+      },
+      "budgets": {
+        "meta": {
+          "amount": 1354500,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 195650,
+          "alert_pct": 80
+        }
       }
     },
     "yafue": {
@@ -142,6 +159,16 @@
         "subdomain": "soporteyafuear",
         "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjdjYzY1M2IyZGQ1OTY3Nzg4NjU5MWY4N2Q5MmU5Njc5NTAzMjEyYzNmOGI2ZDBmYTRlMTVjN2YwNzNhODg4ZTBlNGZkMmFhZWM0MDgyNjRlIn0.eyJhdWQiOiIyODg5MzI1Zi0zOGNlLTQzYmMtYjAwMy1mNTdkY2Y0ZWIwMWUiLCJqdGkiOiI3Y2M2NTNiMmRkNTk2Nzc4ODY1OTFmODdkOTJlOTY3OTUwMzIxMmMzZjhiNmQwZmE0ZTE1YzdmMDczYTg4OGUwZTRmZDJhYWVjNDA4MjY0ZSIsImlhdCI6MTc4NzY3MjMyNiwibmJmIjoxNzg3NjcyMzI2LCJleHAiOjE4Nzc0NzIwMDAsInN1YiI6IjE0NDg4OTM5IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM1Nzk4MTgzLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiMGZjNzA0ZjgtMjc1NC00MWNhLTgwNGQtYWU0M2E1OGY2MDhlIiwiYXBpX2RvbWFpbiI6ImFwaS1nLmtvbW1vLmNvbSJ9.QzmJDr31paFZwWycY9bPWP3riIp1QPIgNUk5FEBmCaEyzEQAtQ4FAuC7XforxAyVbNPvhh32NxBjPmjLdnyhaM5WfD34O3sd9cXWWSRah19BPrELZGyVxLkOVNJIjTrNK-DCIjPdbBstdV3rTPJ294EJqCg3xbdcwossP4t5Er9L0mN7zVPBf3Y0Jp31bU9xA3CV_zJ_AOsrjzRHBgf4N6muIIka-GO0o_2EpxPTJKeDszyNHAPEytaDrfCePqM1Ve3uLoE2A57Xk0E5guh2rq0gVHkhj-juoCsV5Nimzydyl-aBJKZopYA9OHmz5J94AjKKSagkQPIBJnAThODBtw",
         "token_exp": 1877472000
+      },
+      "budgets": {
+        "meta": {
+          "amount": 270900,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 188125,
+          "alert_pct": 80
+        }
       }
     },
     "leandro-galindez": {
@@ -179,7 +206,17 @@
       "gads_customers": [
         "7894641772"
       ],
-      "sheets": {}
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 150500,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 301000,
+          "alert_pct": 80
+        }
+      }
     },
     "secoia": {
       "name": "Secoia",
@@ -192,7 +229,13 @@
       "gads_customers": [
         "9159430462"
       ],
-      "sheets": {}
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 145985,
+          "alert_pct": 80
+        }
+      }
     },
     "alma-de-rio": {
       "name": "Alma de Río",
@@ -203,7 +246,13 @@
         "act_307428198255510"
       ],
       "gads_customers": [],
-      "sheets": {}
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 111200,
+          "alert_pct": 80
+        }
+      }
     },
     "maytronics": {
       "name": "Maytronics LATAM",
@@ -229,7 +278,17 @@
       "gads_customers": [
         "2766347449"
       ],
-      "sheets": {}
+      "sheets": {},
+      "budgets": {
+        "meta": {
+          "amount": 2000,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 1000,
+          "alert_pct": 80
+        }
+      }
     },
     "coas": {
       "name": "COAS",
@@ -245,6 +304,16 @@
         "subdomain": "marketingcoassaludcom",
         "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImViNjNkNjc1NDE0ZTg5MGJlZDM3NGU2MmExOTdiM2E3YTg0MWEyYWU1OTYzZmRkNTUyN2M2OGE0ZjVlMDM1ZDU4Mjc2ZTg2YmViNjViMjZhIn0.eyJhdWQiOiIxZTExYzFhNS1mNWFkLTQ4OGQtODAzZC0xMmI2NzVlNWY5YjAiLCJqdGkiOiJlYjYzZDY3NTQxNGU4OTBiZWQzNzRlNjJhMTk3YjNhN2E4NDFhMmFlNTk2M2ZkZDU1MjdjNjhhNGY1ZTAzNWQ1ODI3NmU4NmJlYjY1YjI2YSIsImlhdCI6MTc2Mjk4MTcyNiwibmJmIjoxNzYyOTgxNzI2LCJleHAiOjE4MzAyOTc2MDAsInN1YiI6IjEzMDUyMjg3IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM0NDY2NzQ3LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiMzg5ZDNiNTYtNjAzYy00YTliLThkMGYtZDUwYjZhMTUzZjIxIiwidXNlcl9mbGFncyI6MCwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.NSyNNVNbN-1AmMlrGw2OYnHSosUcKksQYzVDjSvDfB5ojtbLPM4chrpXQEa_NR2SuL8C3EQEMEE3Uq3b6PvTyADUwB2HewFfKbQmAPeJ__b7fS3DZrsfvQFeaIVIUqXzu9gLMiex65ErI2vpcE5AOcWqYnbz4xKVYusxe68GlCDbdtyKaLrqXJsBufsX6sF8ILUIZAf86HzmyzfItWsA6Q1n5gJpEzaOji3Ue3ocDbdR3xmSTjzONxkALGauXcV0dvodl2G061mRVKxCOAfGmwaXsoi-mYG0H5VtwZWf4YMclZ1l0IqBGBQ8cUMeGilStIydDXQtaZMeK5PPCWFdbA",
         "token_exp": 1830297600
+      },
+      "budgets": {
+        "meta": {
+          "amount": 421400,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 150500,
+          "alert_pct": 80
+        }
       }
     },
     "ampip": {
@@ -375,7 +444,17 @@
         "6319900433"
       ],
       "sheets": {},
-      "active": false
+      "active": false,
+      "budgets": {
+        "meta": {
+          "amount": 270900,
+          "alert_pct": 80
+        },
+        "gads": {
+          "amount": 75250,
+          "alert_pct": 80
+        }
+      }
     },
     "break-talent": {
       "name": "Break Talent",

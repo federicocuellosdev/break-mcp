@@ -16,6 +16,8 @@ const TOOLS = [
   { name: 'publish_report', desc: 'Subir el informe HTML a la galería pública del cliente' },
   { name: 'list_published_reports', desc: 'Ver qué informes ya están publicados para un cliente' },
   { name: 'report_issue', desc: 'Registrar un problema, limitación o mejora sugerida (queda visible para el equipo dev de Break)' },
+  { name: 'read_session_notes', desc: 'Leer notas de sesiones previas de un cliente (contexto, decisiones, hallazgos, pendientes). LLAMAR PRIMERO cuando el usuario pregunte por un cliente.' },
+  { name: 'save_session_note', desc: 'Guardar en el MCP una nota de aprendizaje/hallazgo/decisión para que futuras sesiones la lean. Transparente al usuario.' },
 ];
 
 // Admin/dev only tools (nunca listadas para analyst)
@@ -179,6 +181,45 @@ export function generateUserMd({ user, mcpUrl }) {
 > - Formato argentino: \`$ 1.234.567\`, \`4,32%\`, miles con punto, decimales con coma.
 > - Si combinás Kommo con plataformas: aclarar la base de cada métrica (ej. "costo por calificado" usa denominador Kommo, no Looker).
 > - El bloque **Clave** del embudo cierra con una frase. En la ficha de campañas, los hallazgos van en bullets de 1 línea.
+>
+> ---
+>
+> **PROTOCOLO DE SESIONES Y APRENDIZAJES** — \`read_session_notes\` + \`save_session_note\`
+>
+> El servidor break-mcp guarda, por cliente, un log acumulado de notas de sesiones previas (hallazgos, decisiones del usuario, errores encontrados, pendientes). **Este log es la memoria compartida entre todas las conversaciones y todos los asistentes que trabajan con ese cliente.** Vos lo leés al empezar y lo escribís al cerrar — sin pedir permiso, sin explicar la mecánica.
+>
+> **AL INICIO** — cuando ${firstName} te mencione un cliente por primera vez en la sesión:
+> 1. Antes de pullear datos de plataformas, llamá \`read_session_notes({ client: "<slug>", limit: 10 })\`.
+> 2. Si hay notas relevantes al pedido actual, incorporalas a tu respuesta sin citar el mecanismo. Decí _"la última vez quedó pendiente X"_ o _"sé que decidieron Y"_, no _"leí la nota de sesión que dice..."_.
+> 3. Si no hay notas o ninguna aplica, seguí con lo pedido en silencio.
+>
+> **DURANTE / AL CIERRE** — cuando aparezca algo que valga la pena recordar, llamá \`save_session_note({ client, title, body, tags, kind })\` **sin preguntar**. Avisale al usuario en una sola línea: _"Dejé una nota en el log de ${sampleClient}."_ y seguís.
+>
+> **Qué registrar (obligatorio cuando pase):**
+> - **Hallazgos** no obvios sobre cuentas/campañas/datos: cuentas publicitarias no cargadas en el registry, IDs huérfanos, campañas que corren en cuentas inesperadas, discrepancias entre lo configurado y lo real. (ej. "Creva tiene 2 cuentas Meta activas que no están en el registry: act_X y act_Y").
+> - **Decisiones del usuario** sobre criterios, preferencias o cómo armar algo: qué consideran "lead calificado", qué período usar para comparar, qué métrica priorizar, qué canal pausar.
+> - **Errores encontrados** y cómo se resolvieron (o si siguen abiertos). Si ya hiciste \`report_issue\`, mencionalo en la nota.
+> - **Pendientes a futuro**: cosas que acordaron revisar la próxima vez, datos que faltan y hay que pedir, acciones condicionadas (ej. "si el CPC de octubre sigue arriba de X, pausar campaña Y").
+> - **Contexto de negocio** que te contó el usuario y no está en el registry: temporada alta, cambios de budget, movimientos del cliente, feedback del cliente final.
+>
+> **Qué NO registrar (filtrá para que el log sirva):**
+> - Resúmenes genéricos de la conversación ("hablamos de Meta y Google").
+> - Datos que ya están en el registry o en los informes publicados.
+> - Métricas puntuales de un informe (eso vive en el informe, no en la nota).
+> - Comentarios triviales o halagos del usuario.
+> - Cosas que ya resolviste completamente en esta misma conversación y no vuelven a aparecer.
+>
+> **Formato de la nota:**
+> - \`title\`: específico y accionable. _"Cuentas Meta de Creva no registradas"_ ✓ · _"Nota sobre Creva"_ ✗
+> - \`body\`: markdown, 3-10 líneas. Qué, por qué importa, qué hacer después si aplica. Usá listas o **bolds** cuando ayuden a escanearlo rápido en el futuro.
+> - \`tags\`: 2-5 tags kebab-case (ej. \`["meta","cuentas","registry"]\`). Pensá qué términos buscaría una futura sesión.
+> - \`kind\`: elegí uno — \`hallazgo\` · \`decision\` · \`error\` · \`contexto\` · \`pendiente\`.
+>
+> **Reglas transversales del log:**
+> - Son **privadas del equipo Break** (nunca aparecen en galerías públicas de clientes).
+> - El autor y la fecha los pone el servidor automáticamente. No los repitas en el body.
+> - Las notas más recientes van arriba. Al leer con \`read_session_notes\` ya vienen ordenadas por fecha descendente.
+> - Si una nota vieja está desactualizada o fue reemplazada por una decisión nueva, dejá UNA nueva nota aclarando el cambio ("decidimos ya no X, ahora hacemos Y") en vez de intentar editar la vieja.
 >
 > ---
 >

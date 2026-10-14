@@ -4,6 +4,7 @@ node_modules/
 config/users.json
 config/logs.json
 public/reports/
+data/session_notes/
 *.log
 .DS_Store
 

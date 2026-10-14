@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -10,6 +10,28 @@ function filePath() {
   return process.env.LOGS_FILE || DEFAULT_PATH;
 }
 
+export function logsStorageInfo() {
+  const p = filePath();
+  const custom = !!process.env.LOGS_FILE;
+  let exists = false;
+  let size = null;
+  let mtime = null;
+  try {
+    const s = statSync(p);
+    exists = true;
+    size = s.size;
+    mtime = s.mtime.toISOString();
+  } catch {}
+  return {
+    path: p,
+    using_custom_path: custom,
+    exists,
+    size,
+    mtime,
+    ephemeral_warning: !custom,
+  };
+}
+
 function load() {
   const p = filePath();
   if (!existsSync(p)) return { logs: [] };
@@ -18,7 +40,9 @@ function load() {
 }
 
 function persist(db) {
-  writeFileSync(filePath(), JSON.stringify(db, null, 2) + '\n');
+  const p = filePath();
+  mkdirSync(dirname(p), { recursive: true });
+  writeFileSync(p, JSON.stringify(db, null, 2) + '\n');
 }
 
 export function listLogs() {
@@ -42,6 +66,15 @@ export function createLog({ userId, userName, title, description }) {
   };
   db.logs.push(entry);
   persist(db);
+
+  const verify = load();
+  const persisted = verify.logs.some((l) => l.id === entry.id);
+  if (!persisted) {
+    throw new Error(
+      `Log write FAILED verification: entry ${entry.id} not found after write at ${filePath()}. Possible ephemeral filesystem.`,
+    );
+  }
+
   return entry;
 }
 

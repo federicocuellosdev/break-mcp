@@ -70,6 +70,16 @@ export function listClients() {
       sheets: c.sheets || {},
       budgets: c.budgets || {},
       platforms_active: c.platforms_active || {},
+      kommo: c.kommo
+        ? {
+            subdomain: c.kommo.subdomain,
+            token_exp: c.kommo.token_exp ?? null,
+            expired:
+              c.kommo.token_exp != null
+                ? Number(c.kommo.token_exp) * 1000 < Date.now()
+                : null,
+          }
+        : null,
     };
   });
 }

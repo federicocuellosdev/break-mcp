@@ -7,6 +7,8 @@ import { registerGa4Tools } from './tools/ga4.js';
 import { registerReportTools } from './tools/report.js';
 import { registerLogsTools } from './tools/logs.js';
 import { registerBillingTools } from './tools/billing.js';
+import { registerNotesTools } from './tools/notes.js';
+import { registerKommoTools } from './tools/kommo.js';
 
 export function createServer({ user }) {
   const server = new McpServer({
@@ -24,6 +26,8 @@ export function createServer({ user }) {
   registerReportTools(server, ctx);
   registerLogsTools(server, ctx);
   registerBillingTools(server, ctx);
+  registerNotesTools(server, ctx);
+  registerKommoTools(server, ctx);
 
   return server;
 }

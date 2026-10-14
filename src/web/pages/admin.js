@@ -3729,8 +3729,17 @@ function formatLogAsText(l) {
   ].join('\n');
 }
 
-export function renderLogsView({ user, logs, flash }) {
+export function renderLogsView({ user, logs, flash, storage }) {
   const list = logs || [];
+  const warnBanner = storage && storage.ephemeral_warning
+    ? `
+<div style="margin:0 0 1.1rem;padding:.95rem 1.1rem;border:1px solid #e9c46a;background:#fff8e1;border-radius:12px;color:#5a4a00;font-size:.9rem;line-height:1.5">
+  <strong>&#9888; Persistencia ef&#237;mera.</strong> La variable <code>LOGS_FILE</code> no est&#225; seteada, por lo que los logs se guardan en <code>${esc(storage.path)}</code> dentro del contenedor y <strong>se pierden en cada redeploy o reinicio</strong>. Montar un disco persistente en Render y setear <code>LOGS_FILE=/data/logs.json</code> (y lo mismo con <code>CLIENTS_FILE</code>) para que esto quede.
+  <div style="margin-top:.5rem;font-size:.82rem;color:#6b5a1a">
+    estado actual &#8594; existe=${storage.exists ? 's&#237;' : 'no'}${storage.size != null ? ` &#183; size=${storage.size}B` : ''}${storage.mtime ? ` &#183; mtime=${esc(storage.mtime)}` : ''}
+  </div>
+</div>`
+    : '';
   const rows = list.length
     ? list
         .map((l) => {
@@ -3772,6 +3781,7 @@ export function renderLogsView({ user, logs, flash }) {
 
   const body = list.length
     ? `
+${warnBanner}
 ${topBar}
     <div class="table-wrap">
       <table class="logs-table">
@@ -3787,7 +3797,7 @@ ${topBar}
         <tbody>${rows}</tbody>
       </table>
     </div>`
-    : `
+    : `${warnBanner}
 <div class="reports-empty" style="margin:0">No hay logs todav&#237;a. Las IA de los clientes pueden reportar problemas o limitaciones llamando al tool <code>report_issue</code> desde el MCP.</div>`;
 
   return layout({ user, active: 'logs', title: 'Logs', body, flash });

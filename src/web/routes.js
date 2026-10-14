@@ -40,9 +40,9 @@ import {
   renderLogsView,
 } from './pages/admin.js';
 import { generateUserMd } from '../mdConfig.js';
-import { listLogs, deleteLog } from '../logs.js';
+import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
 
-const TOOLS_COUNT = 18;
+const TOOLS_COUNT = 20;
 
 function maskToken(tok) {
   if (!tok) return '';
@@ -615,9 +615,10 @@ export function createWebRouter() {
   // -------- LOGS (dev-only) --------
   router.get('/admin/logs', requireLogin, requireDev, (req, res) => {
     const logs = listLogs();
+    const storage = logsStorageInfo();
     res
       .set('Content-Type', 'text/html; charset=utf-8')
-      .send(renderLogsView({ user: res.locals.user, logs, flash: flashFromQuery(req) }));
+      .send(renderLogsView({ user: res.locals.user, logs, storage, flash: flashFromQuery(req) }));
   });
 
   router.post('/admin/logs/:id/delete', requireLogin, requireDev, (req, res) => {
