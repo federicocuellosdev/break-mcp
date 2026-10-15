@@ -13,7 +13,7 @@ import {
   allowedClientSlugs,
 } from '../users.js';
 import { listMccChildren } from '../providers/gads.js';
-import { listAccountSummaries } from '../providers/ga4.js';
+import { listAccountSummaries, recentActivity } from '../providers/ga4.js';
 import {
   listClients,
   getClient,
@@ -319,6 +319,23 @@ export function createWebRouter() {
       res.json({ accounts });
     } catch (e) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.get('/admin/api/ga4-health', requireLogin, requireAdmin, async (req, res) => {
+    const propertyId = String(req.query.property_id || '').replace(/^properties\//, '');
+    if (!propertyId) return res.status(400).json({ error: 'property_id requerido' });
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+      return res.json({ status: 'unconfigured', sessions: 0, days: 3 });
+    }
+    try {
+      const info = await recentActivity({ propertyId, days: 3 });
+      const status = info.sessions > 0 ? 'ok' : 'stale';
+      res.json({ status, ...info });
+    } catch (e) {
+      const msg = String(e.message || '');
+      const isAuth = /PERMISSION_DENIED|403|not have sufficient permissions/i.test(msg);
+      res.json({ status: isAuth ? 'no_access' : 'error', sessions: 0, days: 3, message: msg.slice(0, 200) });
     }
   });
 

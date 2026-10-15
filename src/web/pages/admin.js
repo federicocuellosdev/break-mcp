@@ -237,8 +237,8 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .accounts-loading.err{color:var(--coral)}
 .accounts-loading.warn{color:#8a6d00;background:#fff8e1;border-radius:8px}
 .cap-help{margin-top:1rem}
-.cap-help-title{margin:0 0 .4rem;font-size:.95rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
-.cap-sa-paragraph{margin:0;font-size:.88rem;line-height:1.65;color:var(--muted)}
+.cap-help-title{margin:0 0 .35rem;font-size:.85rem;font-weight:700;color:var(--ink);letter-spacing:-.005em}
+.cap-sa-paragraph{margin:0;color:var(--muted);font-size:.85rem;line-height:1.5}
 .cap-sa-paragraph strong{color:var(--ink);font-weight:600}
 .cap-sa-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.1rem .55rem;margin:0 0 0 .15rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;font:500 .82rem 'JetBrains Mono','Menlo',monospace;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s,background .15s;vertical-align:baseline;line-height:1.6}
 .cap-sa-chip:hover{color:var(--ink);border-color:#bfb9c6;background:var(--card)}
@@ -306,6 +306,13 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .acc-list-head .btn-row{padding:.3rem .6rem;font-size:.6rem}
 .acc-list-rows{display:flex;flex-direction:column;min-height:60px}
 .acc-list-row{display:flex;align-items:center;gap:.55rem;padding:.7rem .9rem;border-bottom:1px solid var(--line);transition:background .12s;min-width:0}
+.ga4-health-chip{flex-shrink:0;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .55rem;border-radius:100px;line-height:1;cursor:default;transition:background .15s,color .15s}
+.ga4-health-loading{background:var(--soft);color:var(--muted)}
+.ga4-health-ok{background:#e6f5ee;color:var(--green)}
+.ga4-health-stale{background:#fff3d1;color:#8a6d00}
+.ga4-health-no_access{background:var(--coral-soft);color:var(--coral)}
+.ga4-health-unconfigured{background:var(--soft);color:var(--muted)}
+.ga4-health-error{background:var(--coral-soft);color:var(--coral)}
 .acc-list-row:last-child{border-bottom:none}
 .acc-list-row:hover{background:var(--soft)}
 .acc-list-name{flex:1;font-weight:600;color:var(--ink);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -1098,15 +1105,45 @@ const CLIENT_JS = `
 
   // ─── Enrich client account rows on load ───────────────────────
   var ENRICH_STATUS_LABEL={ENABLED:'Habilitada',SUSPENDED:'Suspendida',CANCELED:'Cancelada',CLOSED:'Cerrada'};
+  var GA4_HEALTH_COPY={
+    ok:{label:'Al día',title:'Recibió datos en los últimos 3 días'},
+    stale:{label:'Sin datos',title:'Sin sesiones en los últimos 3 días'},
+    no_access:{label:'Sin acceso',title:'La cuenta de servicio no tiene permiso en esta property'},
+    unconfigured:{label:'No configurado',title:'Falta la credencial GOOGLE_SERVICE_ACCOUNT_JSON'},
+    error:{label:'Error',title:'Error al consultar la Data API'}
+  };
+  async function enrichGa4Health(row){
+    var chip=row.querySelector('[data-role="ga4-health"]');
+    if(!chip)return;
+    var id=row.dataset.accountId;
+    if(!id)return;
+    try{
+      var r=await fetch('/admin/api/ga4-health?property_id='+encodeURIComponent(id),{headers:{Accept:'application/json'}});
+      var data=await r.json();
+      var state=data.status||'error';
+      var copy=GA4_HEALTH_COPY[state]||GA4_HEALTH_COPY.error;
+      chip.classList.remove('ga4-health-loading');
+      chip.classList.add('ga4-health-'+state);
+      chip.textContent=copy.label;
+      var title=copy.title;
+      if(state==='ok'&&data.sessions)title+=' · '+Number(data.sessions).toLocaleString('es-AR')+' sesiones';
+      chip.title=title;
+    }catch(e){
+      chip.classList.remove('ga4-health-loading');
+      chip.classList.add('ga4-health-error');
+      chip.textContent='Error';
+      chip.title=String(e.message||'').slice(0,160);
+    }
+  }
   async function enrichClientAccounts(){
     var blocks=document.querySelectorAll('.acc-list-block');
     if(!blocks.length)return;
-    // Billing summary se carga una vez y se comparte entre todos los bloques
     var billingPromise=fetch('/admin/api/billing-summary',{headers:{Accept:'application/json'}}).then(function(r){return r.json()}).catch(function(){return null});
     blocks.forEach(async function(block){
       var platform=block.dataset.platform;
       var rows=block.querySelectorAll('.acc-list-row');
       if(!rows.length)return;
+      if(platform==='ga4'){rows.forEach(enrichGa4Health)}
       try{
         var r=await fetch('/admin/api/'+platform+'-accounts',{headers:{Accept:'application/json'}});
         var data=await r.json();
@@ -3200,6 +3237,7 @@ export function renderClientEditView({ user, target, flash }) {
               (id) => `
               <div class="acc-list-row" data-account-id="${esc(id)}">
                 <span class="acc-list-name" data-role="name"><span class="muted" style="font-weight:400">Cargando&#8230;</span></span>
+                ${p.key === 'ga4' ? `<span class="ga4-health-chip ga4-health-loading" data-role="ga4-health" title="Chequeando actividad">&#8230;</span>` : ''}
                 <span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${esc(String(id).replace(/^act_/, ''))}</span>
                 <button type="button" class="icon-action danger" onclick="removeClientAccount(this,'${esc(p.key)}','${esc(id)}')" title="Quitar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -3477,7 +3515,7 @@ function clientAccountPickerModal() {
       <p class="accounts-modal-note">Se&#241;al&#225; qu&#233; cuentas quer&#233;s asociar al cliente. Pod&#233;s elegir m&#225;s de una.</p>
       <div class="cap-help" id="cap-ga4-help" hidden>
         <h4 class="cap-help-title">Mail para darle acceso</h4>
-        <p class="cap-sa-paragraph">Pegalo como <strong>Viewer</strong> en Google Analytics &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong> de la cuenta del cliente: <button type="button" class="cap-sa-chip" id="cap-sa-chip" onclick="capCopySaEmail(this)" title="Click para copiar"><span id="cap-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
+        <p class="cap-sa-paragraph">Pegalo como <strong>lector</strong> en Google Analytics &#8594; <strong>Administrar</strong> &#8594; <strong>Gestión del acceso de la propiedad</strong> de la cuenta del cliente: <button type="button" class="cap-sa-chip" id="cap-sa-chip" onclick="capCopySaEmail(this)" title="Click para copiar"><span id="cap-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
       </div>
       <div class="cap-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>

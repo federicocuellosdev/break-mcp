@@ -69,3 +69,25 @@ export async function listProperties({ accountId }) {
 export async function listAccountSummaries() {
   return get(`${ADMIN}/accountSummaries?pageSize=200`);
 }
+
+// Chequea si una property recibió datos en los últimos N días.
+// Devuelve: { ok, sessions, last_date, days }  ·  tira error si falla API/auth.
+export async function recentActivity({ propertyId, days = 3 }) {
+  const body = {
+    dimensions: [{ name: 'date' }],
+    metrics: [{ name: 'sessions' }],
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: 'today' }],
+    orderBys: [{ dimension: { dimensionName: 'date' }, desc: true }],
+    limit: 10,
+  };
+  const data = await post(`${BASE}/properties/${propertyId}:runReport`, body);
+  const rows = data.rows || [];
+  let total = 0;
+  let lastDate = null;
+  for (const r of rows) {
+    const v = Number(r.metricValues?.[0]?.value || 0);
+    total += v;
+    if (v > 0 && !lastDate) lastDate = r.dimensionValues?.[0]?.value || null;
+  }
+  return { ok: true, sessions: total, last_date: lastDate, days };
+}
