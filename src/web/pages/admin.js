@@ -236,16 +236,14 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .accounts-loading{padding:1.4rem .8rem;text-align:center;color:var(--muted);font-size:.85rem}
 .accounts-loading.err{color:var(--coral)}
 .accounts-loading.warn{color:#8a6d00;background:#fff8e1;border-radius:8px}
-.cap-help{margin-top:1.1rem}
-.cap-sa-label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
-.cap-sa-field{display:flex;gap:.5rem;align-items:stretch}
-.cap-sa-field input{flex:1;min-width:0;padding:.65rem .9rem;border:1px solid var(--line);border-radius:8px;background:var(--card);font:500 .85rem 'JetBrains Mono','Menlo',monospace;color:var(--ink);outline:none;transition:border-color .15s}
-.cap-sa-field input:focus{border-color:var(--pink)}
-.cap-sa-copy{flex-shrink:0;width:40px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
-.cap-sa-copy:hover{color:var(--ink);border-color:#bfb9c6}
-.cap-sa-copy svg{width:14px;height:14px}
-.cap-sa-hint{margin:.75rem 0 0;font-size:.82rem;line-height:1.55;color:var(--muted)}
-.cap-sa-hint strong{color:var(--ink);font-weight:600}
+.cap-help{margin-top:1rem}
+.cap-sa-paragraph{margin:0;font-size:.88rem;line-height:1.65;color:var(--muted)}
+.cap-sa-paragraph strong{color:var(--ink);font-weight:600}
+.cap-sa-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.1rem .55rem;margin:0 0 0 .15rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;font:500 .82rem 'JetBrains Mono','Menlo',monospace;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s,background .15s;vertical-align:baseline;line-height:1.6}
+.cap-sa-chip:hover{color:var(--ink);border-color:#bfb9c6;background:var(--card)}
+.cap-sa-chip svg{width:12px;height:12px;opacity:.65}
+.cap-sa-chip.copied{color:var(--green);border-color:var(--green)}
+.cap-sa-chip.copied svg{opacity:1}
 .cap-help-actions{margin-top:1.1rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap}
 .cap-retest-btn{display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;font-size:.82rem;border-radius:100px}
 .cap-retest-btn svg{width:13px;height:13px;transition:transform .2s}
@@ -1167,8 +1165,10 @@ const CLIENT_JS = `
       var data=await r.json();
       if(platform==='ga4'){
         var saEmail=data.service_account_email||'';
-        var inp=document.getElementById('cap-sa-email');
-        if(inp)inp.value=saEmail||'(service account no configurado)';
+        var span=document.getElementById('cap-sa-email');
+        if(span)span.textContent=saEmail||'(service account no configurado)';
+        var chip=document.getElementById('cap-sa-chip');
+        if(chip)chip.dataset.email=saEmail||'';
       }
       if(!r.ok||data.error){list.innerHTML='<div class="accounts-loading err">Error: '+(data.error||r.status)+'</div>';if(modal)modal.classList.remove('has-ga4-accounts');return {ok:false,count:0}}
       var accounts=data.accounts||[];
@@ -1254,12 +1254,15 @@ const CLIENT_JS = `
   };
 
   window.capCopySaEmail=function(btn){
-    var inp=document.getElementById('cap-sa-email');
-    if(!inp||!inp.value||inp.value.startsWith('('))return;
-    navigator.clipboard.writeText(inp.value).then(function(){
-      var span=btn.querySelector('span');var old=span?span.textContent:'';
-      if(span)span.textContent='Copiado';
-      setTimeout(function(){if(span)span.textContent=old||'Copiar'},1200);
+    var email=btn&&btn.dataset?btn.dataset.email:'';
+    if(!email){
+      var span=document.getElementById('cap-sa-email');
+      email=span?span.textContent.trim():'';
+    }
+    if(!email||email.startsWith('('))return;
+    navigator.clipboard.writeText(email).then(function(){
+      btn.classList.add('copied');
+      setTimeout(function(){btn.classList.remove('copied')},1200);
     }).catch(function(){});
   };
 
@@ -3495,14 +3498,7 @@ function clientAccountPickerModal() {
       <div class="accounts-divider"></div>
       <p class="accounts-modal-note">Se&#241;al&#225; qu&#233; cuentas quer&#233;s asociar al cliente. Pod&#233;s elegir m&#225;s de una.</p>
       <div class="cap-help" id="cap-ga4-help" hidden>
-        <label class="cap-sa-label">Mail para darle acceso</label>
-        <div class="cap-sa-field">
-          <input type="text" id="cap-sa-email" readonly value="" placeholder="(cargando&#8230;)">
-          <button type="button" class="cap-sa-copy" onclick="capCopySaEmail(this)" title="Copiar mail">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          </button>
-        </div>
-        <p class="cap-sa-hint">Pegalo como <strong>Viewer</strong> en Google Analytics &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong> de la cuenta del cliente.</p>
+        <p class="cap-sa-paragraph">Pegá este mail como <strong>Viewer</strong> en Google Analytics &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong> de la cuenta del cliente: <button type="button" class="cap-sa-chip" id="cap-sa-chip" onclick="capCopySaEmail(this)" title="Click para copiar"><span id="cap-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
         <div class="cap-help-actions">
           <button type="button" class="btn ghost cap-retest-btn" onclick="capRetestGa4()" id="cap-retest-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
