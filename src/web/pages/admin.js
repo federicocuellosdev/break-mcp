@@ -236,6 +236,30 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .accounts-loading{padding:1.4rem .8rem;text-align:center;color:var(--muted);font-size:.85rem}
 .accounts-loading.err{color:var(--coral)}
 .accounts-loading.warn{color:#8a6d00;background:#fff8e1;border-radius:8px}
+.cap-help{margin-top:1rem;padding:1rem 1.1rem;background:#f6f0fb;border:1px solid #e2d4ec;border-radius:10px}
+.cap-help-title{display:flex;align-items:flex-start;gap:.55rem;flex-wrap:wrap;font-size:.9rem;color:var(--ink);line-height:1.5}
+.cap-help-title svg{width:16px;height:16px;color:#8a4bb8;flex-shrink:0;margin-top:.15rem}
+.cap-help-title strong{font-weight:700}
+.cap-help-title span{color:var(--muted);display:block;width:100%;font-size:.82rem;margin-top:.1rem}
+.cap-help-steps{margin:.75rem 0 0;padding-left:1.25rem;font-size:.84rem;line-height:1.6;color:var(--ink)}
+.cap-help-steps li{margin:0 0 .3rem}
+.cap-help-steps a{color:#0073d1;text-decoration:none;border-bottom:1px dashed rgba(0,115,209,.4)}
+.cap-help-steps a:hover{border-bottom-style:solid}
+.cap-sa-row{margin-top:.9rem}
+.cap-sa-label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.cap-sa-field{display:flex;gap:.5rem;align-items:stretch}
+.cap-sa-field input{flex:1;padding:.5rem .75rem;border:1px solid var(--line);border-radius:8px;background:#fff;font:500 .82rem 'JetBrains Mono','Menlo',monospace;color:var(--ink)}
+.cap-sa-copy{padding:.4rem .75rem;font-size:.8rem;border-radius:8px;display:inline-flex;align-items:center;gap:.35rem;cursor:pointer}
+.cap-sa-copy svg{width:13px;height:13px}
+.cap-help-actions{margin-top:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.cap-help-actions .btn.primary{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;font-size:.85rem}
+.cap-help-actions .btn.primary svg{width:14px;height:14px;transition:transform .2s}
+.cap-help-actions .btn.primary.is-loading svg{animation:cap-spin .8s linear infinite}
+@keyframes cap-spin{to{transform:rotate(360deg)}}
+.cap-retest-status{font-size:.82rem;color:var(--muted);line-height:1.4}
+.cap-retest-status.ok{color:var(--green)}
+.cap-retest-status.warn{color:#8a6d00}
+.cap-retest-status.err{color:var(--coral)}
 .account-row{display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;cursor:pointer;transition:background .12s;font-size:.9rem;border-bottom:1px solid var(--line)}
 .account-row:last-child{border-bottom:none}
 .account-row:hover{background:var(--soft)}
@@ -1131,27 +1155,24 @@ const CLIENT_JS = `
   var PLATFORM_LABELS_CAP={meta:'Meta Ads',gads:'Google Ads',ga4:'Google Analytics 4'};
   var capState={platform:null,selected:new Set(),existing:new Set()};
 
-  window.openClientAccountPicker=async function(platform){
-    var container=document.querySelector('[data-client-slug]');
-    if(!container){showSavedToast('Contexto no v&#225;lido','error');return}
-    capState.platform=platform;
-    capState.selected=new Set();
-    capFilters.search='';capFilters.status='';
-    var searchInp=document.getElementById('cap-search');
-    if(searchInp)searchInp.value='';
-    // Collect existing account IDs for this platform (to prevent duplicates)
-    var block=document.querySelector('.acc-list-block[data-platform="'+platform+'"]');
-    capState.existing=new Set([].map.call(block.querySelectorAll('.acc-list-row'),function(r){return r.dataset.accountId}));
-    document.getElementById('cap-platform-label').textContent=PLATFORM_LABELS_CAP[platform];
+  async function capFetchAndRender(){
+    var platform=capState.platform;
     var list=document.getElementById('cap-list');
-    list.innerHTML='<div class="accounts-loading">Cargando cuentas...</div>';
-    openModal('client-acc-modal');
     try{
       var r=await fetch('/admin/api/'+platform+'-accounts',{headers:{Accept:'application/json'}});
       var data=await r.json();
-      if(!r.ok||data.error){list.innerHTML='<div class="accounts-loading err">Error: '+(data.error||r.status)+'</div>';return}
+      // Email del SA siempre que venga: lo seteamos tanto si hay cuentas como si no
+      if(platform==='ga4'){
+        var saEmail=data.service_account_email||'';
+        var inp=document.getElementById('cap-sa-email');
+        if(inp)inp.value=saEmail||'(service account no configurado)';
+      }
+      if(!r.ok||data.error){list.innerHTML='<div class="accounts-loading err">Error: '+(data.error||r.status)+'</div>';return {ok:false,count:0}}
       var accounts=data.accounts||[];
-      if(!accounts.length){list.innerHTML='<div class="accounts-loading warn">'+(data.notice||'No hay cuentas disponibles.')+'</div>';return}
+      if(!accounts.length){
+        list.innerHTML='<div class="accounts-loading warn">'+(data.notice||'No hay cuentas disponibles.')+'</div>';
+        return {ok:true,count:0};
+      }
       accounts.sort(function(a,b){
         var na=(a.name||'').trim();
         var nb=(b.name||'').trim();
@@ -1174,7 +1195,62 @@ const CLIENT_JS = `
           +'<span class="a-id">'+idDisplay+'</span>'
           +'</label>';
       }).join('');
-    }catch(e){list.innerHTML='<div class="accounts-loading err">Error: '+e.message+'</div>'}
+      return {ok:true,count:accounts.length};
+    }catch(e){list.innerHTML='<div class="accounts-loading err">Error: '+e.message+'</div>';return {ok:false,count:0}}
+  }
+
+  window.openClientAccountPicker=async function(platform){
+    var container=document.querySelector('[data-client-slug]');
+    if(!container){showSavedToast('Contexto no v&#225;lido','error');return}
+    capState.platform=platform;
+    capState.selected=new Set();
+    capFilters.search='';capFilters.status='';
+    var searchInp=document.getElementById('cap-search');
+    if(searchInp)searchInp.value='';
+    var block=document.querySelector('.acc-list-block[data-platform="'+platform+'"]');
+    capState.existing=new Set([].map.call(block.querySelectorAll('.acc-list-row'),function(r){return r.dataset.accountId}));
+    document.getElementById('cap-platform-label').textContent=PLATFORM_LABELS_CAP[platform];
+    var help=document.getElementById('cap-ga4-help');
+    if(help)help.hidden=(platform!=='ga4');
+    var retestStatus=document.getElementById('cap-retest-status');
+    if(retestStatus)retestStatus.textContent='';
+    var list=document.getElementById('cap-list');
+    list.innerHTML='<div class="accounts-loading">Cargando cuentas...</div>';
+    openModal('client-acc-modal');
+    await capFetchAndRender();
+  };
+
+  window.capRetestGa4=async function(){
+    var btn=document.getElementById('cap-retest-btn');
+    var status=document.getElementById('cap-retest-status');
+    if(btn){btn.disabled=true;btn.classList.add('is-loading')}
+    if(status){status.textContent='Consultando GA4...';status.className='cap-retest-status'}
+    var list=document.getElementById('cap-list');
+    list.innerHTML='<div class="accounts-loading">Cargando cuentas...</div>';
+    var res=await capFetchAndRender();
+    if(btn){btn.disabled=false;btn.classList.remove('is-loading')}
+    if(status){
+      if(res.ok&&res.count>0){
+        status.textContent='Listo: '+res.count+' cuenta'+(res.count===1?'':'s')+' disponible'+(res.count===1?'':'s')+'. Seleccioná una abajo.';
+        status.className='cap-retest-status ok';
+      }else if(res.ok){
+        status.textContent='Todavía no veo cuentas. Revisá que hayas puesto el mail como Viewer en la property y guardado.';
+        status.className='cap-retest-status warn';
+      }else{
+        status.textContent='Error al consultar. Reintentá en unos segundos.';
+        status.className='cap-retest-status err';
+      }
+    }
+  };
+
+  window.capCopySaEmail=function(btn){
+    var inp=document.getElementById('cap-sa-email');
+    if(!inp||!inp.value||inp.value.startsWith('('))return;
+    navigator.clipboard.writeText(inp.value).then(function(){
+      var span=btn.querySelector('span');var old=span?span.textContent:'';
+      if(span)span.textContent='Copiado';
+      setTimeout(function(){if(span)span.textContent=old||'Copiar'},1200);
+    }).catch(function(){});
   };
 
   var capFilters={search:'',status:''};
@@ -3408,6 +3484,36 @@ function clientAccountPickerModal() {
       </div>
       <div class="accounts-divider"></div>
       <p class="accounts-modal-note">Se&#241;al&#225; qu&#233; cuentas quer&#233;s asociar al cliente. Pod&#233;s elegir m&#225;s de una.</p>
+      <div class="cap-help" id="cap-ga4-help" hidden>
+        <div class="cap-help-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><circle cx="12" cy="16" r=".9" fill="currentColor" stroke="none"/></svg>
+          <strong>¿No aparece la cuenta del cliente?</strong>
+          <span>Para que figure acá hay que darle acceso a nuestro usuario de Break.</span>
+        </div>
+        <ol class="cap-help-steps">
+          <li>Abrí <a href="https://analytics.google.com/" target="_blank" rel="noopener">Google Analytics</a> con la cuenta del cliente.</li>
+          <li>Entrá a la <strong>property</strong> de ese cliente &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong>.</li>
+          <li>Click en <strong>+</strong> &#8594; <strong>Add users</strong>. Pegá el mail de abajo y asignale rol <strong>Viewer</strong>. Desmarcá "Notify by email" y guardá.</li>
+          <li>Volvé acá y tocá <strong>Probar conexión</strong>. La cuenta debería aparecer en la lista.</li>
+        </ol>
+        <div class="cap-sa-row">
+          <label class="cap-sa-label">Mail para darle acceso</label>
+          <div class="cap-sa-field">
+            <input type="text" id="cap-sa-email" readonly value="" placeholder="(cargando&#8230;)">
+            <button type="button" class="btn ghost cap-sa-copy" onclick="capCopySaEmail(this)" title="Copiar mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copiar</span>
+            </button>
+          </div>
+        </div>
+        <div class="cap-help-actions">
+          <button type="button" class="btn primary" onclick="capRetestGa4()" id="cap-retest-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span>Probar conexión</span>
+          </button>
+          <span id="cap-retest-status" class="cap-retest-status"></span>
+        </div>
+      </div>
       <div class="cap-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         <input type="text" id="cap-search" placeholder="Buscar cuenta por nombre o ID..." autocomplete="off" oninput="capFilterSearch(this.value)">

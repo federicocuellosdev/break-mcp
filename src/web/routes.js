@@ -323,9 +323,15 @@ export function createWebRouter() {
   });
 
   router.get('/admin/api/ga4-accounts', requireLogin, requireAdmin, async (_req, res) => {
+    let serviceAccountEmail = null;
+    try {
+      if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+        serviceAccountEmail = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON).client_email || null;
+      }
+    } catch {}
     try {
       if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-        return res.json({ accounts: [], notice: 'GA4 no configurado (falta GOOGLE_SERVICE_ACCOUNT_JSON).' });
+        return res.json({ accounts: [], service_account_email: null, notice: 'GA4 no configurado (falta GOOGLE_SERVICE_ACCOUNT_JSON).' });
       }
       const data = await listAccountSummaries();
       const accounts = (data.accountSummaries || []).flatMap((a) =>
@@ -335,9 +341,9 @@ export function createWebRouter() {
           account: a.displayName || '',
         })),
       );
-      res.json({ accounts });
+      res.json({ accounts, service_account_email: serviceAccountEmail });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: e.message, service_account_email: serviceAccountEmail });
     }
   });
 
