@@ -41,6 +41,7 @@ import {
 } from './pages/admin.js';
 import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
+import { listAlertsForUser, createAlert, dismissAlert } from '../alerts.js';
 
 const TOOLS_COUNT = 28;
 
@@ -627,6 +628,44 @@ export function createWebRouter() {
       redirWithFlash(res, '/admin/logs', 'ok', 'Log eliminado.');
     } catch (e) {
       redirWithFlash(res, '/admin/logs', 'err', e.message);
+    }
+  });
+
+  // -------- ALERTAS DE USUARIO (persistidas, con dismiss) --------
+  router.get('/admin/api/user-alerts', requireLogin, (req, res) => {
+    const user = res.locals.user;
+    try {
+      const alerts = listAlertsForUser(user.id).map((a) => ({
+        id: a.id,
+        title: a.title,
+        body: a.body,
+        kind: a.kind || 'info',
+        createdAt: a.createdAt,
+      }));
+      res.json({ alerts });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/alerts/:id/dismiss', requireLogin, express.json(), (req, res) => {
+    const user = res.locals.user;
+    try {
+      dismissAlert(req.params.id, user.id);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+
+  // Dev-only: crear alertas para cualquier usuario (uso interno / scripts)
+  router.post('/admin/api/user-alerts', requireLogin, requireDev, express.json(), (req, res) => {
+    const { userId, title, body, kind } = req.body || {};
+    try {
+      const alert = createAlert({ userId, title, body, kind });
+      res.json({ ok: true, alert });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
   });
 

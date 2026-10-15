@@ -405,6 +405,18 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .alert-item .alert-pill.warn{background:#fff3d1;color:#8a6d00}
 .alert-item .alert-pill.over{background:var(--coral-soft);color:var(--coral)}
 .alert-item .alert-pill.billing{background:var(--coral);color:#fff}
+.alert-item.user-alert{position:relative;padding-right:2.6rem}
+.alert-item.user-alert.info{border-left-color:#0087F2;background:linear-gradient(0deg,rgba(0,135,242,.045),rgba(0,135,242,.045)),var(--card)}
+.alert-item.user-alert.info .alert-icon{background:rgba(0,135,242,.12);color:#0073d1}
+.alert-item.user-alert.success{border-left-color:var(--green);background:linear-gradient(0deg,rgba(15,138,95,.045),rgba(15,138,95,.045)),var(--card)}
+.alert-item.user-alert.success .alert-icon{background:rgba(15,138,95,.12);color:var(--green)}
+.alert-item.user-alert.warn{border-left-color:#F6B40E;background:linear-gradient(0deg,rgba(246,180,14,.055),rgba(246,180,14,.055)),var(--card)}
+.alert-item.user-alert.warn .alert-icon{background:rgba(246,180,14,.14);color:#8a6d00}
+.alert-item .alert-pill.info{background:rgba(0,135,242,.12);color:#0073d1}
+.alert-item .alert-pill.success{background:rgba(15,138,95,.14);color:var(--green)}
+.alert-dismiss{position:absolute;top:.55rem;right:.6rem;width:26px;height:26px;border-radius:50%;background:transparent;border:none;color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s}
+.alert-dismiss:hover{background:rgba(0,0,0,.06);color:var(--ink)}
+.alert-dismiss svg{width:14px;height:14px}
 .alert-loading{padding:.9rem 1rem;color:var(--muted);font-size:.8rem}
 
 /* ── Investment section ─────────────────────────────────────────────── */
@@ -2080,10 +2092,12 @@ export function renderDashboard({ user }) {
       var to=iso(now);
       Promise.all([
         fetch('/admin/api/investment?from='+from+'&to='+to).then(function(r){return r.json()}),
-        fetch('/admin/api/billing-summary').then(function(r){return r.json()}).catch(function(){return null})
+        fetch('/admin/api/billing-summary').then(function(r){return r.json()}).catch(function(){return null}),
+        fetch('/admin/api/user-alerts').then(function(r){return r.json()}).catch(function(){return {alerts:[]}})
       ]).then(function(res){
         var d=res[0];
         var billing=res[1];
+        var userAlerts=(res[2]&&res[2].alerts)||[];
         if(d.error){box.innerHTML='<div class="alerts-empty">No se pudieron cargar las alertas: '+d.error+'</div>';return}
         var items=[];
         (d.clients||[]).forEach(function(c){
@@ -2136,11 +2150,31 @@ export function renderDashboard({ user }) {
             }
           });
         });
-        if(!items.length){box.innerHTML='<div class="alerts-empty">Sin alertas.</div>';return}
+        if(!items.length && !userAlerts.length){box.innerHTML='<div class="alerts-empty">Sin alertas.</div>';return}
         // Billing primero, luego over, luego warn, dentro de cada grupo por pct desc
         var order={billing:0,over:1,warn:2};
         items.sort(function(a,b){return (order[a.cls]-order[b.cls]) || b.sortKey-a.sortKey});
-        box.innerHTML='<div class="alerts-list">'+items.map(function(a){
+        var escHtml=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+        var userHtml=userAlerts.map(function(a){
+          var kind=a.kind||'info';
+          var pill=kind==='success'?'resuelto':kind==='warn'?'aviso':'nuevo';
+          return '<div class="alert-item user-alert '+kind+'" data-alert-id="'+escHtml(a.id)+'">'
+            +'<div class="alert-icon">'
+              +(kind==='success'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>')
+            +'</div>'
+            +'<div class="alert-body">'
+              +'<div class="alert-title">'+escHtml(a.title)+'</div>'
+              +'<div class="alert-text">'+escHtml(a.body)+'</div>'
+            +'</div>'
+            +'<span class="alert-pill '+kind+'">'+pill+'</span>'
+            +'<button type="button" class="alert-dismiss" title="Marcar como visto" aria-label="Cerrar alerta">'
+              +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+            +'</button>'
+            +'</div>';
+        }).join('');
+        var systemHtml=items.map(function(a){
           var pillText=a.cls==='billing'?'error pago':a.cls==='over'?'excedido':'alerta';
           return '<a class="alert-item '+a.cls+'" href="/admin/clients/'+a.slug+'/edit" style="text-decoration:none">'
             +'<div class="alert-icon">'+a.plat.icon+'</div>'
@@ -2150,7 +2184,27 @@ export function renderDashboard({ user }) {
             +'</div>'
             +'<span class="alert-pill '+a.cls+'">'+pillText+'</span>'
             +'</a>';
-        }).join('')+'</div>';
+        }).join('');
+        box.innerHTML='<div class="alerts-list">'+userHtml+systemHtml+'</div>';
+        // Wire dismiss buttons
+        box.querySelectorAll('.alert-dismiss').forEach(function(btn){
+          btn.addEventListener('click',function(ev){
+            ev.preventDefault();ev.stopPropagation();
+            var item=btn.closest('.alert-item');
+            var id=item&&item.getAttribute('data-alert-id');
+            if(!id)return;
+            btn.disabled=true;
+            fetch('/admin/alerts/'+encodeURIComponent(id)+'/dismiss',{method:'POST'}).then(function(r){
+              if(!r.ok)throw new Error('http '+r.status);
+              item.style.transition='opacity .18s ease, transform .18s ease';
+              item.style.opacity='0';item.style.transform='translateX(8px)';
+              setTimeout(function(){
+                item.remove();
+                if(!box.querySelector('.alert-item')){box.innerHTML='<div class="alerts-empty">Sin alertas.</div>'}
+              },180);
+            }).catch(function(){btn.disabled=false});
+          });
+        });
       }).catch(function(e){box.innerHTML='<div class="alerts-empty">No se pudieron cargar las alertas: '+e.message+'</div>'});
     })();
     <\/script>`;
