@@ -237,6 +237,7 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .accounts-loading.err{color:var(--coral)}
 .accounts-loading.warn{color:#8a6d00;background:#fff8e1;border-radius:8px}
 .cap-help{margin-top:1rem}
+.cap-help-title{margin:0 0 .4rem;font-size:.95rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
 .cap-sa-paragraph{margin:0;font-size:.88rem;line-height:1.65;color:var(--muted)}
 .cap-sa-paragraph strong{color:var(--ink);font-weight:600}
 .cap-sa-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.1rem .55rem;margin:0 0 0 .15rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;font:500 .82rem 'JetBrains Mono','Menlo',monospace;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s,background .15s;vertical-align:baseline;line-height:1.6}
@@ -1228,29 +1229,6 @@ const CLIENT_JS = `
     list.innerHTML='<div class="accounts-loading">Cargando cuentas...</div>';
     openModal('client-acc-modal');
     await capFetchAndRender();
-  };
-
-  window.capRetestGa4=async function(){
-    var btn=document.getElementById('cap-retest-btn');
-    var status=document.getElementById('cap-retest-status');
-    if(btn){btn.disabled=true;btn.classList.add('is-loading')}
-    if(status){status.textContent='Consultando GA4...';status.className='cap-retest-status'}
-    var list=document.getElementById('cap-list');
-    list.innerHTML='<div class="accounts-loading">Cargando cuentas...</div>';
-    var res=await capFetchAndRender();
-    if(btn){btn.disabled=false;btn.classList.remove('is-loading')}
-    if(status){
-      if(res.ok&&res.count>0){
-        status.textContent='Listo: '+res.count+' cuenta'+(res.count===1?'':'s')+' disponible'+(res.count===1?'':'s')+'. Seleccioná una abajo.';
-        status.className='cap-retest-status ok';
-      }else if(res.ok){
-        status.textContent='Todavía no veo cuentas. Revisá que hayas puesto el mail como Viewer en la property y guardado.';
-        status.className='cap-retest-status warn';
-      }else{
-        status.textContent='Error al consultar. Reintentá en unos segundos.';
-        status.className='cap-retest-status err';
-      }
-    }
   };
 
   window.capCopySaEmail=function(btn){
@@ -3498,14 +3476,8 @@ function clientAccountPickerModal() {
       <div class="accounts-divider"></div>
       <p class="accounts-modal-note">Se&#241;al&#225; qu&#233; cuentas quer&#233;s asociar al cliente. Pod&#233;s elegir m&#225;s de una.</p>
       <div class="cap-help" id="cap-ga4-help" hidden>
-        <p class="cap-sa-paragraph">Pegá este mail como <strong>Viewer</strong> en Google Analytics &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong> de la cuenta del cliente: <button type="button" class="cap-sa-chip" id="cap-sa-chip" onclick="capCopySaEmail(this)" title="Click para copiar"><span id="cap-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
-        <div class="cap-help-actions">
-          <button type="button" class="btn ghost cap-retest-btn" onclick="capRetestGa4()" id="cap-retest-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            <span>Probar conexión</span>
-          </button>
-          <span id="cap-retest-status" class="cap-retest-status"></span>
-        </div>
+        <h4 class="cap-help-title">Mail para darle acceso</h4>
+        <p class="cap-sa-paragraph">Pegalo como <strong>Viewer</strong> en Google Analytics &#8594; <strong>Admin</strong> &#8594; <strong>Property Access Management</strong> de la cuenta del cliente: <button type="button" class="cap-sa-chip" id="cap-sa-chip" onclick="capCopySaEmail(this)" title="Click para copiar"><span id="cap-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
       </div>
       <div class="cap-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
