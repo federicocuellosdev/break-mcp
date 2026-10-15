@@ -302,19 +302,23 @@ export function registerReportTools(server, ctx) {
   server.registerTool(
     'publish_report',
     {
-      title: 'Publish an HTML report to the client public gallery',
+      title: 'Publish or update an HTML report in the client public gallery',
       description:
-        'Uploads the given HTML to the server so it appears at mcp.breakmkt.com.ar/{client} as a card and at mcp.breakmkt.com.ar/{client}/{slug} as a full page. The server routes to the correct client folder based on the `client` slug and validates the user has access. Use this AFTER the user reviewed the local file and said "publicar / subir". Author is inferred from the bearer token.',
+        'Publica el informe en mcp.breakmkt.com.ar/{client}/{slug}. También sirve para ACTUALIZAR un informe existente — se pueden pasar solo los campos a cambiar (ej. "cambiar la fecha de publicación de un informe ya subido" se hace llamando con el mismo slug y pasando únicamente published_at, sin html). Si html se omite y el informe no existe, tira error. Si html se omite y el informe existe, mantiene el HTML actual y actualiza solo la metadata provista. Autor se infiere del bearer token.',
       inputSchema: {
-        client: z.string().describe('Client slug (must be in your allowed list) — the server uses this to route to the right public folder'),
-        slug: z.string().describe('URL slug for the report (kebab-case, ej. "informe-septiembre-2026")'),
-        title: z.string().describe('Human title for the gallery card, ej. "Informe septiembre 2026"'),
-        description: z.string().optional().describe('One-line summary shown on the card'),
-        sources: z.array(sourceSchema).optional().describe('Data sources that fed this report (Meta / Google Ads / GA4 / Sheets). Multiple platforms per report are expected.'),
-        html: z.string().describe('Full standalone HTML of the report'),
+        client: z.string().describe('Client slug (must be in your allowed list)'),
+        slug: z.string().describe('URL slug del informe (kebab-case, ej. "informe-septiembre-2026")'),
+        title: z.string().optional().describe('Título visible en la galería. Default: humanize(slug) si es nuevo.'),
+        description: z.string().optional().describe('Resumen de una línea en la card'),
+        sources: z.array(sourceSchema).optional().describe('Fuentes de datos (meta/gads/ga4/sheets).'),
+        html: z.string().optional().describe('HTML completo del informe. Obligatorio al crear, opcional al actualizar metadata.'),
+        published_at: z
+          .string()
+          .optional()
+          .describe('Fecha de publicación: YYYY-MM-DD o ISO completo. Si se omite al crear, usa fecha actual. Si se pasa al actualizar, re-fecha el informe (útil para backdating y para corregir fecha después de republicar).'),
       },
     },
-    async ({ client, slug, title, description, sources, html }) => {
+    async ({ client, slug, title, description, sources, html, published_at }) => {
       assertAccess(ctx.user, client);
       const base = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '').replace(/\/mcp$/, '');
       const saved = saveReport({
@@ -324,6 +328,7 @@ export function registerReportTools(server, ctx) {
         description,
         sources,
         html,
+        published_at,
         author: { id: ctx.user.id, name: ctx.user.name },
       });
       const url = `${base}/${client}/${saved.slug}`;

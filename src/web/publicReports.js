@@ -69,7 +69,11 @@ export function reportsForClient(slug) {
       });
     }
   }
-  return items.sort((a, b) => b.mtime - a.mtime);
+  return items.sort((a, b) => {
+    const ta = new Date(a.published_at || a.mtime).getTime();
+    const tb = new Date(b.published_at || b.mtime).getTime();
+    return tb - ta;
+  });
 }
 
 function serveReport(clientSlug, reportSlug) {
@@ -223,32 +227,50 @@ export function createPublicReportsRouter() {
   return router;
 }
 
-export function saveReport({ clientSlug, reportSlug, title, description, sources, html, author }) {
+function normalizePublishedAt(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim();
+  // YYYY-MM-DD → convertir a ISO con hora 12:00 UTC (evita off-by-one por timezone)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T12:00:00.000Z`;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) throw new Error(`published_at inválido: ${value}`);
+  return d.toISOString();
+}
+
+export function saveReport({ clientSlug, reportSlug, title, description, sources, html, author, published_at }) {
   const safeReport = safeSlug(reportSlug);
   if (!safeReport) throw new Error('reportSlug inválido');
   const dir = ensureClientFolder(clientSlug);
   const reportDir = join(dir, safeReport);
+  const htmlPath = join(reportDir, 'index.html');
+  const metaPath = join(reportDir, 'metadata.json');
+  const alreadyExists = existsSync(htmlPath);
+
+  if (!html && !alreadyExists) {
+    throw new Error(`No se puede crear "${safeReport}" sin html. Solo se puede omitir html al actualizar un informe existente.`);
+  }
+
   if (!existsSync(reportDir)) mkdirSync(reportDir, { recursive: true });
 
   let existing = {};
-  const metaPath = join(reportDir, 'metadata.json');
   if (existsSync(metaPath)) {
     try { existing = JSON.parse(readFileSync(metaPath, 'utf8')); } catch {}
   }
 
   const now = new Date().toISOString();
+  const customPublishedAt = normalizePublishedAt(published_at);
   const metadata = {
     title: title || existing.title || humanize(safeReport),
     description: description || existing.description || '',
     author_id: (author && author.id) || existing.author_id || '',
     author_name: (author && author.name) || existing.author_name || '',
     sources: Array.isArray(sources) && sources.length ? sources : existing.sources || [],
-    published_at: existing.published_at || now,
+    published_at: customPublishedAt || existing.published_at || now,
     updated_at: now,
   };
 
-  writeFileSync(join(reportDir, 'index.html'), html, 'utf8');
+  if (html) writeFileSync(htmlPath, html, 'utf8');
   writeFileSync(metaPath, JSON.stringify(metadata, null, 2) + '\n', 'utf8');
 
-  return { slug: safeReport, metadata };
+  return { slug: safeReport, metadata, html_updated: !!html };
 }
