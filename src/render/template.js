@@ -123,6 +123,24 @@ h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .q strong{display:block;font-weight:600;font-size:.95rem}
 .q span{display:block;font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.25rem}
 
+.rtable-wrap{margin-top:clamp(2rem,5vh,3rem);overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;background:var(--white);border:1px solid var(--border)}
+.s-black .rtable{background:#221f25;border-color:var(--w-faint)}
+.rtable thead th{font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);text-align:left;padding:.95rem 1.1rem;border-bottom:1px solid var(--border);background:var(--bg)}
+.s-black .rtable thead th{color:var(--w-dim);background:#1a171d;border-color:var(--w-faint)}
+.rtable thead th+th{text-align:right}
+.rtable tbody td{padding:.85rem 1.1rem;border-top:1px solid var(--border);font-size:.95rem;color:var(--black)}
+.s-black .rtable tbody td{color:var(--white);border-color:var(--w-faint)}
+.rtable tbody td+td{text-align:right;font-weight:600}
+.rtable tbody tr:first-child td{border-top:none}
+.rtable tr.total td{font-weight:800;background:#F0EDF4}
+.s-black tr.total td{background:#2b2730}
+.rtable tr.highlight td{background:linear-gradient(90deg,rgba(0,135,242,.06),rgba(225,59,125,.04))}
+.rtable tr.good td:nth-child(n+2){color:var(--blue)}
+.rtable tr.bad td:nth-child(n+2){color:var(--coral)}
+.rfoot{margin-top:.9rem;font-size:.78rem;color:var(--gray);font-weight:300;max-width:72ch}
+.s-black .rfoot{color:var(--w-dim)}
+
 @media (max-width:900px){
   .slide{padding-block:80px 56px}
   .ctx{display:none}
@@ -326,6 +344,34 @@ function renderProximos(s, idx, total) {
 </section>`;
 }
 
+function renderTabla(s, idx) {
+  const bg = s.background || 's-bg';
+  const headers = (s.headers || [])
+    .map((h) => `<th>${esc(h)}</th>`)
+    .join('');
+  const rows = (s.rows || [])
+    .map((r) => {
+      const tone = r.tone ? ` class="${esc(r.tone)}"` : '';
+      const cells = (r.cells || []).map((c) => `<td>${esc(c)}</td>`).join('');
+      return `<tr${tone}>${cells}</tr>`;
+    })
+    .join('');
+  return `
+<section class="slide ${bg}" id="s${idx}">
+  <div class="inner">
+    ${s.eyebrow ? `<span class="stag">${esc(s.eyebrow)}</span>` : ''}
+    <h2>${titleTwo(s.title)}</h2>
+    <div class="rtable-wrap">
+      <table class="rtable">
+        <thead><tr>${headers}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${s.footnote ? `<p class="rfoot">${esc(s.footnote)}</p>` : ''}
+  </div>
+</section>`;
+}
+
 const RENDERERS = {
   portada: renderPortada,
   embudo: renderEmbudo,
@@ -333,6 +379,7 @@ const RENDERERS = {
   venta: renderVenta,
   pipeline: renderPipeline,
   proximos: renderProximos,
+  tabla: renderTabla,
 };
 
 export function renderReport(spec) {

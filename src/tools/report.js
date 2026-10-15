@@ -50,6 +50,11 @@ const actionSchema = z.object({
 });
 const decisionSchema = z.object({ title: z.string(), detail: z.string().optional() });
 
+const tablaRowSchema = z.object({
+  cells: z.array(z.string()),
+  tone: z.enum(['total', 'highlight', 'bad', 'good']).optional(),
+});
+
 const slideSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('portada'),
@@ -109,6 +114,15 @@ const slideSchema = z.discriminatedUnion('kind', [
     eyebrow: z.string().optional(),
     actions: z.array(actionSchema).optional(),
     decisions: z.array(decisionSchema).optional(),
+    background: z.enum(['s-black', 's-white', 's-bg']).optional(),
+  }),
+  z.object({
+    kind: z.literal('tabla'),
+    title: z.array(z.string()),
+    eyebrow: z.string().optional(),
+    headers: z.array(z.string()),
+    rows: z.array(tablaRowSchema),
+    footnote: z.string().optional(),
     background: z.enum(['s-black', 's-white', 's-bg']).optional(),
   }),
 ]);
