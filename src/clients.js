@@ -260,17 +260,32 @@ function normalizeSlug(s) {
     .replace(/^-+|-+$/g, '');
 }
 
+// Normaliza el nombre del cliente al crearlo.
+// Regla por palabra:
+//   · si todas las letras ya están en mayúscula → tratar como sigla y dejar igual (COAS, AMPIP, CAM)
+//   · si no → primera letra en mayúscula, resto en minúscula (agiltech→Agiltech, AGiltech→Agiltech, aLmA→Alma)
+function normalizeClientName(input) {
+  const s = String(input || '').trim();
+  if (!s) return s;
+  return s.replace(/\S+/g, (word) => {
+    const letters = word.replace(/[^\p{L}]/gu, '');
+    if (letters && letters === letters.toUpperCase()) return word;
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
 export function createClientRecord({ slug, name, meta_ad_account_id, gads_customer_id, ga4_property_id }) {
   const s = normalizeSlug(slug);
   if (!s) throw new Error('slug obligatorio');
   if (!name) throw new Error('name obligatorio');
+  const normalizedName = normalizeClientName(name);
   const db = load();
   if (db.clients[s]) throw new Error(`Ya existe un cliente con slug "${s}"`);
   const meta = meta_ad_account_id ? String(meta_ad_account_id) : null;
   const gads = gads_customer_id ? String(gads_customer_id) : null;
   const ga4 = ga4_property_id ? String(ga4_property_id) : null;
   db.clients[s] = {
-    name,
+    name: normalizedName,
     meta_ad_account_id: meta,
     gads_customer_id: gads,
     ga4_property_id: ga4,
