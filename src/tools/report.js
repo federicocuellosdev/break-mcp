@@ -125,6 +125,38 @@ const slideSchema = z.discriminatedUnion('kind', [
     footnote: z.string().optional(),
     background: z.enum(['s-black', 's-white', 's-bg']).optional(),
   }),
+  z.object({
+    kind: z.literal('tarjetas',
+    ),
+    title: z.array(z.string()),
+    eyebrow: z.string().optional(),
+    columns: z.number().int().min(1).max(3).optional().describe('Default 2. 1 para texto largo, 3 para claims cortos.'),
+    cards: z
+      .array(
+        z.object({
+          title: z.string(),
+          body: z
+            .union([
+              z.string(),
+              z.array(
+                z.union([
+                  z.object({ kind: z.literal('p'), text: z.string() }),
+                  z.object({ kind: z.literal('ol'), items: z.array(z.string()) }),
+                  z.object({ kind: z.literal('ul'), items: z.array(z.string()) }),
+                ]),
+              ),
+            ])
+            .optional(),
+          icon: z
+            .enum(['check', 'target', 'monitor', 'warn', 'info', 'list', 'bulb', 'chart', 'dot'])
+            .optional()
+            .describe('Icono preset. Default "dot".'),
+        }),
+      )
+      .min(1),
+    footnote: z.string().optional(),
+    background: z.enum(['s-black', 's-white', 's-bg']).optional(),
+  }),
 ]);
 
 export function registerReportTools(server, ctx) {

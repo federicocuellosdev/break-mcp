@@ -141,6 +141,33 @@ h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .rfoot{margin-top:.9rem;font-size:.78rem;color:var(--gray);font-weight:300;max-width:72ch}
 .s-black .rfoot{color:var(--w-dim)}
 
+.wcards{display:grid;grid-template-columns:repeat(var(--wcols,2),1fr);gap:16px;margin-top:clamp(2rem,5vh,3rem)}
+.wcard{display:flex;align-items:flex-start;gap:1.1rem;padding:1.4rem 1.5rem;border-radius:10px;background:var(--white);border:1px solid var(--border);transition:border-color .15s,background .15s}
+.wcard:hover{border-color:#bfb9c6}
+.s-black .wcard{background:rgba(255,255,255,.03);border-color:var(--w-faint)}
+.s-black .wcard:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05)}
+.wcard .wicon{flex:0 0 auto;width:46px;height:46px;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--pink)}
+.s-black .wcard .wicon{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
+.wcard .wicon svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wcard .wbody{flex:1;min-width:0}
+.wcard .wbody h4{font-size:1rem;font-weight:800;letter-spacing:-.015em;color:var(--black);margin:0 0 .3rem}
+.s-black .wcard .wbody h4{color:var(--white)}
+.wcard .wbody p{font-size:.88rem;line-height:1.6;color:var(--gray);margin:0}
+.s-black .wcard .wbody p{color:rgba(255,255,255,.72)}
+.wcard .wbody p+p{margin-top:.7rem}
+.wcard .wbody p strong{color:var(--black);font-weight:600}
+.s-black .wcard .wbody p strong{color:var(--white)}
+.wcard .wbody ol,.wcard .wbody ul{list-style:none;padding:0;margin:.3rem 0 0;display:flex;flex-direction:column;gap:.55rem}
+.wcard .wbody ol{counter-reset:wk}
+.wcard .wbody ol li,.wcard .wbody ul li{position:relative;padding-left:2rem;font-size:.88rem;line-height:1.55;color:var(--gray)}
+.s-black .wcard .wbody ol li,.s-black .wcard .wbody ul li{color:rgba(255,255,255,.72)}
+.wcard .wbody ol li{counter-increment:wk}
+.wcard .wbody ol li::before{content:counter(wk);position:absolute;left:0;top:0;width:1.4rem;height:1.4rem;border-radius:50%;background:rgba(225,59,125,.12);border:1px solid rgba(225,59,125,.4);color:var(--pink);font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.wcard .wbody ul li::before{content:'';position:absolute;left:.5rem;top:.6rem;width:6px;height:6px;border-radius:50%;background:var(--pink)}
+.wcard .wbody li strong{color:var(--black);font-weight:600}
+.s-black .wcard .wbody li strong{color:var(--white)}
+@media (max-width:720px){.wcards{grid-template-columns:1fr}}
+
 @media (max-width:900px){
   .slide{padding-block:80px 56px}
   .ctx{display:none}
@@ -344,6 +371,58 @@ function renderProximos(s, idx, total) {
 </section>`;
 }
 
+const WCARD_ICONS = {
+  check: '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>',
+  target: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
+  monitor: '<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  warn: '<svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"/></svg>',
+  list: '<svg viewBox="0 0 24 24"><path d="M5 6h14"/><path d="M5 12h14"/><path d="M5 18h14"/><circle cx="3" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1.3 1.9 1.3 3V15h5.4v-1.5c0-1.1.5-2.2 1.3-3A6 6 0 0 0 12 3z"/></svg>',
+  chart: '<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>',
+  dot: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>',
+};
+
+function renderCardBody(body) {
+  if (!body) return '';
+  if (typeof body === 'string') return `<p>${renderInlineMarkdown(body)}</p>`;
+  return body
+    .map((b) => {
+      if (b.kind === 'p') return `<p>${renderInlineMarkdown(b.text || '')}</p>`;
+      if (b.kind === 'ol') return `<ol>${(b.items || []).map((i) => `<li>${renderInlineMarkdown(i)}</li>`).join('')}</ol>`;
+      if (b.kind === 'ul') return `<ul>${(b.items || []).map((i) => `<li>${renderInlineMarkdown(i)}</li>`).join('')}</ul>`;
+      return '';
+    })
+    .join('');
+}
+
+function renderTarjetas(s, idx) {
+  const bg = s.background || 's-white';
+  const cols = s.columns || 2;
+  const cards = (s.cards || [])
+    .map((c) => {
+      const icon = WCARD_ICONS[c.icon || 'dot'] || WCARD_ICONS.dot;
+      return `
+      <div class="wcard">
+        <div class="wicon">${icon}</div>
+        <div class="wbody">
+          <h4>${esc(c.title)}</h4>
+          ${renderCardBody(c.body)}
+        </div>
+      </div>`;
+    })
+    .join('');
+  return `
+<section class="slide ${bg}" id="s${idx}">
+  <div class="inner">
+    ${s.eyebrow ? `<span class="stag">${esc(s.eyebrow)}</span>` : ''}
+    <h2>${titleTwo(s.title)}</h2>
+    <div class="wcards" style="--wcols:${cols}">${cards}</div>
+    ${s.footnote ? `<p class="rfoot">${esc(s.footnote)}</p>` : ''}
+  </div>
+</section>`;
+}
+
 function renderTabla(s, idx) {
   const bg = s.background || 's-bg';
   const headers = (s.headers || [])
@@ -380,6 +459,7 @@ const RENDERERS = {
   pipeline: renderPipeline,
   proximos: renderProximos,
   tabla: renderTabla,
+  tarjetas: renderTarjetas,
 };
 
 export function renderReport(spec) {
