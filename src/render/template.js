@@ -17,7 +17,7 @@ const CSS = `
   color-scheme:light;
 }
 *{box-sizing:border-box}img{max-width:100%}[hidden]{display:none!important}
-html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--black);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .gb{height:2px;background:var(--grad)}
 .top{position:fixed;inset:0 0 auto 0;z-index:50}
@@ -27,10 +27,7 @@ nav{display:flex;justify-content:space-between;align-items:center;padding:.9rem 
 .brand{display:flex;align-items:center;gap:.9rem}
 .brand .x{color:var(--gray);font-size:.8rem}
 .ctx{font-size:.66rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);padding-left:.9rem;border-left:1px solid var(--border)}
-.pager{display:flex;gap:6px}
-.pager a{width:22px;height:3px;background:#B9B5BF;display:block;transition:background .25s}
-.pager a.on{background:var(--grad)}
-.slide{min-height:100svh;scroll-snap-align:start;padding:clamp(88px,11vh,116px) clamp(16px,5vw,4.5rem) clamp(40px,6vh,60px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.slide{padding:clamp(72px,8vh,96px) clamp(16px,5vw,4.5rem) clamp(40px,6vh,60px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
 .inner{max-width:1180px;width:100%;margin:0 auto;position:relative}
 .s-black{background:var(--black);color:var(--white)}
 .s-white{background:var(--white)}
@@ -46,8 +43,6 @@ h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .s-black .lede{color:var(--w-dim)}
 .num{font-variant-numeric:tabular-nums}
 .orb{position:absolute;border-radius:50%;background:var(--grad);opacity:.14;filter:blur(90px);pointer-events:none}
-.pnum{position:absolute;right:clamp(16px,5vw,4.5rem);bottom:clamp(18px,4vh,34px);font-size:.66rem;font-weight:600;letter-spacing:.16em;color:var(--gray)}
-.s-black .pnum{color:var(--w-dim)}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes drop{from{opacity:.001;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
@@ -129,8 +124,7 @@ h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .q span{display:block;font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.25rem}
 
 @media (max-width:900px){
-  html{scroll-snap-type:none}
-  .slide{min-height:auto;padding-block:96px 64px}
+  .slide{padding-block:80px 56px}
   .ctx{display:none}
   .kpis{grid-template-columns:1fr 1fr}
   .acts{grid-template-columns:1fr}
@@ -140,9 +134,8 @@ h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
   .facts{grid-template-columns:1fr}
   .funnel-wrap{grid-template-columns:1fr 7.5rem;column-gap:.8rem}
   .f-cost,.f-head.r{display:none}
-  .pnum{display:none}
 }
-@media (max-width:540px){.pipe{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.pager{display:none}}
+@media (max-width:540px){.pipe{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 `;
 
@@ -176,7 +169,6 @@ function renderPortada(s, idx, total) {
     ${s.lede ? `<p class="lede">${esc(s.lede)}</p>` : ''}
     ${kpis ? `<div class="kpis num">${kpis}</div>` : ''}
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -223,7 +215,6 @@ function renderEmbudo(s, idx, total) {
     </div>
     ${take}
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -250,7 +241,6 @@ function renderPauta(s, idx, total) {
     <h2>${titleTwo(s.title)}</h2>
     <div class="num" style="margin-top:2rem">${bars}</div>
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -275,7 +265,6 @@ function renderVenta(s, idx, total) {
     ${timeline ? `<div class="timeline">${timeline}</div>` : ''}
     ${facts ? `<div class="facts num">${facts}</div>` : ''}
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -302,7 +291,6 @@ function renderPipeline(s, idx, total) {
     <h2>${titleTwo(s.title)}</h2>
     <div class="pipe num">${cols}</div>
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -335,7 +323,6 @@ function renderProximos(s, idx, total) {
       </div>
     </div>
   </div>
-  <span class="pnum">${String(idx).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
 </section>`;
 }
 
@@ -347,21 +334,6 @@ const RENDERERS = {
   pipeline: renderPipeline,
   proximos: renderProximos,
 };
-
-const PAGER_SCRIPT = `
-<script>
-(function(){
-  const slides=[...document.querySelectorAll('.slide')];
-  const pager=document.getElementById('pager');
-  if(!pager||!slides.length)return;
-  pager.innerHTML=slides.map((s,i)=>'<a href="#'+s.id+'" data-i="'+i+'"></a>').join('');
-  const links=[...pager.children];
-  const set=(i)=>links.forEach((l,j)=>l.classList.toggle('on',i===j));
-  set(0);
-  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)set(slides.indexOf(e.target))})},{threshold:0.55});
-  slides.forEach(s=>io.observe(s));
-})();
-</script>`;
 
 export function renderReport(spec) {
   const cliente = spec.cliente || { slug: 'cliente', name: 'Cliente' };
@@ -399,11 +371,9 @@ export function renderReport(spec) {
       <span class="logo">break<span class="dot"></span></span>
       <span class="ctx">${esc(contexto)}</span>
     </div>
-    <div class="pager" id="pager" aria-label="Diapositivas"></div>
   </nav>
 </div>
 ${body}
-${PAGER_SCRIPT}
 </body>
 </html>`;
 }
