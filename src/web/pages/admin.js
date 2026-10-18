@@ -316,12 +316,17 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .acc-list-row:last-child{border-bottom:none}
 .acc-list-row:hover{background:var(--soft)}
 .acc-list-name{flex:1;font-weight:600;color:var(--ink);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.acc-list-id-pill{display:inline-block;padding:.22rem .6rem;border-radius:100px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.7rem;background:var(--soft);color:var(--muted);flex-shrink:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-list-id-pill{display:inline-block;padding:.22rem .6rem;border-radius:100px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:.7rem;background:var(--soft);color:var(--muted);flex-shrink:0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .acc-list-id-pill.enabled{background:#e6f6ee;color:var(--green)}
 .acc-list-id-pill.suspended{background:var(--coral-soft);color:var(--coral)}
 .acc-list-id-pill.canceled,.acc-list-id-pill.closed{background:var(--soft);color:var(--muted)}
 .acc-list-id-pill.billing-bad{background:var(--coral);color:#fff}
 .acc-list-id-pill.billing-warn{background:#fff6d6;color:#8a6d00}
+/* GA4 health states (reusa el id-pill: color = estado; cuando hay error el texto cambia al label) */
+.acc-list-id-pill.ga4-ok{background:#e6f6ee;color:var(--green)}
+.acc-list-id-pill.ga4-stale{background:#fff6d6;color:#8a6d00;font-family:inherit;letter-spacing:.08em;text-transform:uppercase;font-weight:700;font-size:.66rem}
+.acc-list-id-pill.ga4-no_access,.acc-list-id-pill.ga4-error{background:var(--coral-soft);color:var(--coral);font-family:inherit;letter-spacing:.08em;text-transform:uppercase;font-weight:700;font-size:.66rem}
+.acc-list-id-pill.ga4-unconfigured{background:var(--soft);color:var(--muted);font-family:inherit;letter-spacing:.08em;text-transform:uppercase;font-weight:700;font-size:.66rem}
 .acc-list-empty{padding:1.2rem 1rem;text-align:center;color:var(--muted);font-size:.8rem;background:var(--soft);flex:1;display:flex;align-items:center;justify-content:center}
 @media (max-width:1100px){.acc-list-container{grid-template-columns:1fr}}
 
@@ -1105,34 +1110,40 @@ const CLIENT_JS = `
 
   // ─── Enrich client account rows on load ───────────────────────
   var ENRICH_STATUS_LABEL={ENABLED:'Habilitada',SUSPENDED:'Suspendida',CANCELED:'Cancelada',CLOSED:'Cerrada'};
+  // Al día = sólo pintar; en estados de error se reemplaza el texto del ID por el label corto.
   var GA4_HEALTH_COPY={
-    ok:{label:'Al día',title:'Recibió datos en los últimos 3 días'},
+    ok:{keepId:true,title:'Recibió datos en los últimos 3 días'},
     stale:{label:'Sin datos',title:'Sin sesiones en los últimos 3 días'},
     no_access:{label:'Sin acceso',title:'La cuenta de servicio no tiene permiso en esta property'},
     unconfigured:{label:'No configurado',title:'Falta la credencial GOOGLE_SERVICE_ACCOUNT_JSON'},
     error:{label:'Error',title:'Error al consultar la Data API'}
   };
   async function enrichGa4Health(row){
-    var chip=row.querySelector('[data-role="ga4-health"]');
-    if(!chip)return;
+    var pill=row.querySelector('[data-role="id-pill"]');
+    if(!pill)return;
     var id=row.dataset.accountId;
     if(!id)return;
+    var originalId=pill.dataset.id||pill.textContent;
     try{
       var r=await fetch('/admin/api/ga4-health?property_id='+encodeURIComponent(id),{headers:{Accept:'application/json'}});
       var data=await r.json();
       var state=data.status||'error';
       var copy=GA4_HEALTH_COPY[state]||GA4_HEALTH_COPY.error;
-      chip.classList.remove('ga4-health-loading');
-      chip.classList.add('ga4-health-'+state);
-      chip.textContent=copy.label;
-      var title=copy.title;
-      if(state==='ok'&&data.sessions)title+=' · '+Number(data.sessions).toLocaleString('es-AR')+' sesiones';
-      chip.title=title;
+      // Limpia clases ga4-* previas antes de setear la nueva
+      pill.classList.remove('ga4-ok','ga4-stale','ga4-no_access','ga4-unconfigured','ga4-error');
+      pill.classList.add('ga4-'+state);
+      if(copy.keepId){
+        pill.textContent=originalId;
+        var sess=data.sessions?' · '+Number(data.sessions).toLocaleString('es-AR')+' sesiones':'';
+        pill.title=originalId+' · '+copy.title+sess;
+      }else{
+        pill.textContent=copy.label;
+        pill.title=originalId+' · '+copy.title;
+      }
     }catch(e){
-      chip.classList.remove('ga4-health-loading');
-      chip.classList.add('ga4-health-error');
-      chip.textContent='Error';
-      chip.title=String(e.message||'').slice(0,160);
+      pill.classList.add('ga4-error');
+      pill.textContent='Error';
+      pill.title=originalId+' · '+String(e.message||'').slice(0,160);
     }
   }
   async function enrichClientAccounts(){
@@ -3237,8 +3248,7 @@ export function renderClientEditView({ user, target, flash }) {
               (id) => `
               <div class="acc-list-row" data-account-id="${esc(id)}">
                 <span class="acc-list-name" data-role="name"><span class="muted" style="font-weight:400">Cargando&#8230;</span></span>
-                ${p.key === 'ga4' ? `<span class="ga4-health-chip ga4-health-loading" data-role="ga4-health" title="Chequeando actividad">&#8230;</span>` : ''}
-                <span class="acc-list-id-pill" data-role="id-pill" title="${esc(id)}">${esc(String(id).replace(/^act_/, ''))}</span>
+                <span class="acc-list-id-pill" data-role="id-pill" data-id="${esc(String(id).replace(/^act_/, ''))}" title="${esc(id)}">${esc(String(id).replace(/^act_/, ''))}</span>
                 <button type="button" class="icon-action danger" onclick="removeClientAccount(this,'${esc(p.key)}','${esc(id)}')" title="Quitar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
