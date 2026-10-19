@@ -629,6 +629,40 @@ export function createWebRouter() {
     }
   });
 
+  // Proxy dev-only para llamadas directas a la API de Kommo de un cliente
+  // (usa el token almacenado en clients.json). Útil para operaciones one-shot
+  // que no tienen endpoint dedicado (crear pipeline, etc.).
+  // Body: { client, method, path, body?, params? }
+  router.post('/admin/api/kommo-proxy', requireLogin, requireDev, express.json({ limit: '1mb' }), async (req, res) => {
+    const { client, method = 'GET', path, body, params = {} } = req.body || {};
+    if (!client || !path) return res.status(400).json({ error: 'client y path son obligatorios' });
+    try {
+      const c = getClient(client);
+      const k = c.kommo || {};
+      if (!k.subdomain || !k.token) return res.status(400).json({ error: `cliente "${client}" sin Kommo configurado` });
+      const url = new URL(`https://${k.subdomain}.kommo.com${path}`);
+      for (const [kk, vv] of Object.entries(params)) {
+        if (vv === undefined || vv === null) continue;
+        url.searchParams.set(kk, String(vv));
+      }
+      const opts = {
+        method,
+        headers: { Authorization: `Bearer ${k.token}`, Accept: 'application/json' },
+      };
+      if (body != null) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(url, opts);
+      const text = await r.text();
+      let data;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      res.status(r.status).json({ ok: r.ok, status: r.status, data });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   router.post('/admin/clients/:slug/budget', requireLogin, requireAdmin, express.json(), (req, res) => {
     const { platform, amount, alert_pct } = req.body || {};
     const patch = {};
