@@ -2105,6 +2105,17 @@ export function renderDashboard({ user }) {
           <div class="dash-section-title">Noticias</div>
           <div class="news-feed">
             <div class="news-item">
+              <div class="news-icon">${SHEETS_ICON}</div>
+              <div class="news-body">
+                <div class="news-head">
+                  <span class="news-tag">Nuevo</span>
+                  <span class="news-date">19 de octubre de 2026</span>
+                </div>
+                <h3 class="news-title">Integraci&#243;n de Google Sheets</h3>
+                <p class="news-text">Agregu&#233; Google Sheets al MCP: cada planilla se conecta desde la ficha del cliente eligiendo el archivo y la hoja (tab) espec&#237;fica. Las IA conectadas pueden leer rangos, escribir filas y hacer append sobre el tab correcto sin tener que pasar el ID a mano.</p>
+              </div>
+            </div>
+            <div class="news-item">
               <div class="news-icon">${GA4_ICON}</div>
               <div class="news-body">
                 <div class="news-head">

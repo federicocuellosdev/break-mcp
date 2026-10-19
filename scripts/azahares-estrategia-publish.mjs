@@ -162,6 +162,17 @@ a.cname:hover { color: var(--secondary); border-bottom-color: var(--secondary); 
 .oct-dd-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px; max-height: 300px; overflow-y: auto; background: var(--white); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,0.1); padding: 0.3rem; z-index: 50; }
 .oct-dd-menu[hidden] { display: none; }
 .oct-dd-opt { padding: 0.55rem 0.7rem; border-radius: 6px; cursor: pointer; font-size: 0.76rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; transition: background 0.12s, color 0.12s; white-space: nowrap; text-transform: none; letter-spacing: 0; }
+.oct-dd-all { border-bottom: 1px solid var(--border); margin-bottom: 3px; padding-bottom: 0.6rem; }
+.ctbl-interactive .oct-empty td { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2.5rem 1rem; font-style: italic; }
+.ctbl-interactive .oct-empty[hidden] { display: none; }
+
+/* Animación fluida al cambio de filas (View Transitions API) */
+.ctbl-interactive { view-transition-name: oct-table; }
+::view-transition-old(oct-table),
+::view-transition-new(oct-table) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(.22,.9,.3,1);
+}
 .oct-dd-opt:hover { background: var(--light); color: var(--primary); }
 .oct-dd-opt.selected { color: var(--secondary); font-weight: 700; }
 .oct-dd-opt.selected::after { content: ''; width: 12px; height: 12px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23057488'><path d='M13.485 1.929a.75.75 0 0 1 .086 1.056l-7.5 9a.75.75 0 0 1-1.113.056l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.92 3.918 6.99-8.388a.75.75 0 0 1 1.057-.082'/></svg>") center/contain no-repeat; flex-shrink: 0; }
@@ -376,14 +387,14 @@ const html = `<!DOCTYPE html>
                 <span class="th-label" onclick="octSort(this.closest('th'),'interaccion','text')">Interacción<svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span>
                 <span class="oct-dd" data-filter="interaccion">
                   <button type="button" class="oct-dd-btn" onclick="octToggleDD(event,this)"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg></button>
-                  <div class="oct-dd-menu" hidden>
-                    <div class="oct-dd-opt selected" data-value="" onclick="octPickDD(this)">Todas</div>
-                    <div class="oct-dd-opt" data-value="Primer contacto" onclick="octPickDD(this)">Primer contacto</div>
-                    <div class="oct-dd-opt" data-value="Segundo contacto" onclick="octPickDD(this)">Segundo contacto</div>
-                    <div class="oct-dd-opt" data-value="Seguimiento" onclick="octPickDD(this)">Seguimiento</div>
-                    <div class="oct-dd-opt" data-value="Coordinar visita" onclick="octPickDD(this)">Coordinar visita</div>
-                    <div class="oct-dd-opt" data-value="Envío de presupuesto" onclick="octPickDD(this)">Envío de presupuesto</div>
-                    <div class="oct-dd-opt" data-value="Cierre" onclick="octPickDD(this)">Cierre</div>
+                  <div class="oct-dd-menu" hidden onclick="event.stopPropagation()">
+                    <div class="oct-dd-opt oct-dd-all selected" data-value="__all" onclick="octPickDD(this,event)">Todas</div>
+                    <div class="oct-dd-opt" data-value="Primer contacto" onclick="octPickDD(this,event)">Primer contacto</div>
+                    <div class="oct-dd-opt" data-value="Segundo contacto" onclick="octPickDD(this,event)">Segundo contacto</div>
+                    <div class="oct-dd-opt" data-value="Seguimiento" onclick="octPickDD(this,event)">Seguimiento</div>
+                    <div class="oct-dd-opt" data-value="Coordinar visita" onclick="octPickDD(this,event)">Coordinar visita</div>
+                    <div class="oct-dd-opt" data-value="Envío de presupuesto" onclick="octPickDD(this,event)">Envío de presupuesto</div>
+                    <div class="oct-dd-opt" data-value="Cierre" onclick="octPickDD(this,event)">Cierre</div>
                   </div>
                 </span>
               </span>
@@ -393,18 +404,18 @@ const html = `<!DOCTYPE html>
                 <span class="th-label" onclick="octSort(this.closest('th'),'etapa','text')">Etapa<svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span>
                 <span class="oct-dd" data-filter="etapa">
                   <button type="button" class="oct-dd-btn" onclick="octToggleDD(event,this)"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg></button>
-                  <div class="oct-dd-menu" hidden>
-                    <div class="oct-dd-opt selected" data-value="" onclick="octPickDD(this)">Todas</div>
-                    <div class="oct-dd-opt" data-value="Lead calificado" onclick="octPickDD(this)">Lead calificado</div>
-                    <div class="oct-dd-opt" data-value="Oportunidad" onclick="octPickDD(this)">Oportunidad</div>
-                    <div class="oct-dd-opt" data-value="Presupuesto enviado" onclick="octPickDD(this)">Presupuesto enviado</div>
-                    <div class="oct-dd-opt" data-value="Quiere conocer" onclick="octPickDD(this)">Quiere conocer</div>
-                    <div class="oct-dd-opt" data-value="En validación" onclick="octPickDD(this)">En validación</div>
-                    <div class="oct-dd-opt" data-value="Volver a contactar" onclick="octPickDD(this)">Volver a contactar</div>
-                    <div class="oct-dd-opt" data-value="Sin respuesta" onclick="octPickDD(this)">Sin respuesta</div>
-                    <div class="oct-dd-opt" data-value="Stand by" onclick="octPickDD(this)">Stand by</div>
-                    <div class="oct-dd-opt" data-value="Agenda reunion" onclick="octPickDD(this)">Agenda reunion</div>
-                    <div class="oct-dd-opt" data-value="—" onclick="octPickDD(this)">— (sin etapa)</div>
+                  <div class="oct-dd-menu" hidden onclick="event.stopPropagation()">
+                    <div class="oct-dd-opt oct-dd-all selected" data-value="__all" onclick="octPickDD(this,event)">Todas</div>
+                    <div class="oct-dd-opt" data-value="Lead calificado" onclick="octPickDD(this,event)">Lead calificado</div>
+                    <div class="oct-dd-opt" data-value="Oportunidad" onclick="octPickDD(this,event)">Oportunidad</div>
+                    <div class="oct-dd-opt" data-value="Presupuesto enviado" onclick="octPickDD(this,event)">Presupuesto enviado</div>
+                    <div class="oct-dd-opt" data-value="Quiere conocer" onclick="octPickDD(this,event)">Quiere conocer</div>
+                    <div class="oct-dd-opt" data-value="En validación" onclick="octPickDD(this,event)">En validación</div>
+                    <div class="oct-dd-opt" data-value="Volver a contactar" onclick="octPickDD(this,event)">Volver a contactar</div>
+                    <div class="oct-dd-opt" data-value="Sin respuesta" onclick="octPickDD(this,event)">Sin respuesta</div>
+                    <div class="oct-dd-opt" data-value="Stand by" onclick="octPickDD(this,event)">Stand by</div>
+                    <div class="oct-dd-opt" data-value="Agenda reunion" onclick="octPickDD(this,event)">Agenda reunion</div>
+                    <div class="oct-dd-opt" data-value="—" onclick="octPickDD(this,event)">— (sin etapa)</div>
                   </div>
                 </span>
               </span>
@@ -445,6 +456,7 @@ const html = `<!DOCTYPE html>
           <tr data-fecha="2026-10-19" data-lead="Ramiro Arballo" data-canal="WhatsApp" data-interaccion="Coordinar visita" data-etapa="—"><td class="date">19/10</td><td class="name">Ramiro Arballo</td><td>WhatsApp</td><td>Coordinar visita</td><td><span class="pill pill-neutral">—</span></td></tr>
           <tr data-fecha="2026-10-19" data-lead="Hernan Stebano" data-canal="WhatsApp" data-interaccion="Seguimiento" data-etapa="—"><td class="date">19/10</td><td class="name">Hernan Stebano</td><td>WhatsApp</td><td>Seguimiento</td><td><span class="pill pill-neutral">—</span></td></tr>
           <tr data-fecha="2026-10-19" data-lead="Luis Londres" data-canal="WhatsApp" data-interaccion="Seguimiento" data-etapa="—"><td class="date">19/10</td><td class="name">Luis Londres</td><td>WhatsApp</td><td>Seguimiento</td><td><span class="pill pill-neutral">—</span></td></tr>
+          <tr class="oct-empty" hidden><td colspan="5">Sin interacciones que coincidan con los filtros aplicados.</td></tr>
         </tbody>
       </table>
     </div>
@@ -558,22 +570,23 @@ const html = `<!DOCTYPE html>
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') close(); });
 })();
 
-// ─── Tabla interacciones de octubre: sort + filter (single-select estilo admin) ─
+// ─── Tabla interacciones de octubre: sort + filter multi-select ────────
 (function(){
   const tbl = document.getElementById('tbl-oct');
   if(!tbl) return;
   const tbody = tbl.querySelector('tbody');
   const allRows = Array.from(tbody.rows);
-  const filters = { interaccion: '', etapa: '' };
+  // filters[key] = Set de valores PERMITIDOS; null = sin filtro (todos)
+  const filters = { interaccion: null, etapa: null };
   let sortKey = null, sortDir = null;
 
-  function applyFilters(){
+  function doApplyFilters(){
     let shown = 0;
     for(const r of allRows){
       let ok = true;
-      for(const [k, v] of Object.entries(filters)){
-        if(!v) continue;
-        if((r.dataset[k] || '') !== v){ ok = false; break; }
+      for(const [k, set] of Object.entries(filters)){
+        if(!set) continue;
+        if(!set.has(r.dataset[k] || '')){ ok = false; break; }
       }
       r.style.display = ok ? '' : 'none';
       if(ok) shown++;
@@ -582,9 +595,20 @@ const html = `<!DOCTYPE html>
     const tot = document.getElementById('oct-total');
     if(cnt) cnt.textContent = String(shown);
     if(tot) tot.style.display = (shown === allRows.length) ? 'none' : '';
+    const empty = tbody.querySelector('.oct-empty');
+    if(empty) empty.hidden = shown > 0;
   }
 
-  function sortRows(){
+  function applyFilters(){
+    if(document.startViewTransition){
+      document.startViewTransition(() => doApplyFilters());
+    } else {
+      doApplyFilters();
+    }
+  }
+
+  function doSortRows(){
+    const empty = tbody.querySelector('.oct-empty');
     const visible = allRows.filter((r) => r.style.display !== 'none');
     const hidden = allRows.filter((r) => r.style.display === 'none');
     if(sortKey){
@@ -598,6 +622,15 @@ const html = `<!DOCTYPE html>
     tbody.innerHTML = '';
     for(const r of visible) tbody.appendChild(r);
     for(const r of hidden) tbody.appendChild(r);
+    if(empty) tbody.appendChild(empty);
+  }
+
+  function sortRows(){
+    if(document.startViewTransition){
+      document.startViewTransition(() => doSortRows());
+    } else {
+      doSortRows();
+    }
   }
 
   window.octSort = function(th, key){
@@ -617,6 +650,25 @@ const html = `<!DOCTYPE html>
     });
   }
 
+  function refreshDDState(dd){
+    const key = dd.dataset.filter;
+    const btn = dd.querySelector('.oct-dd-btn');
+    const opts = Array.from(dd.querySelectorAll('.oct-dd-opt'));
+    const valueOpts = opts.filter((o) => o.dataset.value !== '__all');
+    const allOpt = opts.find((o) => o.dataset.value === '__all');
+    const activeSet = filters[key];
+
+    if(!activeSet){
+      valueOpts.forEach((o) => o.classList.add('selected'));
+      if(allOpt) allOpt.classList.add('selected');
+      btn.classList.remove('on');
+    } else {
+      valueOpts.forEach((o) => o.classList.toggle('selected', activeSet.has(o.dataset.value)));
+      if(allOpt) allOpt.classList.remove('selected');
+      btn.classList.add('on');
+    }
+  }
+
   window.octToggleDD = function(ev, btn){
     ev.stopPropagation();
     const dd = btn.closest('.oct-dd');
@@ -626,19 +678,30 @@ const html = `<!DOCTYPE html>
     if(!isOpen){
       dd.classList.add('open');
       dd.querySelector('.oct-dd-menu').hidden = false;
+      refreshDDState(dd);
     }
   };
 
-  window.octPickDD = function(opt){
+  window.octPickDD = function(opt, ev){
+    if(ev) ev.stopPropagation();
     const dd = opt.closest('.oct-dd');
     if(!dd) return;
     const key = dd.dataset.filter;
-    dd.querySelectorAll('.oct-dd-opt').forEach((o) => o.classList.remove('selected'));
-    opt.classList.add('selected');
-    filters[key] = opt.dataset.value || '';
-    const btn = dd.querySelector('.oct-dd-btn');
-    if(filters[key]) btn.classList.add('on'); else btn.classList.remove('on');
-    closeDDs();
+    const value = opt.dataset.value;
+    const valueOpts = Array.from(dd.querySelectorAll('.oct-dd-opt')).filter((o) => o.dataset.value !== '__all');
+    const allValues = valueOpts.map((o) => o.dataset.value);
+
+    if(value === '__all'){
+      // Toggle: si están todas, deseleccionar todas; si no, seleccionar todas
+      filters[key] = (filters[key] === null) ? new Set() : null;
+    } else {
+      let set = filters[key] ? new Set(filters[key]) : new Set(allValues);
+      if(set.has(value)) set.delete(value); else set.add(value);
+      if(set.size === allValues.length) filters[key] = null;
+      else if(set.size === 0) filters[key] = new Set();
+      else filters[key] = set;
+    }
+    refreshDDState(dd);
     applyFilters();
     sortRows();
   };
