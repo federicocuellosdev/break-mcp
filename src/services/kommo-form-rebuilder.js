@@ -99,7 +99,7 @@ async function processTarget(target) {
       const leadFull = await kreq(target, 'GET', `/api/v4/leads/${leadId}`, null, { with: 'contacts' });
       const name = leadFull.name || '';
       if (name.startsWith('FORM - ')) { stats.skipped++; continue; }
-      if (!/^Facebook\s*N[º°]/.test(name)) { stats.skipped++; continue; }
+      if (!/^Facebook\s*(?:N[º°]|№)/.test(name)) { stats.skipped++; continue; }
 
       const contactId = leadFull._embedded?.contacts?.[0]?.id;
       const contact = contactId
@@ -108,7 +108,7 @@ async function processTarget(target) {
       const fullName = getFullContactName(contact);
       const newName = `FORM - ${fullName}`;
       const newTags = ['FORM - Marlaca', 'Meta Ads'].map((n) => ({ name: n }));
-      const fbMatch = name.match(/Facebook\s*N[º°]\s*(\d+)/);
+      const fbMatch = name.match(/Facebook\s*(?:N[º°]|№)\s*(\d+)/);
       const fbLeadId = fbMatch ? fbMatch[1] : null;
       const noteResp = buildNoteRespuestas(leadFull, target, fbLeadId);
 
