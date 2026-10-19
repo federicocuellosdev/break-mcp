@@ -169,3 +169,51 @@ export async function runKommoFormRebuilderOnce() {
   const results = await tick();
   return { ok: true, results };
 }
+
+// Cleanup one-shot: borra las notas con texto "Para hablar por WhatsApp..."
+// de todos los leads de Marlaca (dejadas por un rebuild viejo).
+export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 14547399 } = {}) {
+  const target = { slug };
+  const stats = { scanned_leads: 0, found_notes: 0, deleted: 0, failed: 0, errors: [] };
+
+  async function listAll(path, params = {}) {
+    const all = [];
+    for (let page = 1; page <= 10; page++) {
+      const j = await kreq(target, 'GET', path, null, { ...params, page: String(page), limit: '250' });
+      if (!j) break;
+      const items = j?._embedded?.leads || j?._embedded?.notes || j?._embedded?.unsorted || [];
+      all.push(...items);
+      if (!j?._links?.next) break;
+    }
+    return all;
+  }
+
+  const formales = await listAll('/api/v4/leads', { 'filter[pipeline_id]': String(pipeline_id) });
+  const unsorted = await listAll('/api/v4/leads/unsorted', { 'filter[pipeline_id]': String(pipeline_id) });
+  const leadIds = new Set();
+  for (const l of formales) leadIds.add(l.id);
+  for (const u of unsorted) { const id = u._embedded?.leads?.[0]?.id; if (id) leadIds.add(id); }
+  stats.scanned_leads = leadIds.size;
+
+  for (const leadId of leadIds) {
+    try {
+      const notesData = await kreq(target, 'GET', `/api/v4/leads/${leadId}/notes`, null, { limit: '250' });
+      const notes = notesData?._embedded?.notes || [];
+      const waNotes = notes.filter((n) => n.note_type === 'common' && typeof n.params?.text === 'string' && n.params.text.startsWith('Para hablar por WhatsApp'));
+      stats.found_notes += waNotes.length;
+      for (const n of waNotes) {
+        try {
+          await kreq(target, 'DELETE', `/api/v4/leads/${leadId}/notes/${n.id}`);
+          stats.deleted++;
+        } catch (e) {
+          stats.failed++;
+          stats.errors.push({ lead_id: leadId, note_id: n.id, error: e.message.slice(0, 180) });
+        }
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    } catch (e) {
+      stats.errors.push({ lead_id: leadId, error: 'list notes: ' + e.message.slice(0, 180) });
+    }
+  }
+  return stats;
+}

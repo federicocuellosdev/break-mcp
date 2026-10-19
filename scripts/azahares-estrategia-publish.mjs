@@ -141,26 +141,30 @@ a.cname:hover { color: var(--secondary); border-bottom-color: var(--secondary); 
 .pill-wait { background: var(--awa-soft); color: var(--awa); }
 .pill-neutral { background: var(--border); color: var(--text-muted); }
 
+.ctbl-interactive th { white-space: nowrap; }
 .ctbl-interactive th.sort { cursor: pointer; user-select: none; }
-.ctbl-interactive th.sort .sort-ico { display: inline-block; width: 10px; margin-left: 5px; opacity: 0.3; font-size: 0.75em; transition: opacity 0.15s; }
-.ctbl-interactive th.sort .sort-ico::after { content: '↕'; }
-.ctbl-interactive th.sort:hover .sort-ico { opacity: 0.7; }
-.ctbl-interactive th.sort-asc .sort-ico { opacity: 1; color: var(--secondary); }
-.ctbl-interactive th.sort-asc .sort-ico::after { content: '↑'; }
+.ctbl-interactive th .th-inner { display: inline-flex; align-items: center; gap: 5px; line-height: 1; vertical-align: middle; }
+.ctbl-interactive th .th-label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.ctbl-interactive th .sort-ico { display: block; width: 8px; height: 11px; opacity: 0.3; color: currentColor; transition: opacity 0.15s, color 0.15s; flex-shrink: 0; }
+.ctbl-interactive th.sort:hover .sort-ico { opacity: 0.65; }
+.ctbl-interactive th.sort-asc .sort-ico,
 .ctbl-interactive th.sort-desc .sort-ico { opacity: 1; color: var(--secondary); }
-.ctbl-interactive th.sort-desc .sort-ico::after { content: '↓'; }
-.ctbl-interactive th.filterable { position: relative; }
-.ctbl-interactive th.filterable .th-label { cursor: pointer; }
-.ctbl-interactive .filter-btn { background: transparent; border: 0; cursor: pointer; margin-left: 4px; color: var(--text-muted); font-size: 0.68rem; padding: 1px 4px; border-radius: 3px; vertical-align: middle; }
-.ctbl-interactive .filter-btn:hover { background: var(--border); color: var(--primary); }
-.ctbl-interactive .filter-btn.on { background: var(--secondary); color: var(--white); }
-.filter-pop { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; background: var(--white); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); padding: 0.4rem; min-width: 220px; max-height: 280px; overflow-y: auto; text-transform: none; letter-spacing: 0; }
-.filter-pop label { display: flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0.5rem; font-size: 0.78rem; color: var(--text); cursor: pointer; font-weight: 500; border-radius: 4px; }
-.filter-pop label:hover { background: var(--light); }
-.filter-pop label input { margin: 0; cursor: pointer; }
-.filter-pop .fp-actions { display: flex; justify-content: space-between; padding: 0.5rem 0.5rem 0.1rem; border-top: 1px solid var(--border); margin-top: 0.4rem; font-size: 0.72rem; }
-.filter-pop .fp-actions a { color: var(--secondary); cursor: pointer; text-decoration: none; font-weight: 600; }
-.filter-pop .fp-actions a:hover { text-decoration: underline; }
+.ctbl-interactive th.sort-asc .sort-ico .dn,
+.ctbl-interactive th.sort-desc .sort-ico .up { opacity: 0.2; }
+
+/* Dropdown de filtro — copia del patrón admin (col-status-dropdown) */
+.oct-dd { position: relative; display: inline-flex; margin-left: 2px; }
+.oct-dd-btn { display: inline-flex; align-items: center; gap: 3px; background: none; border: 0; padding: 0 2px; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--text-muted); cursor: pointer; outline: none; transition: color 0.15s; border-radius: 3px; }
+.oct-dd-btn:hover, .oct-dd.open .oct-dd-btn { color: var(--primary); }
+.oct-dd-btn svg { width: 10px; height: 10px; flex-shrink: 0; transition: transform 0.2s; }
+.oct-dd.open .oct-dd-btn svg { transform: rotate(180deg); color: var(--secondary); }
+.oct-dd-btn.on { color: var(--secondary); font-weight: 700; }
+.oct-dd-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px; max-height: 300px; overflow-y: auto; background: var(--white); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,0.1); padding: 0.3rem; z-index: 50; }
+.oct-dd-menu[hidden] { display: none; }
+.oct-dd-opt { padding: 0.55rem 0.7rem; border-radius: 6px; cursor: pointer; font-size: 0.76rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; transition: background 0.12s, color 0.12s; white-space: nowrap; text-transform: none; letter-spacing: 0; }
+.oct-dd-opt:hover { background: var(--light); color: var(--primary); }
+.oct-dd-opt.selected { color: var(--secondary); font-weight: 700; }
+.oct-dd-opt.selected::after { content: ''; width: 12px; height: 12px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23057488'><path d='M13.485 1.929a.75.75 0 0 1 .086 1.056l-7.5 9a.75.75 0 0 1-1.113.056l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.92 3.918 6.99-8.388a.75.75 0 0 1 1.057-.082'/></svg>") center/contain no-repeat; flex-shrink: 0; }
 
 .modal-root { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: clamp(16px, 4vw, 2rem); background: rgba(18, 28, 37, 0.55); backdrop-filter: blur(5px); }
 .modal-root.show { display: flex; }
@@ -360,20 +364,50 @@ const html = `<!DOCTYPE html>
 
       <p class="foot-note"><strong>Lectura:</strong> el pipeline real es chico pero no fantasmal — 36 leads vivos y 2 cierres confirmados en 4 meses sobre 231 contactos. El problema no es la cantidad sino la <strong>trazabilidad</strong>: la mayoría del embudo cae en "En seguimiento" sin próxima acción cargada, el mismo contacto se registra múltiples veces como filas sueltas (16 teléfonos duplicados con hasta 9 entradas cada uno) y campos clave como valor, avance y próxima acción están prácticamente vacíos. Es lo que Kommo resuelve de fábrica.</p>
 
-      <h3 class="subhead">Interacciones de octubre (33)</h3>
+      <h3 class="subhead">Interacciones de octubre (<span id="oct-count">33</span><span id="oct-total" style="color:var(--text-muted);font-weight:500"> / 33</span>)</h3>
       <table class="ctbl ctbl-interactive" id="tbl-oct">
         <thead>
           <tr>
-            <th class="sort" data-key="fecha" style="width:72px" onclick="octSort(this,'fecha','date')">Fecha<span class="sort-ico"></span></th>
-            <th class="sort" data-key="lead" onclick="octSort(this,'lead','text')">Lead<span class="sort-ico"></span></th>
-            <th class="sort" data-key="canal" style="width:110px" onclick="octSort(this,'canal','text')">Canal<span class="sort-ico"></span></th>
-            <th class="sort filterable" data-key="interaccion" style="width:220px">
-              <span class="th-label" onclick="octSort(this.parentElement,'interaccion','text')">Interacción<span class="sort-ico"></span></span>
-              <button type="button" class="filter-btn" data-filter="interaccion" onclick="octOpenFilter(event,this,'interaccion')" title="Filtrar">▾</button>
+            <th class="sort" data-key="fecha" style="width:72px" onclick="octSort(this,'fecha','date')"><span class="th-inner"><span class="th-txt">Fecha</span><svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span></th>
+            <th class="sort" data-key="lead" onclick="octSort(this,'lead','text')"><span class="th-inner"><span class="th-txt">Lead</span><svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span></th>
+            <th class="sort" data-key="canal" style="width:110px" onclick="octSort(this,'canal','text')"><span class="th-inner"><span class="th-txt">Canal</span><svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span></th>
+            <th class="sort" data-key="interaccion" style="width:220px">
+              <span class="th-inner">
+                <span class="th-label" onclick="octSort(this.closest('th'),'interaccion','text')">Interacción<svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span>
+                <span class="oct-dd" data-filter="interaccion">
+                  <button type="button" class="oct-dd-btn" onclick="octToggleDD(event,this)"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg></button>
+                  <div class="oct-dd-menu" hidden>
+                    <div class="oct-dd-opt selected" data-value="" onclick="octPickDD(this)">Todas</div>
+                    <div class="oct-dd-opt" data-value="Primer contacto" onclick="octPickDD(this)">Primer contacto</div>
+                    <div class="oct-dd-opt" data-value="Segundo contacto" onclick="octPickDD(this)">Segundo contacto</div>
+                    <div class="oct-dd-opt" data-value="Seguimiento" onclick="octPickDD(this)">Seguimiento</div>
+                    <div class="oct-dd-opt" data-value="Coordinar visita" onclick="octPickDD(this)">Coordinar visita</div>
+                    <div class="oct-dd-opt" data-value="Envío de presupuesto" onclick="octPickDD(this)">Envío de presupuesto</div>
+                    <div class="oct-dd-opt" data-value="Cierre" onclick="octPickDD(this)">Cierre</div>
+                  </div>
+                </span>
+              </span>
             </th>
-            <th class="sort filterable" data-key="etapa" style="width:200px">
-              <span class="th-label" onclick="octSort(this.parentElement,'etapa','text')">Etapa<span class="sort-ico"></span></span>
-              <button type="button" class="filter-btn" data-filter="etapa" onclick="octOpenFilter(event,this,'etapa')" title="Filtrar">▾</button>
+            <th class="sort" data-key="etapa" style="width:200px">
+              <span class="th-inner">
+                <span class="th-label" onclick="octSort(this.closest('th'),'etapa','text')">Etapa<svg class="sort-ico" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l3 3H2z" fill="currentColor" class="up"/><path d="M5 11l3-3H2z" fill="currentColor" class="dn"/></svg></span>
+                <span class="oct-dd" data-filter="etapa">
+                  <button type="button" class="oct-dd-btn" onclick="octToggleDD(event,this)"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg></button>
+                  <div class="oct-dd-menu" hidden>
+                    <div class="oct-dd-opt selected" data-value="" onclick="octPickDD(this)">Todas</div>
+                    <div class="oct-dd-opt" data-value="Lead calificado" onclick="octPickDD(this)">Lead calificado</div>
+                    <div class="oct-dd-opt" data-value="Oportunidad" onclick="octPickDD(this)">Oportunidad</div>
+                    <div class="oct-dd-opt" data-value="Presupuesto enviado" onclick="octPickDD(this)">Presupuesto enviado</div>
+                    <div class="oct-dd-opt" data-value="Quiere conocer" onclick="octPickDD(this)">Quiere conocer</div>
+                    <div class="oct-dd-opt" data-value="En validación" onclick="octPickDD(this)">En validación</div>
+                    <div class="oct-dd-opt" data-value="Volver a contactar" onclick="octPickDD(this)">Volver a contactar</div>
+                    <div class="oct-dd-opt" data-value="Sin respuesta" onclick="octPickDD(this)">Sin respuesta</div>
+                    <div class="oct-dd-opt" data-value="Stand by" onclick="octPickDD(this)">Stand by</div>
+                    <div class="oct-dd-opt" data-value="Agenda reunion" onclick="octPickDD(this)">Agenda reunion</div>
+                    <div class="oct-dd-opt" data-value="—" onclick="octPickDD(this)">— (sin etapa)</div>
+                  </div>
+                </span>
+              </span>
             </th>
           </tr>
         </thead>
@@ -524,25 +558,30 @@ const html = `<!DOCTYPE html>
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') close(); });
 })();
 
-// ─── Tabla interacciones de octubre: sort + filter ──────────────
+// ─── Tabla interacciones de octubre: sort + filter (single-select estilo admin) ─
 (function(){
   const tbl = document.getElementById('tbl-oct');
   if(!tbl) return;
   const tbody = tbl.querySelector('tbody');
   const allRows = Array.from(tbody.rows);
-  const filters = { interaccion: null, etapa: null };
+  const filters = { interaccion: '', etapa: '' };
   let sortKey = null, sortDir = null;
 
   function applyFilters(){
+    let shown = 0;
     for(const r of allRows){
       let ok = true;
-      for(const [k, set] of Object.entries(filters)){
-        if(!set) continue;
-        const v = r.dataset[k] || '';
-        if(!set.has(v)){ ok = false; break; }
+      for(const [k, v] of Object.entries(filters)){
+        if(!v) continue;
+        if((r.dataset[k] || '') !== v){ ok = false; break; }
       }
       r.style.display = ok ? '' : 'none';
+      if(ok) shown++;
     }
+    const cnt = document.getElementById('oct-count');
+    const tot = document.getElementById('oct-total');
+    if(cnt) cnt.textContent = String(shown);
+    if(tot) tot.style.display = (shown === allRows.length) ? 'none' : '';
   }
 
   function sortRows(){
@@ -561,7 +600,7 @@ const html = `<!DOCTYPE html>
     for(const r of hidden) tbody.appendChild(r);
   }
 
-  window.octSort = function(th, key, _type){
+  window.octSort = function(th, key){
     const headers = tbl.querySelectorAll('th');
     if(sortKey === key){ sortDir = sortDir === 'asc' ? 'desc' : (sortDir === 'desc' ? null : 'asc'); }
     else { sortKey = key; sortDir = 'asc'; }
@@ -571,51 +610,40 @@ const html = `<!DOCTYPE html>
     sortRows();
   };
 
-  function uniqueValues(key){
-    const s = new Set();
-    for(const r of allRows) s.add(r.dataset[key] || '');
-    return Array.from(s).sort((a, b) => a.localeCompare(b, 'es'));
+  function closeDDs(){
+    document.querySelectorAll('.oct-dd.open').forEach((d) => {
+      d.classList.remove('open');
+      const m = d.querySelector('.oct-dd-menu'); if(m) m.hidden = true;
+    });
   }
 
-  function closeFilter(){
-    document.querySelectorAll('.filter-pop').forEach((el) => el.remove());
-    document.querySelectorAll('.filter-btn.open').forEach((b) => b.classList.remove('open'));
-  }
-
-  window.octOpenFilter = function(ev, btn, key){
+  window.octToggleDD = function(ev, btn){
     ev.stopPropagation();
-    if(btn.classList.contains('open')){ closeFilter(); return; }
-    closeFilter();
-    btn.classList.add('open');
-    const values = uniqueValues(key);
-    const active = filters[key] || new Set(values);
-    const pop = document.createElement('div');
-    pop.className = 'filter-pop';
-    pop.onclick = (e) => e.stopPropagation();
-    pop.innerHTML = values.map((v) => '<label><input type="checkbox" data-v="' + v.replace(/"/g,'&quot;') + '" ' + (active.has(v) ? 'checked' : '') + '> ' + (v || '—') + '</label>').join('') + '<div class="fp-actions"><a data-act="all">Todos</a><a data-act="none">Ninguno</a></div>';
-    btn.parentElement.appendChild(pop);
-    pop.querySelectorAll('input').forEach((inp) => {
-      inp.addEventListener('change', () => {
-        const checked = Array.from(pop.querySelectorAll('input:checked')).map((i) => i.dataset.v);
-        if(checked.length === values.length){ filters[key] = null; btn.classList.remove('on'); }
-        else { filters[key] = new Set(checked); btn.classList.add('on'); }
-        applyFilters();
-        sortRows();
-      });
-    });
-    pop.querySelector('[data-act="all"]').addEventListener('click', () => {
-      pop.querySelectorAll('input').forEach((i) => i.checked = true);
-      filters[key] = null; btn.classList.remove('on');
-      applyFilters(); sortRows();
-    });
-    pop.querySelector('[data-act="none"]').addEventListener('click', () => {
-      pop.querySelectorAll('input').forEach((i) => i.checked = false);
-      filters[key] = new Set(); btn.classList.add('on');
-      applyFilters(); sortRows();
-    });
+    const dd = btn.closest('.oct-dd');
+    if(!dd) return;
+    const isOpen = dd.classList.contains('open');
+    closeDDs();
+    if(!isOpen){
+      dd.classList.add('open');
+      dd.querySelector('.oct-dd-menu').hidden = false;
+    }
   };
 
-  document.addEventListener('click', closeFilter);
+  window.octPickDD = function(opt){
+    const dd = opt.closest('.oct-dd');
+    if(!dd) return;
+    const key = dd.dataset.filter;
+    dd.querySelectorAll('.oct-dd-opt').forEach((o) => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    filters[key] = opt.dataset.value || '';
+    const btn = dd.querySelector('.oct-dd-btn');
+    if(filters[key]) btn.classList.add('on'); else btn.classList.remove('on');
+    closeDDs();
+    applyFilters();
+    sortRows();
+  };
+
+  document.addEventListener('click', closeDDs);
 })();
 </script>
 </body>

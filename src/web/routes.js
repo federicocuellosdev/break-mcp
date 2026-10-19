@@ -28,7 +28,7 @@ import {
   deleteClientRecord,
 } from '../clients.js';
 import { google } from 'googleapis';
-import { runKommoFormRebuilderOnce } from '../services/kommo-form-rebuilder.js';
+import { runKommoFormRebuilderOnce, cleanupWhatsAppNotes } from '../services/kommo-form-rebuilder.js';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
 import { renderLogin } from './pages/login.js';
 import {
@@ -615,6 +615,15 @@ export function createWebRouter() {
     try {
       const r = await runKommoFormRebuilderOnce();
       res.json(r);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/api/kommo-cleanup-wa-notes', requireLogin, requireAdmin, async (_req, res) => {
+    try {
+      const r = await cleanupWhatsAppNotes();
+      res.json({ ok: true, ...r });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
