@@ -22,6 +22,8 @@ const TARGETS = [
     source_label: 'Meta Lead Ads',
     form_id: '1477737454181714',
     form_tag: 'FORM - Marlaca',
+    // nuevo_status_id null → se queda en Incoming hasta que el comercial acepte
+    nuevo_status_id: null,
   },
   {
     slug: 'azahares',
@@ -29,6 +31,8 @@ const TARGETS = [
     source_label: 'Meta Lead Ads',
     form_id: null, // múltiples formularios activos — se extrae del lead si está en custom fields
     form_tag: 'FORM - Azahares',
+    // nuevo_status_id "Nuevo" → se mueve directo tras rebuild
+    nuevo_status_id: 113131176,
   },
 ];
 
@@ -93,6 +97,18 @@ async function kreq(target, method, path, body = null, params = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+// Cache del user_id del dueño del token Kommo por target (para accept de unsorted).
+const USER_ID_CACHE = new Map();
+async function getAccountUserId(target) {
+  if (USER_ID_CACHE.has(target.slug)) return USER_ID_CACHE.get(target.slug);
+  const acc = await kreq(target, 'GET', '/api/v4/account', null, { with: 'users' });
+  // El token Kommo pertenece a la "integración" o a un user; account tiene created_by (admin)
+  const uid = acc?.current_user_id || acc?.created_by || acc?._embedded?.users?.[0]?.id || null;
+  if (!uid) throw new Error('no se pudo resolver user_id del account Kommo');
+  USER_ID_CACHE.set(target.slug, uid);
+  return uid;
+}
+
 async function processTarget(target) {
   const started = Date.now();
   const stats = { slug: target.slug, scanned: 0, rebuilt: 0, skipped: 0, failed: 0, details: [] };
@@ -133,6 +149,21 @@ async function processTarget(target) {
       await kreq(target, 'POST', `/api/v4/leads/${leadId}/notes`, [
         { note_type: 'common', params: { text: noteResp } },
       ]);
+
+      // Si el target define nuevo_status_id, aceptar el unsorted + mover al stage "Nuevo".
+      // Si no, se queda en Incoming para que el comercial lo revise manualmente.
+      if (target.nuevo_status_id && u.uid) {
+        try {
+          const userId = await getAccountUserId(target);
+          await kreq(target, 'POST', `/api/v4/leads/unsorted/${u.uid}/accept`, {
+            user_id: userId,
+            status_id: target.nuevo_status_id,
+          });
+        } catch (e) {
+          console.warn(`[kommo-rebuilder] ${target.slug} accept fail lead ${leadId}:`, e.message.slice(0, 150));
+        }
+      }
+
       stats.rebuilt++;
       stats.details.push({ lead_id: leadId, from: name, to: newName });
       await new Promise((r) => setTimeout(r, 200));
@@ -215,12 +246,10 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
       const waNotes = notes.filter((n) => n.note_type === 'common' && typeof n.params?.text === 'string' && n.params.text.startsWith('Para hablar por WhatsApp'));
       stats.found_notes += waNotes.length;
       for (const n of waNotes) {
-        let done = false;
         // 1) intentar DELETE
         try {
           await kreq(target, 'DELETE', `/api/v4/leads/${leadId}/notes/${n.id}`);
           stats.deleted++;
-          done = true;
         } catch (e) {
           // 2) fallback: PATCH para vaciar el texto (requiere note_type)
           try {
@@ -229,7 +258,6 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
               params: { text: '—' },
             });
             stats.patched = (stats.patched || 0) + 1;
-            done = true;
           } catch (e2) {
             // 3) fallback 2: PATCH bulk
             try {
@@ -237,7 +265,6 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
                 { id: n.id, entity_id: leadId, note_type: 'common', params: { text: '—' } },
               ]);
               stats.patched_bulk = (stats.patched_bulk || 0) + 1;
-              done = true;
             } catch (e3) {
               stats.failed++;
               stats.errors.push({
