@@ -2,7 +2,7 @@
 // detecta los leads unsorted creados por la integración nativa de Facebook
 // (lead.name = "Facebook №...") y los reconstruye en el formato propio:
 //   · name = "FORM - <Contacto>"
-//   · tags = ["FORM - Marlaca", "Meta Ads"]
+//   · tags = [target.form_tag, "Meta Ads"]
 //   · custom_fields del lead vaciados
 //   · nota common con "Respuestas del formulario" + "Datos de seguimiento"
 //
@@ -16,7 +16,20 @@
 import { getClient } from '../clients.js';
 
 const TARGETS = [
-  { slug: 'marlaca', pipeline_id: 14547399, source_label: 'Meta Lead Ads', form_id: '1477737454181714' },
+  {
+    slug: 'marlaca',
+    pipeline_id: 14547399,
+    source_label: 'Meta Lead Ads',
+    form_id: '1477737454181714',
+    form_tag: 'FORM - Marlaca',
+  },
+  {
+    slug: 'azahares',
+    pipeline_id: 14641828, // Meta Ads & Web
+    source_label: 'Meta Lead Ads',
+    form_id: null, // múltiples formularios activos — se extrae del lead si está en custom fields
+    form_tag: 'FORM - Azahares',
+  },
 ];
 
 function cleanValue(v) {
@@ -50,8 +63,8 @@ function buildNoteRespuestas(leadFull, target, fbLeadId) {
   if (waValue) txt += `• WhatsApp: ${waValue}\n`;
 
   txt += '\n---\nDatos de seguimiento\n--\n';
-  txt += `• Plataforma: ${target.source_label}\n`;
-  txt += `• Form ID: ${target.form_id}`;
+  txt += `• Plataforma: ${target.source_label}`;
+  if (target.form_id) txt += `\n• Form ID: ${target.form_id}`;
   if (fbLeadId) txt += `\n• FB Lead ID: ${fbLeadId}`;
   return txt;
 }
@@ -107,7 +120,7 @@ async function processTarget(target) {
         : null;
       const fullName = getFullContactName(contact);
       const newName = `FORM - ${fullName}`;
-      const newTags = ['FORM - Marlaca', 'Meta Ads'].map((n) => ({ name: n }));
+      const newTags = [target.form_tag, 'Meta Ads'].map((n) => ({ name: n }));
       const fbMatch = name.match(/Facebook\s*(?:N[º°]|№)\s*(\d+)/);
       const fbLeadId = fbMatch ? fbMatch[1] : null;
       const noteResp = buildNoteRespuestas(leadFull, target, fbLeadId);
