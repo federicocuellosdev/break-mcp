@@ -3357,11 +3357,17 @@ export function renderClientEditView({ user, target, flash }) {
       sheet_name: entry.sheet_name || null,
     };
   });
+  const niceCase = (str) => {
+    const s = String(str || '').trim();
+    if (!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  };
   const sheetsRows = sheetEntries.length
     ? sheetEntries
         .map((s) => {
-          const file = s.spreadsheet_title || s.alias;
-          const label = s.sheet_name ? `${file} <span class="sheets-sep">&#8250;</span> ${s.sheet_name}` : `${file} <span class="sheets-sep">&#8250;</span> <em class="muted">(archivo completo)</em>`;
+          const file = niceCase(s.spreadsheet_title || s.alias);
+          const tab = s.sheet_name ? niceCase(s.sheet_name) : null;
+          const label = tab ? `${esc(file)} <span class="sheets-sep">&#8250;</span> ${esc(tab)}` : `${esc(file)} <span class="sheets-sep">&#8250;</span> <em class="muted">(archivo completo)</em>`;
           return `
           <div class="acc-list-row sheets-row" data-account-id="${esc(s.alias)}" data-sheet-id="${esc(s.spreadsheet_id)}" data-sheet-tab="${esc(s.sheet_name || '')}">
             <span class="acc-list-name sheets-label-cell">${label}</span>
@@ -3852,8 +3858,10 @@ export function renderClientEditView({ user, target, flash }) {
       var prev=document.getElementById('sheets-preview');
       var pname=document.getElementById('sheets-preview-name');
       if(prev&&pname){
-        var label=(sheetsState.spreadsheetTitle||'(archivo)')+' › '+(name||'(archivo completo)');
-        pname.textContent=label;
+        var nice=function(s){s=String(s||'').trim();return s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():s};
+        var fileLbl=nice(sheetsState.spreadsheetTitle)||'(archivo)';
+        var tabLbl=name?nice(name):'(archivo completo)';
+        pname.textContent=fileLbl+' › '+tabLbl;
         prev.hidden=false;
       }
       sheetsRefreshNextBtn();
