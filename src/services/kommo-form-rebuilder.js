@@ -202,12 +202,39 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
       const waNotes = notes.filter((n) => n.note_type === 'common' && typeof n.params?.text === 'string' && n.params.text.startsWith('Para hablar por WhatsApp'));
       stats.found_notes += waNotes.length;
       for (const n of waNotes) {
+        let done = false;
+        // 1) intentar DELETE
         try {
           await kreq(target, 'DELETE', `/api/v4/leads/${leadId}/notes/${n.id}`);
           stats.deleted++;
+          done = true;
         } catch (e) {
-          stats.failed++;
-          stats.errors.push({ lead_id: leadId, note_id: n.id, error: e.message.slice(0, 180) });
+          // 2) fallback: PATCH para vaciar el texto
+          try {
+            await kreq(target, 'PATCH', `/api/v4/leads/${leadId}/notes/${n.id}`, {
+              params: { text: '—' },
+            });
+            stats.patched = (stats.patched || 0) + 1;
+            done = true;
+          } catch (e2) {
+            // 3) fallback 2: PATCH bulk
+            try {
+              await kreq(target, 'PATCH', `/api/v4/leads/notes`, [
+                { id: n.id, entity_id: leadId, params: { text: '—' } },
+              ]);
+              stats.patched_bulk = (stats.patched_bulk || 0) + 1;
+              done = true;
+            } catch (e3) {
+              stats.failed++;
+              stats.errors.push({
+                lead_id: leadId,
+                note_id: n.id,
+                delete_err: e.message.slice(0, 120),
+                patch_err: e2.message.slice(0, 120),
+                bulk_err: e3.message.slice(0, 120),
+              });
+            }
+          }
         }
         await new Promise((r) => setTimeout(r, 100));
       }
