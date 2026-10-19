@@ -82,24 +82,24 @@ async function kreq(target, method, path, body = null, params = {}) {
 
 async function processTarget(target) {
   const started = Date.now();
-  let scanned = 0, rebuilt = 0, failed = 0;
+  const stats = { slug: target.slug, scanned: 0, rebuilt: 0, skipped: 0, failed: 0, details: [] };
 
   const uns = await kreq(target, 'GET', '/api/v4/leads/unsorted', null, {
     'filter[pipeline_id]': String(target.pipeline_id),
     limit: '50',
   });
   const items = uns?._embedded?.unsorted || [];
-  scanned = items.length;
+  stats.scanned = items.length;
 
   for (const u of items) {
     const leadId = u._embedded?.leads?.[0]?.id;
-    if (!leadId) continue;
+    if (!leadId) { stats.skipped++; continue; }
 
     try {
       const leadFull = await kreq(target, 'GET', `/api/v4/leads/${leadId}`, null, { with: 'contacts' });
       const name = leadFull.name || '';
-      if (name.startsWith('FORM - ')) continue; // ya reconstruido
-      if (!/^Facebook\s*N[º°]/.test(name)) continue; // no es nativo FB
+      if (name.startsWith('FORM - ')) { stats.skipped++; continue; }
+      if (!/^Facebook\s*N[º°]/.test(name)) { stats.skipped++; continue; }
 
       const contactId = leadFull._embedded?.contacts?.[0]?.id;
       const contact = contactId
@@ -120,28 +120,34 @@ async function processTarget(target) {
       await kreq(target, 'POST', `/api/v4/leads/${leadId}/notes`, [
         { note_type: 'common', params: { text: noteResp } },
       ]);
-      rebuilt++;
+      stats.rebuilt++;
+      stats.details.push({ lead_id: leadId, from: name, to: newName });
       await new Promise((r) => setTimeout(r, 200));
     } catch (e) {
-      failed++;
+      stats.failed++;
+      stats.details.push({ lead_id: leadId, error: e.message.slice(0, 200) });
       console.warn(`[kommo-rebuilder] ${target.slug} lead ${leadId} fail:`, e.message.slice(0, 200));
     }
   }
 
-  const elapsed = Date.now() - started;
-  if (rebuilt > 0 || failed > 0) {
-    console.log(`[kommo-rebuilder] ${target.slug}: scanned=${scanned} rebuilt=${rebuilt} failed=${failed} (${elapsed}ms)`);
+  stats.elapsed_ms = Date.now() - started;
+  if (stats.rebuilt > 0 || stats.failed > 0) {
+    console.log(`[kommo-rebuilder] ${target.slug}: scanned=${stats.scanned} rebuilt=${stats.rebuilt} failed=${stats.failed} (${stats.elapsed_ms}ms)`);
   }
+  return stats;
 }
 
 async function tick() {
+  const results = [];
   for (const target of TARGETS) {
     try {
-      await processTarget(target);
+      results.push(await processTarget(target));
     } catch (e) {
       console.warn(`[kommo-rebuilder] ${target.slug} ciclo fail:`, e.message.slice(0, 200));
+      results.push({ slug: target.slug, error: e.message.slice(0, 300) });
     }
   }
+  return results;
 }
 
 let timer = null;
@@ -160,6 +166,6 @@ export function startKommoFormRebuilder() {
 
 // Para disparar manualmente desde una route de admin si hace falta
 export async function runKommoFormRebuilderOnce() {
-  await tick();
-  return { ok: true, targets: TARGETS.map((t) => t.slug) };
+  const results = await tick();
+  return { ok: true, results };
 }
