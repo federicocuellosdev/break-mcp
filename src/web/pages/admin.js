@@ -3423,11 +3423,11 @@ export function renderClientEditView({ user, target, flash }) {
     ${kommoModal}
   </div>
   <style>
-    .kommo-exp-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .6rem;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.01em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-    .kommo-exp-ok{background:rgba(43,191,125,.12);color:#1f8f5a;border:1px solid rgba(43,191,125,.3)}
-    .kommo-exp-soon{background:rgba(246,178,58,.14);color:#9a6b00;border:1px solid rgba(246,178,58,.35)}
-    .kommo-exp-expired{background:rgba(238,57,77,.14);color:#c22237;border:1px solid rgba(238,57,77,.35)}
-    .kommo-exp-unknown{background:rgba(0,0,0,.04);color:var(--muted,#656467);border:1px solid rgba(0,0,0,.08);font-weight:500}
+    .kommo-exp-chip{display:inline-block;padding:.22rem .6rem;border-radius:100px;font-size:.7rem;background:var(--soft);color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+    .kommo-exp-ok{background:#e6f6ee;color:var(--green)}
+    .kommo-exp-soon{background:#fff6d6;color:#8a6d00}
+    .kommo-exp-expired{background:var(--coral-soft);color:var(--coral)}
+    .kommo-exp-unknown{background:var(--soft);color:var(--muted)}
     .kommo-form{display:grid;grid-template-columns:1fr;gap:1rem}
     .kommo-field{display:flex;flex-direction:column;gap:.35rem}
     .kommo-field.full{grid-column:1/-1}
