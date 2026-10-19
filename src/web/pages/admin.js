@@ -3388,54 +3388,38 @@ export function renderClientEditView({ user, target, flash }) {
 
   const sheetsModal = `
     <div class="modal-overlay" id="sheets-modal" hidden>
-      <div class="modal" style="max-width:600px">
+      <div class="modal" style="max-width:520px">
         <div class="accounts-modal-head">
           <div class="accounts-modal-title">
-            <h3 id="sheets-mod-title">Agregar planilla</h3>
+            <h3><span id="sheets-mod-title">Agregar planilla</span> <span class="sheets-step-hint" id="sheets-step-hint">· Paso 1 de 3</span></h3>
             <button type="button" class="btn-close" onclick="closeModal('sheets-modal')" title="Cerrar" aria-label="Cerrar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div class="accounts-divider"></div>
-          <div class="sheets-stepper">
-            <div class="sheets-dot active" data-step="1"><span>1</span><em>Acceso</em></div>
-            <div class="sheets-dot-sep"></div>
-            <div class="sheets-dot" data-step="2"><span>2</span><em>Archivo</em></div>
-            <div class="sheets-dot-sep"></div>
-            <div class="sheets-dot" data-step="3"><span>3</span><em>Hoja</em></div>
-          </div>
         </div>
 
         <div class="sheets-form">
-          <!-- Etapa 1: dar acceso al service account -->
           <div class="sheets-stage" data-stage="1">
-            <h4 class="sheets-stage-title">Dar acceso al service account</h4>
-            <p class="cap-sa-paragraph">Abrí la planilla en Google Sheets, apretá <strong>Compartir</strong> y agregá este email como <strong>lector</strong>:</p>
-            <div style="margin-top:.6rem">
+            <label class="sheets-label">Dar acceso</label>
+            <p class="sheets-help">Compartí la planilla como <strong>lector</strong> con este email:</p>
+            <div>
               <button type="button" class="cap-sa-chip" id="sheets-sa-chip" onclick="sheetsCopySaEmail(this)" title="Click para copiar"><span id="sheets-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
             </div>
           </div>
 
-          <!-- Etapa 2: URL del archivo -->
           <div class="sheets-stage" data-stage="2" hidden>
-            <h4 class="sheets-stage-title">Pegá la URL del archivo</h4>
-            <p class="cap-sa-paragraph">Copiá la URL desde la barra del navegador o desde el botón <strong>Compartir &#8594; Copiar enlace</strong>.</p>
-            <div class="sheets-input-row" style="margin-top:.7rem">
-              <input type="text" id="sheets-mod-url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false" oninput="sheetsOnUrlInput(this)">
-            </div>
+            <label class="sheets-label">URL del archivo</label>
+            <input type="text" id="sheets-mod-url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false" oninput="sheetsOnUrlInput(this)">
             <div class="sheets-file-info" id="sheets-file-info" hidden></div>
           </div>
 
-          <!-- Etapa 3: Elegir hoja (tab) + alias -->
           <div class="sheets-stage" data-stage="3" hidden>
-            <h4 class="sheets-stage-title">Elegí la hoja y el alias</h4>
-            <p class="cap-sa-paragraph" id="sheets-stage3-sub">&#8212;</p>
-            <div class="sheets-tab-list" id="sheets-tab-list" style="margin-top:.7rem"></div>
-            <div style="margin-top:1rem">
-              <label class="sheets-label">Alias</label>
-              <input type="text" id="sheets-mod-alias" placeholder="leads" autocomplete="off" oninput="sheetsCleanAlias(this)">
-              <div class="sheets-hint">Lo usan las tools MCP: <code>client=${esc(t.slug)}, sheet_key=&lt;alias&gt;</code></div>
-            </div>
+            <label class="sheets-label">Hoja</label>
+            <div class="sheets-tab-list" id="sheets-tab-list"></div>
+            <label class="sheets-label" style="margin-top:.9rem">Alias</label>
+            <input type="text" id="sheets-mod-alias" placeholder="leads" autocomplete="off" oninput="sheetsCleanAlias(this)">
+            <div class="sheets-hint">Lo usan las tools MCP: <code>client=${esc(t.slug)}, sheet_key=&lt;alias&gt;</code></div>
           </div>
         </div>
 
@@ -3443,7 +3427,7 @@ export function renderClientEditView({ user, target, flash }) {
           <button type="button" class="btn ghost" id="sheets-back-btn" onclick="sheetsGoBack()" hidden>&#8592; Atrás</button>
           <button type="button" class="btn ghost" id="sheets-cancel-btn" onclick="closeModal('sheets-modal')">Cancelar</button>
           <div class="spacer"></div>
-          <button type="button" class="btn primary" id="sheets-next-btn" onclick="sheetsGoNext()">Siguiente &#8594;</button>
+          <button type="button" class="btn primary" id="sheets-next-btn" onclick="sheetsGoNext()">Siguiente</button>
           <button type="button" class="btn primary" id="sheets-mod-save" onclick="sheetsModalSave('${esc(t.slug)}')" hidden disabled>Guardar</button>
         </div>
       </div>
@@ -3586,35 +3570,30 @@ export function renderClientEditView({ user, target, flash }) {
     .sheets-hint code{background:var(--soft);padding:.08rem .3rem;border-radius:3px;font-size:.76rem;font-family:ui-monospace,SFMono-Regular,monospace}
     .sheets-file-info{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border:1px solid var(--line);border-radius:4px;background:var(--soft);font-size:.84rem;color:var(--ink)}
     .sheets-file-info .sheets-file-title{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .sheets-file-info.err{background:#fff6f6;color:var(--coral);border-color:#f5d7dc;align-items:flex-start;padding:.7rem .85rem;gap:.65rem}
-    .sheets-file-info.err .sheets-err-ico{flex-shrink:0;line-height:0;padding-top:.1rem}
-    .sheets-file-info.err .sheets-err-body{display:flex;flex-direction:column;gap:.2rem;line-height:1.4;min-width:0}
-    .sheets-file-info.err .sheets-err-body strong{color:var(--coral);font-weight:700;font-size:.86rem}
-    .sheets-file-info.err .sheets-err-body span{color:#8a3545;font-size:.8rem;font-weight:500}
-    .sheets-file-info.err .sheets-err-cta{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:600;color:var(--coral);text-decoration:none;border-bottom:1px solid currentColor;align-self:flex-start}
-    .sheets-file-info.err .sheets-err-cta:hover{opacity:.75}
-    .sheets-tab-list{display:flex;flex-direction:column;gap:.3rem;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:.3rem}
-    .sheets-tab-opt{display:flex;align-items:center;gap:.55rem;padding:.4rem .6rem;border-radius:4px;cursor:pointer;transition:background .15s}
+    .sheets-file-info.err{background:transparent;color:var(--coral);border:0;padding:.4rem 0;gap:.4rem;align-items:flex-start}
+    .sheets-file-info.err .sheets-err-body{display:flex;flex-direction:column;gap:.15rem;line-height:1.45;min-width:0}
+    .sheets-file-info.err .sheets-err-body strong{color:var(--ink);font-weight:600;font-size:.82rem}
+    .sheets-file-info.err .sheets-err-body span{color:var(--muted);font-size:.78rem;font-weight:400}
+    .sheets-file-info.err .sheets-err-cta{display:inline-block;margin-top:.25rem;font-size:.75rem;color:var(--muted);text-decoration:underline;align-self:flex-start}
+    .sheets-file-info.err .sheets-err-cta:hover{color:var(--ink)}
+    .sheets-file-info.err .sheets-err-ico{display:none}
+    .sheets-tab-list{display:flex;flex-direction:column;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:4px}
+    .sheets-tab-opt{display:flex;align-items:center;gap:.55rem;padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid var(--line)}
+    .sheets-tab-opt:last-child{border-bottom:0}
     .sheets-tab-opt:hover{background:var(--soft)}
     .sheets-tab-opt input{margin:0}
-    .sheets-tab-opt.selected{background:var(--pink-soft)}
+    .sheets-tab-opt.selected{background:var(--soft)}
     .sheets-tab-opt .tab-name{flex:1;font-size:.86rem;color:var(--ink)}
-    .sheets-tab-opt.all{border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem}
-    .sheets-tab-opt.all .tab-name{color:var(--muted);font-style:italic}
-    .sheets-stepper{display:flex;align-items:center;gap:.5rem;margin-top:.9rem;padding:.2rem 0}
-    .sheets-dot{display:flex;align-items:center;gap:.5rem;padding:.3rem .55rem;border-radius:100px;background:var(--soft);color:var(--muted);transition:background .18s,color .18s}
-    .sheets-dot span{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--muted);font-size:.72rem;font-weight:700;font-variant-numeric:tabular-nums}
-    .sheets-dot em{font-size:.72rem;font-weight:600;font-style:normal;letter-spacing:.03em}
-    .sheets-dot.active{background:var(--pink-soft);color:var(--pink)}
-    .sheets-dot.active span{background:var(--pink);color:#fff}
-    .sheets-dot.done{color:var(--green)}
-    .sheets-dot.done span{background:var(--green);color:#fff}
-    .sheets-dot-sep{flex:1;height:1px;background:var(--line)}
-    .sheets-stage{display:flex;flex-direction:column;gap:.3rem}
+    .sheets-tab-opt.all .tab-name{color:var(--muted)}
+    .sheets-step-hint{font-size:.72rem;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:.2rem}
+    .sheets-stage{display:flex;flex-direction:column;gap:.5rem}
     .sheets-stage[hidden]{display:none}
-    .sheets-stage-title{font-size:.95rem;font-weight:700;color:var(--ink);margin:0 0 .5rem}
-    .sheets-form{display:flex;flex-direction:column;gap:1.1rem;padding:0;background:none;min-height:200px}
+    .sheets-help{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
+    .sheets-help strong{color:var(--ink);font-weight:600}
+    .sheets-form{display:flex;flex-direction:column;gap:1rem;padding:0;background:none;min-height:140px}
     #sheets-back-btn[hidden],#sheets-next-btn[hidden],#sheets-mod-save[hidden]{display:none}
+    .sheets-stage input[type="text"]{padding:.65rem .8rem;border:1px solid var(--line);border-radius:4px;font-family:inherit;font-size:.88rem;background:var(--card);color:var(--ink);width:100%}
+    .sheets-stage input[type="text"]:focus{outline:none;border-color:var(--pink)}
   </style>
   <script>
   (function(){
@@ -3678,12 +3657,8 @@ export function renderClientEditView({ user, target, flash }) {
       document.querySelectorAll('.sheets-stage').forEach(function(s){
         s.hidden=(Number(s.dataset.stage)!==n);
       });
-      document.querySelectorAll('.sheets-dot').forEach(function(d){
-        var i=Number(d.dataset.step);
-        d.classList.remove('active','done');
-        if(i<n)d.classList.add('done');
-        else if(i===n)d.classList.add('active');
-      });
+      var hint=document.getElementById('sheets-step-hint');
+      if(hint)hint.textContent='· Paso '+n+' de 3';
       var backBtn=document.getElementById('sheets-back-btn');
       var nextBtn=document.getElementById('sheets-next-btn');
       var saveBtn=document.getElementById('sheets-mod-save');
@@ -3694,7 +3669,7 @@ export function renderClientEditView({ user, target, flash }) {
       }else{
         nextBtn.hidden=false;
         saveBtn.hidden=true;
-        nextBtn.textContent=(n===2?'Buscar archivo':'Siguiente →');
+        nextBtn.textContent=(n===2?'Buscar':'Siguiente');
       }
       sheetsRefreshNextBtn();
       if(n===2)setTimeout(function(){var u=document.getElementById('sheets-mod-url');if(u)u.focus();},80);
