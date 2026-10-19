@@ -3397,13 +3397,18 @@ export function renderClientEditView({ user, target, flash }) {
             </button>
           </div>
           <div class="accounts-divider"></div>
-          <p class="cap-sa-paragraph" style="margin-top:.9rem">Compartí la planilla como <strong>lector</strong> con <button type="button" class="cap-sa-chip" id="sheets-sa-chip" onclick="sheetsCopySaEmail(this)" title="Click para copiar"><span id="sheets-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
         </div>
 
         <div class="sheets-form">
-          <!-- Paso 1: URL o ID del archivo -->
+          <!-- Paso 1: dar acceso al service account -->
           <div class="sheets-step">
-            <label class="sheets-label">1 &#183; Archivo</label>
+            <label class="sheets-label">1 &#183; Dar acceso</label>
+            <p class="cap-sa-paragraph">Compartí la planilla en Google Sheets &#8594; <strong>Compartir</strong> como <strong>lector</strong> con <button type="button" class="cap-sa-chip" id="sheets-sa-chip" onclick="sheetsCopySaEmail(this)" title="Click para copiar"><span id="sheets-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
+          </div>
+
+          <!-- Paso 2: URL o ID del archivo -->
+          <div class="sheets-step">
+            <label class="sheets-label">2 &#183; Pegá la URL del archivo</label>
             <div class="sheets-input-row">
               <input type="text" id="sheets-mod-url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false" oninput="sheetsOnUrlInput(this)">
               <button type="button" class="btn ghost" id="sheets-mod-lookup" onclick="sheetsLookup()">Buscar</button>
@@ -3411,15 +3416,15 @@ export function renderClientEditView({ user, target, flash }) {
             <div class="sheets-file-info" id="sheets-file-info" hidden></div>
           </div>
 
-          <!-- Paso 2: Elegir hoja (tab) -->
+          <!-- Paso 3: Elegir hoja (tab) -->
           <div class="sheets-step" id="sheets-step-tab" hidden>
-            <label class="sheets-label">2 &#183; Hoja</label>
+            <label class="sheets-label">3 &#183; Elegí la hoja</label>
             <div class="sheets-tab-list" id="sheets-tab-list"></div>
           </div>
 
-          <!-- Paso 3: Alias -->
+          <!-- Paso 4: Alias -->
           <div class="sheets-step" id="sheets-step-alias" hidden>
-            <label class="sheets-label">3 &#183; Alias</label>
+            <label class="sheets-label">4 &#183; Alias</label>
             <input type="text" id="sheets-mod-alias" placeholder="leads" autocomplete="off" oninput="sheetsCleanAlias(this)">
             <div class="sheets-hint">Lo usan las tools MCP: <code>client=${esc(t.slug)}, sheet_key=&lt;alias&gt;</code></div>
           </div>
@@ -3741,9 +3746,9 @@ export function renderClientEditView({ user, target, flash }) {
         if(!r.ok){
           info.className='sheets-file-info err';
           var hint=d.status==='no_access'
-            ? 'La planilla no está compartida con el service account. Pegá el email arriba como lector.'
+            ? 'Todavía no tenemos acceso. Volvé al paso 1 y agregá el email como lector en la planilla.'
             : d.status==='not_found'
-            ? 'No se encontró ninguna planilla con ese ID.'
+            ? 'No se encontró ninguna planilla con esa URL.'
             : (d.error||'Error '+r.status);
           info.innerHTML='<span>'+hint+'</span>';
           return;
@@ -3755,7 +3760,7 @@ export function renderClientEditView({ user, target, flash }) {
         info.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F9D58" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="sheets-file-title">'+d.title+'</span><span style="color:var(--muted);font-size:.78rem">'+sheetsState.tabs.length+' hoja'+(sheetsState.tabs.length===1?'':'s')+'</span>';
         sheetsRenderTabs();
         document.getElementById('sheets-step-tab').hidden=false;
-        document.getElementById('sheets-step-alias').hidden=false;
+        // alias se revela recién cuando se elige una hoja (sheetsPickTab)
         // Pre-seleccionar según modo
         var preTab=null;
         if(sheetsState.mode==='edit'){
@@ -3801,7 +3806,8 @@ export function renderClientEditView({ user, target, flash }) {
       el.classList.add('selected');
       var cb=el.querySelector('input');
       if(cb)cb.checked=true;
-      // Sugerir alias si está vacío
+      // Revelar paso 4 (alias) y sugerir alias si está vacío
+      document.getElementById('sheets-step-alias').hidden=false;
       var aliasEl=document.getElementById('sheets-mod-alias');
       if(aliasEl&&!aliasEl.value){
         var suggested=name||sheetsState.spreadsheetTitle||'sheet';
