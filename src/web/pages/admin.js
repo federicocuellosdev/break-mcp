@@ -2892,7 +2892,7 @@ function kommoExpInfo(exp) {
   let state = 'ok';
   if (days < 0) state = 'expired';
   else if (days <= 30) state = 'soon';
-  const label = `${days < 0 ? 'vencido' : 'vence'} ${dstr}`;
+  const label = `${days < 0 ? 'vencido' : 'vto.'} ${dstr}`;
   return { state, label, days, dstr };
 }
 
