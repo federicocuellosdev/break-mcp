@@ -28,6 +28,7 @@ import {
   deleteClientRecord,
 } from '../clients.js';
 import { google } from 'googleapis';
+import { runKommoFormRebuilderOnce } from '../services/kommo-form-rebuilder.js';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
 import { renderLogin } from './pages/login.js';
 import {
@@ -605,6 +606,17 @@ export function createWebRouter() {
       res.json({ ok: true });
     } catch (e) {
       res.status(400).json({ error: e.message });
+    }
+  });
+
+  // Dispara el rebuilder de leads Kommo (natives FB → formato FORM) en el acto.
+  // Útil para no esperar al tick (3 min).
+  router.post('/admin/api/kommo-rebuilder/run', requireLogin, requireAdmin, async (_req, res) => {
+    try {
+      const r = await runKommoFormRebuilderOnce();
+      res.json(r);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
     }
   });
 

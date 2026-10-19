@@ -7,6 +7,7 @@ import { createServer } from './server.js';
 import { verifyToken } from './users.js';
 import { createWebRouter } from './web/routes.js';
 import { createPublicReportsRouter } from './web/publicReports.js';
+import { startKommoFormRebuilder } from './services/kommo-form-rebuilder.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -91,4 +92,5 @@ app.delete('/mcp', requireAuth, handleSessionRequest);
 
 app.listen(PORT, () => {
   console.log(`break-mcp listening on :${PORT}`);
+  startKommoFormRebuilder();
 });
