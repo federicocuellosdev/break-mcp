@@ -318,18 +318,32 @@ export function deleteClientRecord(slug) {
   persist(db);
 }
 
-export function resolveSheetId({ client, sheet_key, spreadsheet_id }) {
-  if (spreadsheet_id) return spreadsheet_id;
+// Backward-compatible: resuelve la referencia del sheet para un cliente+alias.
+// Soporta dos formatos en clients.json → sheets[alias]:
+//   · "SPREADSHEET_ID"                                    (string, viejo)
+//   · { spreadsheet_id: "...", sheet_name: "Azahares" }   (objeto, nuevo — permite elegir tab)
+// Devuelve siempre { spreadsheetId, sheetName|null }.
+export function resolveSheetRef({ client, sheet_key, spreadsheet_id, sheet_name }) {
+  if (spreadsheet_id) return { spreadsheetId: spreadsheet_id, sheetName: sheet_name || null };
   if (!client || !sheet_key) {
     throw new Error('Provide either spreadsheet_id or (client + sheet_key)');
   }
   const c = getClient(client);
-  const id = c.sheets?.[sheet_key];
-  if (!id) {
+  const entry = c.sheets?.[sheet_key];
+  if (!entry) {
     const known = Object.keys(c.sheets || {}).join(', ');
     throw new Error(
       `Client "${client}" has no sheet "${sheet_key}". Known keys: ${known || '(none)'}`,
     );
   }
-  return id;
+  if (typeof entry === 'string') return { spreadsheetId: entry, sheetName: sheet_name || null };
+  return {
+    spreadsheetId: entry.spreadsheet_id || entry.id,
+    sheetName: sheet_name || entry.sheet_name || null,
+  };
+}
+
+// Legacy: devuelve solo el spreadsheet_id (usado por quien no necesita sheet_name).
+export function resolveSheetId(args) {
+  return resolveSheetRef(args).spreadsheetId;
 }

@@ -1,7 +1,18 @@
 import { z } from 'zod';
 import { google } from 'googleapis';
-import { resolveSheetId } from '../clients.js';
+import { resolveSheetRef } from '../clients.js';
 import { assertAccess } from '../users.js';
+
+// Si el range no incluye nombre de hoja (no tiene "!"), y hay sheet_name definida
+// en el mapping del cliente, se prepende automáticamente.
+function applySheetName(range, sheetName) {
+  if (!range) return range;
+  if (!sheetName) return range;
+  if (range.includes('!')) return range;
+  // Nombres con espacios o caracteres especiales van entre comillas simples
+  const quoted = /[\s'!]/.test(sheetName) ? `'${sheetName.replace(/'/g, "''")}'` : sheetName;
+  return `${quoted}!${range}`;
+}
 
 let cachedClient = null;
 
@@ -29,7 +40,17 @@ const asText = (obj) => ({ content: [{ type: 'text', text: JSON.stringify(obj, n
 export function registerSheetsTools(server, ctx) {
   const gateResolve = (args) => {
     if (args.client) assertAccess(ctx.user, args.client);
-    return resolveSheetId(args);
+    return resolveSheetRef(args);
+  };
+
+  const commonInput = {
+    spreadsheet_id: z.string().optional(),
+    client: z.string().optional(),
+    sheet_key: z.string().optional(),
+    sheet_name: z
+      .string()
+      .optional()
+      .describe('Overrides el nombre de hoja (tab) definido en el alias del cliente. Si no se pasa, usa el mapeado o el que viene explícito en el range.'),
   };
 
   server.registerTool(
@@ -45,10 +66,10 @@ export function registerSheetsTools(server, ctx) {
       },
     },
     async ({ spreadsheet_id, client, sheet_key }) => {
-      const id = gateResolve({ client, sheet_key, spreadsheet_id });
+      const { spreadsheetId } = gateResolve({ client, sheet_key, spreadsheet_id });
       const sheets = getSheets();
       const { data } = await sheets.spreadsheets.get({
-        spreadsheetId: id,
+        spreadsheetId,
         fields: 'spreadsheetId,properties.title,sheets(properties(sheetId,title,index,gridProperties))',
       });
       return asText(data);
@@ -60,23 +81,21 @@ export function registerSheetsTools(server, ctx) {
     {
       title: 'Read a range from a sheet',
       description:
-        'A1 notation, e.g. "Sheet1!A1:D100". Pass either spreadsheet_id or (client + sheet_key). Returns rows as an array of arrays.',
+        'A1 notation. Si el range no tiene "!Hoja" explícito y el alias del cliente trae sheet_name, se prepende automático. Ej: con sheet_name="Azahares" + range="A1:D100" → lee "Azahares!A1:D100".',
       inputSchema: {
-        spreadsheet_id: z.string().optional(),
-        client: z.string().optional(),
-        sheet_key: z.string().optional(),
-        range: z.string().describe('A1 range, e.g. "Sheet1!A1:D100"'),
+        ...commonInput,
+        range: z.string().describe('A1 range, ej "A1:D100" (usa sheet_name del alias) o "Hoja!A1:D100" para forzar otra hoja.'),
         value_render_option: z
           .enum(['FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA'])
           .optional(),
       },
     },
-    async ({ spreadsheet_id, client, sheet_key, range, value_render_option }) => {
-      const id = gateResolve({ client, sheet_key, spreadsheet_id });
+    async ({ spreadsheet_id, client, sheet_key, sheet_name, range, value_render_option }) => {
+      const ref = gateResolve({ client, sheet_key, spreadsheet_id, sheet_name });
       const sheets = getSheets();
       const { data } = await sheets.spreadsheets.values.get({
-        spreadsheetId: id,
-        range,
+        spreadsheetId: ref.spreadsheetId,
+        range: applySheetName(range, ref.sheetName),
         valueRenderOption: value_render_option,
       });
       return asText(data);
@@ -88,22 +107,20 @@ export function registerSheetsTools(server, ctx) {
     {
       title: 'Append rows to a sheet',
       description:
-        'Appends rows to the end of the table starting at the given range. Pass either spreadsheet_id or (client + sheet_key). Values is an array of rows.',
+        'Appends rows to the end of the table starting at the given range. Si el range no tiene "!Hoja" y el alias trae sheet_name, se prepende automático.',
       inputSchema: {
-        spreadsheet_id: z.string().optional(),
-        client: z.string().optional(),
-        sheet_key: z.string().optional(),
-        range: z.string().describe('A1 range that indicates the target table, e.g. "Sheet1!A:D"'),
+        ...commonInput,
+        range: z.string().describe('A1 range (ej "A:D") — usa sheet_name del alias si no se pasa "Hoja!".'),
         values: z.array(z.array(z.any())),
         value_input_option: z.enum(['RAW', 'USER_ENTERED']).optional(),
       },
     },
-    async ({ spreadsheet_id, client, sheet_key, range, values, value_input_option = 'USER_ENTERED' }) => {
-      const id = gateResolve({ client, sheet_key, spreadsheet_id });
+    async ({ spreadsheet_id, client, sheet_key, sheet_name, range, values, value_input_option = 'USER_ENTERED' }) => {
+      const ref = gateResolve({ client, sheet_key, spreadsheet_id, sheet_name });
       const sheets = getSheets();
       const { data } = await sheets.spreadsheets.values.append({
-        spreadsheetId: id,
-        range,
+        spreadsheetId: ref.spreadsheetId,
+        range: applySheetName(range, ref.sheetName),
         valueInputOption: value_input_option,
         insertDataOption: 'INSERT_ROWS',
         requestBody: { values },
@@ -117,22 +134,20 @@ export function registerSheetsTools(server, ctx) {
     {
       title: 'Overwrite a range in a sheet',
       description:
-        'Writes values into the given A1 range, overwriting existing cells. Pass either spreadsheet_id or (client + sheet_key). For appending prefer sheets_append_rows.',
+        'Writes values into the given A1 range, overwriting existing cells. Si el range no tiene "!Hoja" y el alias trae sheet_name, se prepende automático. For appending prefer sheets_append_rows.',
       inputSchema: {
-        spreadsheet_id: z.string().optional(),
-        client: z.string().optional(),
-        sheet_key: z.string().optional(),
+        ...commonInput,
         range: z.string(),
         values: z.array(z.array(z.any())),
         value_input_option: z.enum(['RAW', 'USER_ENTERED']).optional(),
       },
     },
-    async ({ spreadsheet_id, client, sheet_key, range, values, value_input_option = 'USER_ENTERED' }) => {
-      const id = gateResolve({ client, sheet_key, spreadsheet_id });
+    async ({ spreadsheet_id, client, sheet_key, sheet_name, range, values, value_input_option = 'USER_ENTERED' }) => {
+      const ref = gateResolve({ client, sheet_key, spreadsheet_id, sheet_name });
       const sheets = getSheets();
       const { data } = await sheets.spreadsheets.values.update({
-        spreadsheetId: id,
-        range,
+        spreadsheetId: ref.spreadsheetId,
+        range: applySheetName(range, ref.sheetName),
         valueInputOption: value_input_option,
         requestBody: { values },
       });
