@@ -3611,8 +3611,10 @@ export function renderClientEditView({ user, target, flash }) {
     .sheets-dot.done span{background:var(--green);color:#fff}
     .sheets-dot-sep{flex:1;height:1px;background:var(--line)}
     .sheets-stage{display:flex;flex-direction:column;gap:.3rem}
+    .sheets-stage[hidden]{display:none}
     .sheets-stage-title{font-size:.95rem;font-weight:700;color:var(--ink);margin:0 0 .5rem}
     .sheets-form{display:flex;flex-direction:column;gap:1.1rem;padding:0;background:none;min-height:200px}
+    #sheets-back-btn[hidden],#sheets-next-btn[hidden],#sheets-mod-save[hidden]{display:none}
   </style>
   <script>
   (function(){
