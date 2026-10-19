@@ -316,9 +316,17 @@ export function registerReportTools(server, ctx) {
           .string()
           .optional()
           .describe('Fecha de publicación: YYYY-MM-DD o ISO completo. Si se omite al crear, usa fecha actual. Si se pasa al actualizar, re-fecha el informe (útil para backdating y para corregir fecha después de republicar).'),
+        private: z
+          .boolean()
+          .optional()
+          .describe('Si true, el informe queda oculto en la galería pública y requiere login. Solo el autor + los user ids en allowed_user_ids + usuarios admin/dev pueden verlo. Default: false (público).'),
+        allowed_user_ids: z
+          .array(z.string())
+          .optional()
+          .describe('IDs de usuarios autorizados a ver el informe cuando private=true (adicional al autor y admin/dev). Se guarda tal cual, reemplazando la lista previa.'),
       },
     },
-    async ({ client, slug, title, description, sources, html, published_at }) => {
+    async ({ client, slug, title, description, sources, html, published_at, private: isPrivate, allowed_user_ids }) => {
       assertAccess(ctx.user, client);
       const base = (process.env.MCP_URL || 'https://mcp.breakmkt.com.ar').replace(/\/+$/, '').replace(/\/mcp$/, '');
       const saved = saveReport({
@@ -329,6 +337,8 @@ export function registerReportTools(server, ctx) {
         sources,
         html,
         published_at,
+        isPrivate,
+        allowed_user_ids,
         author: { id: ctx.user.id, name: ctx.user.name },
       });
       const url = `${base}/${client}/${saved.slug}`;

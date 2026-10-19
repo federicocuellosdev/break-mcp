@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { readdirSync, existsSync, statSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { getClient } from '../clients.js';
+import { getUserById, isAdminOrDev } from '../users.js';
+import { readSessionCookie } from './session.js';
 import { esc, FONT_LINK, FAVICON } from './pages/common.js';
 
 const REPORTS_DIR = process.env.REPORTS_DIR
@@ -50,8 +52,11 @@ export function reportsForClient(slug) {
         slug: reportSlug,
         title: meta.title || humanize(reportSlug),
         description: meta.description || '',
+        author_id: meta.author_id || '',
         author_name: meta.author_name || meta.author_id || '',
         sources: Array.isArray(meta.sources) ? meta.sources : [],
+        private: !!meta.private,
+        allowed_user_ids: Array.isArray(meta.allowed_user_ids) ? meta.allowed_user_ids : [],
         published_at: meta.published_at || st.mtime.toISOString(),
         mtime: st.mtime,
       });
@@ -199,6 +204,36 @@ ${FAVICON}
 </html>`;
 }
 
+function currentViewer(req) {
+  if (process.env.DEV_AUTOLOGIN) {
+    const u = getUserById(process.env.DEV_AUTOLOGIN);
+    if (u) return u;
+  }
+  const s = readSessionCookie(req);
+  if (!s) return null;
+  return getUserById(s.userId);
+}
+
+function canSeePrivateReport(viewer, meta) {
+  if (!viewer) return false;
+  if (isAdminOrDev(viewer)) return true;
+  if (meta.author_id && meta.author_id === viewer.id) return true;
+  if (Array.isArray(meta.allowed_user_ids) && meta.allowed_user_ids.includes(viewer.id)) return true;
+  return false;
+}
+
+function readReportMetadata(clientSlug, reportSlug) {
+  const dir = clientReportsPath(clientSlug);
+  const metaPath = join(dir, reportSlug, 'metadata.json');
+  if (!existsSync(metaPath)) return {};
+  try { return JSON.parse(readFileSync(metaPath, 'utf8')); } catch { return {}; }
+}
+
+function renderPrivateDenied(client, reportSlug) {
+  const loginUrl = `/login?next=${encodeURIComponent('/' + client.slug + '/' + reportSlug)}`;
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe privado</title>${FAVICON}<style>body{font-family:system-ui,-apple-system,sans-serif;background:#F5F3F7;color:#1B1B1D;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1.5rem;text-align:center}.b{max-width:420px;background:#fff;border:1px solid #ddd;border-radius:14px;padding:2rem 2.2rem}h1{font-size:1.1rem;margin:0 0 .5rem;letter-spacing:-.01em}p{color:#656467;font-size:.9rem;line-height:1.5;margin:0 0 1.3rem}a.btn{display:inline-block;background:linear-gradient(135deg,#0087F2,#BF4FCD,#E13B7D);color:#fff;padding:.6rem 1.3rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.85rem}</style></head><body><div class="b"><h1>Informe privado</h1><p>Este informe no es p&#250;blico. Ingres&#225; con tu usuario para acceder.</p><a class="btn" href="${loginUrl}">Iniciar sesi&#243;n</a></div></body></html>`;
+}
+
 export function createPublicReportsRouter() {
   const router = Router();
 
@@ -210,15 +245,29 @@ export function createPublicReportsRouter() {
     } catch {
       return next();
     }
-    const reports = reportsForClient(slug);
+    const viewer = currentViewer(req);
+    const all = reportsForClient(slug);
+    // Esconder los privados a los que el viewer no tiene acceso
+    const reports = all.filter((r) => !r.private || canSeePrivateReport(viewer, r));
     res.set('Content-Type', 'text/html; charset=utf-8').send(renderGallery(client, reports));
   });
 
   router.get('/:slug/:report', (req, res, next) => {
     const { slug, report } = req.params;
-    try { getClient(slug); } catch { return next(); }
+    let client;
+    try { client = { slug, ...getClient(slug) }; } catch { return next(); }
     const safe = safeSlug(report);
     if (!safe) return next();
+    const meta = readReportMetadata(slug, safe);
+    if (meta.private) {
+      const viewer = currentViewer(req);
+      if (!canSeePrivateReport(viewer, meta)) {
+        return res
+          .status(403)
+          .set('Content-Type', 'text/html; charset=utf-8')
+          .send(renderPrivateDenied(client, safe));
+      }
+    }
     const html = serveReport(slug, safe);
     if (!html) return next();
     res.set('Content-Type', 'text/html; charset=utf-8').send(html);
@@ -237,7 +286,7 @@ function normalizePublishedAt(value) {
   return d.toISOString();
 }
 
-export function saveReport({ clientSlug, reportSlug, title, description, sources, html, author, published_at }) {
+export function saveReport({ clientSlug, reportSlug, title, description, sources, html, author, published_at, isPrivate, allowed_user_ids }) {
   const safeReport = safeSlug(reportSlug);
   if (!safeReport) throw new Error('reportSlug inválido');
   const dir = ensureClientFolder(clientSlug);
@@ -265,6 +314,8 @@ export function saveReport({ clientSlug, reportSlug, title, description, sources
     author_id: (author && author.id) || existing.author_id || '',
     author_name: (author && author.name) || existing.author_name || '',
     sources: Array.isArray(sources) && sources.length ? sources : existing.sources || [],
+    private: typeof isPrivate === 'boolean' ? isPrivate : !!existing.private,
+    allowed_user_ids: Array.isArray(allowed_user_ids) ? allowed_user_ids : (existing.allowed_user_ids || []),
     published_at: customPublishedAt || existing.published_at || now,
     updated_at: now,
   };
