@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { readdirSync, existsSync, statSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, existsSync, statSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { getClient } from '../clients.js';
 import { getUserById, isAdminOrDev } from '../users.js';
@@ -324,4 +324,23 @@ export function saveReport({ clientSlug, reportSlug, title, description, sources
   writeFileSync(metaPath, JSON.stringify(metadata, null, 2) + '\n', 'utf8');
 
   return { slug: safeReport, metadata, html_updated: !!html };
+}
+
+// Elimina un informe (carpeta entera: html + metadata). Idempotente.
+export function deleteReport(clientSlug, reportSlug) {
+  const safe = safeSlug(reportSlug);
+  if (!safe) throw new Error('reportSlug inválido');
+  const dir = clientReportsPath(clientSlug);
+  const reportDir = join(dir, safe);
+  if (existsSync(reportDir)) {
+    rmSync(reportDir, { recursive: true, force: true });
+    return { ok: true, deleted: safe };
+  }
+  // Fallback legacy (archivo plano .html)
+  const legacy = join(dir, safe + '.html');
+  if (existsSync(legacy)) {
+    rmSync(legacy, { force: true });
+    return { ok: true, deleted: safe, legacy: true };
+  }
+  return { ok: false, deleted: safe, reason: 'not_found' };
 }

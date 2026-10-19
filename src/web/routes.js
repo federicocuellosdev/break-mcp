@@ -29,6 +29,7 @@ import {
 } from '../clients.js';
 import { google } from 'googleapis';
 import { runKommoFormRebuilderOnce, cleanupWhatsAppNotes } from '../services/kommo-form-rebuilder.js';
+import { deleteReport } from './publicReports.js';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
 import { renderLogin } from './pages/login.js';
 import {
@@ -617,6 +618,15 @@ export function createWebRouter() {
       res.json(r);
     } catch (e) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/api/reports/:client/:report/delete', requireLogin, requireAdmin, (req, res) => {
+    try {
+      const r = deleteReport(req.params.client, req.params.report);
+      res.json(r);
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
   });
 
