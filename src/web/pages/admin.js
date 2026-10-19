@@ -3568,8 +3568,9 @@ export function renderClientEditView({ user, target, flash }) {
     #sheets-mod-alias:focus{outline:none;border-color:var(--pink)}
     .sheets-hint{font-size:.74rem;color:var(--muted);margin-top:.1rem}
     .sheets-hint code{background:var(--soft);padding:.08rem .3rem;border-radius:3px;font-size:.76rem;font-family:ui-monospace,SFMono-Regular,monospace}
-    .sheets-file-info{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border:1px solid var(--line);border-radius:4px;background:var(--soft);font-size:.84rem;color:var(--ink)}
-    .sheets-file-info .sheets-file-title{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sheets-file-info{display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.82rem;color:var(--muted)}
+    .sheets-file-info[hidden]{display:none}
+    .sheets-file-info .sheets-file-title{font-weight:600;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .sheets-file-info.err{background:transparent;color:var(--coral);border:0;padding:.4rem 0;gap:.4rem;align-items:flex-start}
     .sheets-file-info.err .sheets-err-body{display:flex;flex-direction:column;gap:.15rem;line-height:1.45;min-width:0}
     .sheets-file-info.err .sheets-err-body strong{color:var(--ink);font-weight:600;font-size:.82rem}
