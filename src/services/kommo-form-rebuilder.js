@@ -209,9 +209,10 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
           stats.deleted++;
           done = true;
         } catch (e) {
-          // 2) fallback: PATCH para vaciar el texto
+          // 2) fallback: PATCH para vaciar el texto (requiere note_type)
           try {
             await kreq(target, 'PATCH', `/api/v4/leads/${leadId}/notes/${n.id}`, {
+              note_type: 'common',
               params: { text: '—' },
             });
             stats.patched = (stats.patched || 0) + 1;
@@ -220,7 +221,7 @@ export async function cleanupWhatsAppNotes({ slug = 'marlaca', pipeline_id = 145
             // 3) fallback 2: PATCH bulk
             try {
               await kreq(target, 'PATCH', `/api/v4/leads/notes`, [
-                { id: n.id, entity_id: leadId, params: { text: '—' } },
+                { id: n.id, entity_id: leadId, note_type: 'common', params: { text: '—' } },
               ]);
               stats.patched_bulk = (stats.patched_bulk || 0) + 1;
               done = true;
