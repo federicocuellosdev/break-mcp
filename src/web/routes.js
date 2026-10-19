@@ -23,8 +23,11 @@ import {
   updateClientBudget,
   updateClientPlatformActive,
   updateClientKommo,
+  updateClientSheet,
+  removeClientSheet,
   deleteClientRecord,
 } from '../clients.js';
+import { google } from 'googleapis';
 import { setSessionCookie, clearSessionCookie, readSessionCookie } from './session.js';
 import { renderLogin } from './pages/login.js';
 import {
@@ -517,6 +520,88 @@ export function createWebRouter() {
           ? { subdomain: saved.subdomain, token_exp: saved.token_exp, token_mask: maskToken(saved.token) }
           : null,
       });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+
+  // ----- GOOGLE SHEETS -----
+  function parseSpreadsheetId(input) {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+    const m = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : raw;
+  }
+
+  function sheetsClient() {
+    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON no está configurado');
+    let creds;
+    try { creds = JSON.parse(raw); } catch { throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON no es JSON válido'); }
+    const auth = new google.auth.JWT({
+      email: creds.client_email,
+      key: creds.private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+    return { api: google.sheets({ version: 'v4', auth }), serviceAccountEmail: creds.client_email };
+  }
+
+  router.get('/admin/api/sheets-metadata', requireLogin, requireAdmin, async (req, res) => {
+    let serviceAccountEmail = null;
+    try {
+      if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+        serviceAccountEmail = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON).client_email || null;
+      }
+    } catch {}
+    const spreadsheetId = parseSpreadsheetId(req.query.spreadsheet_id);
+    if (!spreadsheetId) {
+      return res.status(400).json({ error: 'spreadsheet_id requerido', service_account_email: serviceAccountEmail });
+    }
+    try {
+      const { api } = sheetsClient();
+      const { data } = await api.spreadsheets.get({
+        spreadsheetId,
+        fields: 'spreadsheetId,properties.title,sheets(properties(sheetId,title,index))',
+      });
+      const tabs = (data.sheets || [])
+        .map((s) => ({ id: s.properties?.sheetId, title: s.properties?.title, index: s.properties?.index }))
+        .sort((a, b) => (a.index || 0) - (b.index || 0));
+      res.json({
+        spreadsheet_id: data.spreadsheetId,
+        title: data.properties?.title || '',
+        tabs,
+        service_account_email: serviceAccountEmail,
+      });
+    } catch (e) {
+      const msg = String(e.message || '');
+      const status = /PERMISSION_DENIED|403|does not have access/i.test(msg)
+        ? 'no_access'
+        : /NOT_FOUND|404|not found/i.test(msg)
+        ? 'not_found'
+        : 'error';
+      res.status(400).json({ error: msg.slice(0, 300), status, service_account_email: serviceAccountEmail });
+    }
+  });
+
+  router.post('/admin/clients/:slug/sheets', requireLogin, requireAdmin, express.json(), (req, res) => {
+    const { alias, spreadsheet_id, sheet_name, old_alias } = req.body || {};
+    try {
+      const saved = updateClientSheet(req.params.slug, {
+        alias,
+        spreadsheet_id: parseSpreadsheetId(spreadsheet_id),
+        sheet_name,
+        old_alias,
+      });
+      res.json({ ok: true, sheet: saved });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+
+  router.post('/admin/clients/:slug/sheets/:alias/delete', requireLogin, requireAdmin, express.json(), (req, res) => {
+    try {
+      removeClientSheet(req.params.slug, req.params.alias);
+      res.json({ ok: true });
     } catch (e) {
       res.status(400).json({ error: e.message });
     }

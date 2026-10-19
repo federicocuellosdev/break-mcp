@@ -5,6 +5,7 @@ const META_ICON = `<img src="/public/img/platforms/meta-ads.png" alt="Meta Ads">
 const GADS_ICON = `<img src="/public/img/platforms/google-ads.svg" alt="Google Ads">`;
 const GA4_ICON = `<img src="/public/img/platforms/google-analytics-4.svg" alt="Google Analytics 4">`;
 const KOMMO_ICON = `<img src="/public/img/platforms/kommo.png" alt="Kommo">`;
+const SHEETS_ICON = `<img src="/public/img/platforms/google-sheets.svg" alt="Google Sheets">`;
 
 const CSS = `
 :root{
@@ -1155,6 +1156,7 @@ const CLIENT_JS = `
       var rows=block.querySelectorAll('.acc-list-row');
       if(!rows.length)return;
       if(platform==='ga4'){rows.forEach(enrichGa4Health)}
+      if(platform==='sheets'||platform==='kommo')return;
       try{
         var r=await fetch('/admin/api/'+platform+'-accounts',{headers:{Accept:'application/json'}});
         var data=await r.json();
@@ -3345,6 +3347,92 @@ export function renderClientEditView({ user, target, flash }) {
       </div>
     </div>`;
 
+  // ─── Google Sheets ───────────────────────────────────────────
+  const sheetEntries = Object.entries(t.sheets || {}).map(([alias, raw]) => {
+    const entry = typeof raw === 'string' ? { spreadsheet_id: raw } : raw || {};
+    return {
+      alias,
+      spreadsheet_id: entry.spreadsheet_id || entry.id || '',
+      sheet_name: entry.sheet_name || null,
+    };
+  });
+  const sheetsRows = sheetEntries.length
+    ? sheetEntries
+        .map(
+          (s) => `
+          <div class="acc-list-row sheets-row" data-account-id="${esc(s.alias)}" data-sheet-id="${esc(s.spreadsheet_id)}" data-sheet-tab="${esc(s.sheet_name || '')}">
+            <span class="acc-list-name">
+              <span class="sheets-alias">${esc(s.alias)}</span>
+              ${s.sheet_name ? `<span class="sheets-tab-pill">${esc(s.sheet_name)}</span>` : '<span class="sheets-tab-pill muted">(archivo completo)</span>'}
+            </span>
+            <span class="acc-list-id-pill" title="${esc(s.spreadsheet_id)}">${esc(s.spreadsheet_id.slice(0, 10))}&#8230;</span>
+            <button type="button" class="icon-action" onclick="openSheetsModal('${esc(s.alias)}')" title="Editar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+            </button>
+            <button type="button" class="icon-action danger" onclick="removeClientSheet('${esc(s.alias)}')" title="Quitar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>`,
+        )
+        .join('')
+    : `<div class="acc-list-empty">Sin planillas asociadas todav&#237;a.</div>`;
+  const sheetsHtml = `
+    <div class="acc-list-block" data-platform="sheets">
+      <div class="acc-list-head">
+        <div class="acc-list-head-icon">${SHEETS_ICON}</div>
+        <div class="acc-list-head-name">Google Sheets</div>
+        <button type="button" class="btn-row" onclick="openSheetsModal()">+ Agregar</button>
+      </div>
+      <div class="acc-list-rows">${sheetsRows}</div>
+    </div>`;
+
+  const sheetsModal = `
+    <div class="modal-overlay" id="sheets-modal" hidden>
+      <div class="modal" style="max-width:600px">
+        <div class="accounts-modal-head">
+          <div class="accounts-modal-title">
+            <h3 id="sheets-mod-title">Agregar planilla</h3>
+            <button type="button" class="btn-close" onclick="closeModal('sheets-modal')" title="Cerrar" aria-label="Cerrar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="accounts-divider"></div>
+          <p class="cap-sa-paragraph" style="margin-top:.9rem">Compartí la planilla como <strong>lector</strong> con <button type="button" class="cap-sa-chip" id="sheets-sa-chip" onclick="sheetsCopySaEmail(this)" title="Click para copiar"><span id="sheets-sa-email">(cargando&#8230;)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></p>
+        </div>
+
+        <div class="sheets-form">
+          <!-- Paso 1: URL o ID del archivo -->
+          <div class="sheets-step">
+            <label class="sheets-label">1 &#183; Archivo</label>
+            <div class="sheets-input-row">
+              <input type="text" id="sheets-mod-url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" spellcheck="false" oninput="sheetsOnUrlInput(this)">
+              <button type="button" class="btn ghost" id="sheets-mod-lookup" onclick="sheetsLookup()">Buscar</button>
+            </div>
+            <div class="sheets-file-info" id="sheets-file-info" hidden></div>
+          </div>
+
+          <!-- Paso 2: Elegir hoja (tab) -->
+          <div class="sheets-step" id="sheets-step-tab" hidden>
+            <label class="sheets-label">2 &#183; Hoja</label>
+            <div class="sheets-tab-list" id="sheets-tab-list"></div>
+          </div>
+
+          <!-- Paso 3: Alias -->
+          <div class="sheets-step" id="sheets-step-alias" hidden>
+            <label class="sheets-label">3 &#183; Alias</label>
+            <input type="text" id="sheets-mod-alias" placeholder="leads" autocomplete="off" oninput="sheetsCleanAlias(this)">
+            <div class="sheets-hint">Lo usan las tools MCP: <code>client=${esc(t.slug)}, sheet_key=&lt;alias&gt;</code></div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="border-top:1px solid var(--line);padding-top:1rem;margin-top:1rem">
+          <button type="button" class="btn ghost" onclick="closeModal('sheets-modal')">Cancelar</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn primary" id="sheets-mod-save" onclick="sheetsModalSave('${esc(t.slug)}')" disabled>Guardar</button>
+        </div>
+      </div>
+    </div>`;
+
 
   const body = `
   <div id="client-editor" data-client-slug="${esc(t.slug)}">
@@ -3439,10 +3527,11 @@ export function renderClientEditView({ user, target, flash }) {
 
     <div class="card">
       <h2>Cuentas conectadas</h2>
-      <div class="acc-list-container">${platformsHtml}${kommoHtml}</div>
+      <div class="acc-list-container">${platformsHtml}${kommoHtml}${sheetsHtml}</div>
     </div>
 
     ${kommoModal}
+    ${sheetsModal}
   </div>
   <style>
     .kommo-exp-chip{display:inline-block;padding:.22rem .6rem;border-radius:100px;font-size:.7rem;background:var(--soft);color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -3464,6 +3553,32 @@ export function renderClientEditView({ user, target, flash }) {
     .kommo-sub-wrap input{border:none;border-radius:0}
     .kommo-sub-wrap input:focus{border:none}
     .kommo-sub-suffix{display:inline-flex;align-items:center;padding:0 .9rem;background:var(--soft);color:var(--muted);font-size:.86rem;border-left:1px solid var(--line);white-space:nowrap}
+    .sheets-row{display:flex;align-items:center;gap:.6rem}
+    .sheets-alias{font-weight:600;color:var(--ink);font-size:.86rem}
+    .sheets-tab-pill{display:inline-block;margin-left:.5rem;padding:.08rem .5rem;background:var(--soft);color:var(--muted);border-radius:100px;font-size:.72rem;font-weight:500}
+    .sheets-tab-pill.muted{opacity:.7;font-style:italic}
+    .sheets-form{display:flex;flex-direction:column;gap:1.1rem;padding:0;background:none}
+    .sheets-step{display:flex;flex-direction:column;gap:.4rem}
+    .sheets-label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .sheets-input-row{display:flex;gap:.5rem;align-items:stretch}
+    .sheets-input-row input{flex:1;padding:.65rem .8rem;border:1px solid var(--line);border-radius:4px;font-family:inherit;font-size:.88rem;background:var(--card);color:var(--ink);min-width:0}
+    .sheets-input-row input:focus{outline:none;border-color:var(--pink)}
+    .sheets-input-row .btn{white-space:nowrap}
+    #sheets-mod-alias{padding:.65rem .8rem;border:1px solid var(--line);border-radius:4px;font-family:inherit;font-size:.88rem;background:var(--card);color:var(--ink)}
+    #sheets-mod-alias:focus{outline:none;border-color:var(--pink)}
+    .sheets-hint{font-size:.74rem;color:var(--muted);margin-top:.1rem}
+    .sheets-hint code{background:var(--soft);padding:.08rem .3rem;border-radius:3px;font-size:.76rem;font-family:ui-monospace,SFMono-Regular,monospace}
+    .sheets-file-info{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border:1px solid var(--line);border-radius:4px;background:var(--soft);font-size:.84rem;color:var(--ink)}
+    .sheets-file-info .sheets-file-title{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sheets-file-info.err{background:var(--coral-soft);color:var(--coral);border-color:var(--coral-soft)}
+    .sheets-tab-list{display:flex;flex-direction:column;gap:.3rem;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:.3rem}
+    .sheets-tab-opt{display:flex;align-items:center;gap:.55rem;padding:.4rem .6rem;border-radius:4px;cursor:pointer;transition:background .15s}
+    .sheets-tab-opt:hover{background:var(--soft)}
+    .sheets-tab-opt input{margin:0}
+    .sheets-tab-opt.selected{background:var(--pink-soft)}
+    .sheets-tab-opt .tab-name{flex:1;font-size:.86rem;color:var(--ink)}
+    .sheets-tab-opt.all{border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem}
+    .sheets-tab-opt.all .tab-name{color:var(--muted);font-style:italic}
   </style>
   <script>
   (function(){
@@ -3517,6 +3632,229 @@ export function renderClientEditView({ user, target, flash }) {
         if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.error||'HTTP '+r.status);}
         location.reload();
       }catch(e){alert('No se pudo desvincular: '+e.message);}
+    };
+
+    // ─── Google Sheets modal ─────────────────────────────────────
+    var sheetsState={mode:'new',spreadsheetId:'',spreadsheetTitle:'',tabs:[],selectedTab:null,originalAlias:null};
+
+    window.sheetsCleanAlias=function(input){
+      var raw=input.value;
+      var s=String(raw||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'');
+      if(s!==raw)input.value=s;
+      sheetsRefreshSaveBtn();
+    };
+
+    window.sheetsOnUrlInput=function(input){
+      // Reset downstream if the URL changes
+      sheetsState.spreadsheetId='';
+      sheetsState.spreadsheetTitle='';
+      sheetsState.tabs=[];
+      sheetsState.selectedTab=null;
+      document.getElementById('sheets-step-tab').hidden=true;
+      document.getElementById('sheets-step-alias').hidden=true;
+      document.getElementById('sheets-file-info').hidden=true;
+      sheetsRefreshSaveBtn();
+    };
+
+    function sheetsRefreshSaveBtn(){
+      var saveBtn=document.getElementById('sheets-mod-save');
+      if(!saveBtn)return;
+      var hasFile=!!sheetsState.spreadsheetId;
+      var hasTab=sheetsState.selectedTab!==null;
+      var aliasEl=document.getElementById('sheets-mod-alias');
+      var hasAlias=aliasEl&&aliasEl.value.trim().length>0;
+      saveBtn.disabled=!(hasFile&&hasTab&&hasAlias);
+    }
+
+    async function sheetsFetchSaEmail(){
+      try{
+        var r=await fetch('/admin/api/ga4-accounts',{headers:{Accept:'application/json'}});
+        var d=await r.json();
+        var email=d.service_account_email||'';
+        var span=document.getElementById('sheets-sa-email');
+        if(span)span.textContent=email||'(service account no configurado)';
+        var chip=document.getElementById('sheets-sa-chip');
+        if(chip)chip.dataset.email=email||'';
+      }catch(e){}
+    }
+
+    window.sheetsCopySaEmail=function(btn){
+      var email=btn&&btn.dataset?btn.dataset.email:'';
+      if(!email){
+        var span=document.getElementById('sheets-sa-email');
+        email=span?span.textContent.trim():'';
+      }
+      if(!email||email.startsWith('('))return;
+      navigator.clipboard.writeText(email).then(function(){
+        btn.classList.add('copied');
+        setTimeout(function(){btn.classList.remove('copied')},1200);
+      }).catch(function(){});
+    };
+
+    window.openSheetsModal=function(alias){
+      var editing=!!alias;
+      sheetsState={mode:editing?'edit':'new',spreadsheetId:'',spreadsheetTitle:'',tabs:[],selectedTab:null,originalAlias:editing?alias:null};
+      document.getElementById('sheets-mod-title').textContent=editing?'Editar planilla':'Agregar planilla';
+      var urlInp=document.getElementById('sheets-mod-url');
+      var aliasInp=document.getElementById('sheets-mod-alias');
+      var info=document.getElementById('sheets-file-info');
+      var stepTab=document.getElementById('sheets-step-tab');
+      var stepAlias=document.getElementById('sheets-step-alias');
+      urlInp.value='';
+      aliasInp.value='';
+      info.hidden=true;info.className='sheets-file-info';info.innerHTML='';
+      stepTab.hidden=true;stepAlias.hidden=true;
+      document.getElementById('sheets-tab-list').innerHTML='';
+      sheetsRefreshSaveBtn();
+      sheetsFetchSaEmail();
+
+      if(editing){
+        var row=document.querySelector('.sheets-row[data-account-id="'+alias+'"]');
+        if(row){
+          var id=row.dataset.sheetId||'';
+          urlInp.value='https://docs.google.com/spreadsheets/d/'+id;
+          aliasInp.value=alias;
+        }
+      }
+      openModal('sheets-modal');
+      setTimeout(function(){urlInp.focus();if(editing)sheetsLookup();},50);
+    };
+
+    function parseSpreadsheetIdClient(input){
+      var raw=String(input||'').trim();
+      if(!raw)return '';
+      var m=raw.match(/\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/);
+      return m?m[1]:raw;
+    }
+
+    window.sheetsLookup=async function(){
+      var urlInp=document.getElementById('sheets-mod-url');
+      var sid=parseSpreadsheetIdClient(urlInp.value);
+      if(!sid){urlInp.focus();return;}
+      var btn=document.getElementById('sheets-mod-lookup');
+      var info=document.getElementById('sheets-file-info');
+      btn.disabled=true;btn.textContent='Buscando&#8230;';
+      info.hidden=false;info.className='sheets-file-info';info.innerHTML='<span>Consultando Google Sheets&#8230;</span>';
+      try{
+        var r=await fetch('/admin/api/sheets-metadata?spreadsheet_id='+encodeURIComponent(sid),{headers:{Accept:'application/json'}});
+        var d=await r.json();
+        if(!r.ok){
+          info.className='sheets-file-info err';
+          var hint=d.status==='no_access'
+            ? 'La planilla no está compartida con el service account. Pegá el email arriba como lector.'
+            : d.status==='not_found'
+            ? 'No se encontró ninguna planilla con ese ID.'
+            : (d.error||'Error '+r.status);
+          info.innerHTML='<span>'+hint+'</span>';
+          return;
+        }
+        sheetsState.spreadsheetId=d.spreadsheet_id;
+        sheetsState.spreadsheetTitle=d.title||'';
+        sheetsState.tabs=d.tabs||[];
+        info.className='sheets-file-info';
+        info.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F9D58" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="sheets-file-title">'+d.title+'</span><span style="color:var(--muted);font-size:.78rem">'+sheetsState.tabs.length+' hoja'+(sheetsState.tabs.length===1?'':'s')+'</span>';
+        sheetsRenderTabs();
+        document.getElementById('sheets-step-tab').hidden=false;
+        document.getElementById('sheets-step-alias').hidden=false;
+        // Pre-seleccionar según modo
+        var preTab=null;
+        if(sheetsState.mode==='edit'){
+          var row=document.querySelector('.sheets-row[data-account-id="'+sheetsState.originalAlias+'"]');
+          if(row)preTab=row.dataset.sheetTab||'';
+        }
+        if(preTab!==null){
+          var opt=document.querySelector('.sheets-tab-opt[data-tab-name="'+(preTab||'')+'"]');
+          if(opt)opt.click();
+          else if(sheetsState.tabs.length){document.querySelector('.sheets-tab-opt[data-tab-name="'+sheetsState.tabs[0].title+'"]').click();}
+        }else if(sheetsState.tabs.length===1){
+          document.querySelector('.sheets-tab-opt[data-tab-name="'+sheetsState.tabs[0].title+'"]').click();
+        }
+      }catch(e){
+        info.className='sheets-file-info err';
+        info.innerHTML='<span>'+(e.message||'Error de red')+'</span>';
+      }finally{
+        btn.disabled=false;btn.textContent='Buscar';
+      }
+    };
+
+    function sheetsRenderTabs(){
+      var list=document.getElementById('sheets-tab-list');
+      var html='';
+      html+='<label class="sheets-tab-opt all" data-tab-name="" onclick="sheetsPickTab(this)">'
+          +'<input type="radio" name="sheets-tab-pick" value="">'
+          +'<span class="tab-name">Archivo completo (sin hoja específica)</span>'
+          +'</label>';
+      sheetsState.tabs.forEach(function(t){
+        var name=t.title||'';
+        html+='<label class="sheets-tab-opt" data-tab-name="'+name.replace(/"/g,'&quot;')+'" onclick="sheetsPickTab(this)">'
+            +'<input type="radio" name="sheets-tab-pick" value="'+name.replace(/"/g,'&quot;')+'">'
+            +'<span class="tab-name">'+name.replace(/</g,'&lt;')+'</span>'
+            +'</label>';
+      });
+      list.innerHTML=html;
+    }
+
+    window.sheetsPickTab=function(el){
+      var name=el.dataset.tabName||'';
+      sheetsState.selectedTab=name;
+      document.querySelectorAll('.sheets-tab-opt').forEach(function(o){o.classList.remove('selected')});
+      el.classList.add('selected');
+      var cb=el.querySelector('input');
+      if(cb)cb.checked=true;
+      // Sugerir alias si está vacío
+      var aliasEl=document.getElementById('sheets-mod-alias');
+      if(aliasEl&&!aliasEl.value){
+        var suggested=name||sheetsState.spreadsheetTitle||'sheet';
+        aliasEl.value=suggested.toLowerCase().replace(/[^a-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'');
+      }
+      sheetsRefreshSaveBtn();
+    };
+
+    window.sheetsModalSave=async function(slug){
+      var alias=document.getElementById('sheets-mod-alias').value.trim();
+      if(!alias)return;
+      var payload={
+        alias:alias,
+        spreadsheet_id:sheetsState.spreadsheetId,
+        sheet_name:sheetsState.selectedTab||null,
+      };
+      if(sheetsState.mode==='edit'&&sheetsState.originalAlias){payload.old_alias=sheetsState.originalAlias;}
+      var btn=document.getElementById('sheets-mod-save');
+      btn.disabled=true;btn.textContent='Guardando&#8230;';
+      try{
+        var r=await fetch('/admin/clients/'+encodeURIComponent(slug)+'/sheets',{
+          method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+          body:JSON.stringify(payload)
+        });
+        var d=await r.json();
+        if(!r.ok)throw new Error(d.error||'HTTP '+r.status);
+        location.reload();
+      }catch(e){
+        btn.disabled=false;btn.textContent='Guardar';
+        alert('No se pudo guardar: '+e.message);
+      }
+    };
+
+    window.removeClientSheet=function(alias){
+      askConfirm({
+        title:'Quitar planilla',
+        message:'¿Desasociar la planilla "'+alias+'" de este cliente?',
+        confirmLabel:'Quitar',
+        danger:true,
+        onConfirm:async function(){
+          var container=document.querySelector('[data-client-slug]');
+          if(!container)return;
+          var slug=container.dataset.clientSlug;
+          try{
+            var r=await fetch('/admin/clients/'+encodeURIComponent(slug)+'/sheets/'+encodeURIComponent(alias)+'/delete',{
+              method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'}
+            });
+            if(!r.ok){var d=await r.json().catch(function(){return{}});throw new Error(d.error||r.status);}
+            showSavedToast('Planilla desasociada');
+            setTimeout(function(){window.location.reload()},700);
+          }catch(e){showSavedToast('Error: '+e.message,'error');}
+        }
+      });
     };
   })();
   </script>`;

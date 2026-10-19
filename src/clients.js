@@ -347,3 +347,41 @@ export function resolveSheetRef({ client, sheet_key, spreadsheet_id, sheet_name 
 export function resolveSheetId(args) {
   return resolveSheetRef(args).spreadsheetId;
 }
+
+function normalizeSheetAlias(s) {
+  return String(s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+export function updateClientSheet(slug, { alias, spreadsheet_id, sheet_name, old_alias }) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  const key = normalizeSheetAlias(alias);
+  if (!key) throw new Error('alias obligatorio');
+  const id = String(spreadsheet_id || '').trim();
+  if (!id) throw new Error('spreadsheet_id obligatorio');
+  const name = sheet_name ? String(sheet_name).trim() : null;
+  if (!c.sheets) c.sheets = {};
+  // Si llega old_alias (edición con renombre), borra la entrada anterior
+  if (old_alias && old_alias !== key && c.sheets[old_alias]) {
+    delete c.sheets[old_alias];
+  }
+  c.sheets[key] = name ? { spreadsheet_id: id, sheet_name: name } : { spreadsheet_id: id };
+  persist(db);
+  return { alias: key, spreadsheet_id: id, sheet_name: name };
+}
+
+export function removeClientSheet(slug, alias) {
+  const db = load();
+  const c = db.clients[slug];
+  if (!c) throw new Error(`Cliente "${slug}" no existe`);
+  const key = String(alias || '').trim();
+  if (!c.sheets || !c.sheets[key]) throw new Error(`El cliente no tiene un sheet "${key}"`);
+  delete c.sheets[key];
+  persist(db);
+  return { alias: key };
+}
