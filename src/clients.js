@@ -356,7 +356,7 @@ function normalizeSheetAlias(s) {
     .replace(/^_+|_+$/g, '');
 }
 
-export function updateClientSheet(slug, { alias, spreadsheet_id, sheet_name, old_alias }) {
+export function updateClientSheet(slug, { alias, spreadsheet_id, spreadsheet_title, sheet_name, old_alias }) {
   const db = load();
   const c = db.clients[slug];
   if (!c) throw new Error(`Cliente "${slug}" no existe`);
@@ -365,14 +365,17 @@ export function updateClientSheet(slug, { alias, spreadsheet_id, sheet_name, old
   const id = String(spreadsheet_id || '').trim();
   if (!id) throw new Error('spreadsheet_id obligatorio');
   const name = sheet_name ? String(sheet_name).trim() : null;
+  const title = spreadsheet_title ? String(spreadsheet_title).trim() : null;
   if (!c.sheets) c.sheets = {};
-  // Si llega old_alias (edición con renombre), borra la entrada anterior
   if (old_alias && old_alias !== key && c.sheets[old_alias]) {
     delete c.sheets[old_alias];
   }
-  c.sheets[key] = name ? { spreadsheet_id: id, sheet_name: name } : { spreadsheet_id: id };
+  const entry = { spreadsheet_id: id };
+  if (title) entry.spreadsheet_title = title;
+  if (name) entry.sheet_name = name;
+  c.sheets[key] = entry;
   persist(db);
-  return { alias: key, spreadsheet_id: id, sheet_name: name };
+  return { alias: key, ...entry };
 }
 
 export function removeClientSheet(slug, alias) {

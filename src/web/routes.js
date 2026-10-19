@@ -584,11 +584,12 @@ export function createWebRouter() {
   });
 
   router.post('/admin/clients/:slug/sheets', requireLogin, requireAdmin, express.json(), (req, res) => {
-    const { alias, spreadsheet_id, sheet_name, old_alias } = req.body || {};
+    const { alias, spreadsheet_id, spreadsheet_title, sheet_name, old_alias } = req.body || {};
     try {
       const saved = updateClientSheet(req.params.slug, {
         alias,
         spreadsheet_id: parseSpreadsheetId(spreadsheet_id),
+        spreadsheet_title,
         sheet_name,
         old_alias,
       });

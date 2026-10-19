@@ -3353,27 +3353,23 @@ export function renderClientEditView({ user, target, flash }) {
     return {
       alias,
       spreadsheet_id: entry.spreadsheet_id || entry.id || '',
+      spreadsheet_title: entry.spreadsheet_title || null,
       sheet_name: entry.sheet_name || null,
     };
   });
   const sheetsRows = sheetEntries.length
     ? sheetEntries
-        .map(
-          (s) => `
+        .map((s) => {
+          const file = s.spreadsheet_title || s.alias;
+          const label = s.sheet_name ? `${file} <span class="sheets-sep">&#8250;</span> ${s.sheet_name}` : `${file} <span class="sheets-sep">&#8250;</span> <em class="muted">(archivo completo)</em>`;
+          return `
           <div class="acc-list-row sheets-row" data-account-id="${esc(s.alias)}" data-sheet-id="${esc(s.spreadsheet_id)}" data-sheet-tab="${esc(s.sheet_name || '')}">
-            <span class="acc-list-name">
-              <span class="sheets-alias">${esc(s.alias)}</span>
-              ${s.sheet_name ? `<span class="sheets-tab-pill">${esc(s.sheet_name)}</span>` : '<span class="sheets-tab-pill muted">(archivo completo)</span>'}
-            </span>
-            <span class="acc-list-id-pill" title="${esc(s.spreadsheet_id)}">${esc(s.spreadsheet_id.slice(0, 10))}&#8230;</span>
-            <button type="button" class="icon-action" onclick="openSheetsModal('${esc(s.alias)}')" title="Editar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
-            </button>
+            <span class="acc-list-name sheets-label-cell">${label}</span>
             <button type="button" class="icon-action danger" onclick="removeClientSheet('${esc(s.alias)}')" title="Quitar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
-          </div>`,
-        )
+          </div>`;
+        })
         .join('')
     : `<div class="acc-list-empty">Sin planillas asociadas todav&#237;a.</div>`;
   const sheetsHtml = `
@@ -3417,9 +3413,7 @@ export function renderClientEditView({ user, target, flash }) {
           <div class="sheets-stage" data-stage="3" hidden>
             <label class="sheets-label">Hoja</label>
             <div class="sheets-tab-list" id="sheets-tab-list"></div>
-            <label class="sheets-label" style="margin-top:.9rem">Alias</label>
-            <input type="text" id="sheets-mod-alias" placeholder="leads" autocomplete="off" oninput="sheetsCleanAlias(this)">
-            <div class="sheets-hint">Lo usan las tools MCP: <code>client=${esc(t.slug)}, sheet_key=&lt;alias&gt;</code></div>
+            <div class="sheets-hint" id="sheets-preview" hidden>Se guardará como <strong id="sheets-preview-name">&#8212;</strong></div>
           </div>
         </div>
 
@@ -3554,9 +3548,9 @@ export function renderClientEditView({ user, target, flash }) {
     .kommo-sub-wrap input:focus{border:none}
     .kommo-sub-suffix{display:inline-flex;align-items:center;padding:0 .9rem;background:var(--soft);color:var(--muted);font-size:.86rem;border-left:1px solid var(--line);white-space:nowrap}
     .sheets-row{display:flex;align-items:center;gap:.6rem}
-    .sheets-alias{font-weight:600;color:var(--ink);font-size:.86rem}
-    .sheets-tab-pill{display:inline-block;margin-left:.5rem;padding:.08rem .5rem;background:var(--soft);color:var(--muted);border-radius:100px;font-size:.72rem;font-weight:500}
-    .sheets-tab-pill.muted{opacity:.7;font-style:italic}
+    .sheets-label-cell{font-size:.86rem;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sheets-sep{color:var(--muted);margin:0 .25rem}
+    .sheets-label-cell .muted{color:var(--muted);font-style:normal}
     .sheets-form{display:flex;flex-direction:column;gap:1.1rem;padding:0;background:none}
     .sheets-step{display:flex;flex-direction:column;gap:.4rem}
     .sheets-label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -3685,19 +3679,14 @@ export function renderClientEditView({ user, target, flash }) {
         nextBtn.disabled=!(urlEl&&urlEl.value.trim().length>5);
         return;
       }
-      // stage 3 → el que importa es el Save
+      // stage 3 → Save se habilita cuando hay archivo + hoja elegida
       var hasTab=sheetsState.selectedTab!==null;
-      var aliasEl=document.getElementById('sheets-mod-alias');
-      var hasAlias=aliasEl&&aliasEl.value.trim().length>0;
-      saveBtn.disabled=!(sheetsState.spreadsheetId&&hasTab&&hasAlias);
+      saveBtn.disabled=!(sheetsState.spreadsheetId&&hasTab);
     }
 
-    window.sheetsCleanAlias=function(input){
-      var raw=input.value;
-      var s=String(raw||'').toLowerCase().replace(/[^a-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'');
-      if(s!==raw)input.value=s;
-      sheetsRefreshNextBtn();
-    };
+    function sheetsSlug(s){
+      return String(s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    }
 
     window.sheetsOnUrlInput=function(input){
       sheetsState.spreadsheetId='';
@@ -3733,32 +3722,16 @@ export function renderClientEditView({ user, target, flash }) {
       }).catch(function(){});
     };
 
-    window.openSheetsModal=function(alias){
-      var editing=!!alias;
-      sheetsState={mode:editing?'edit':'new',stage:1,spreadsheetId:'',spreadsheetTitle:'',tabs:[],selectedTab:null,originalAlias:editing?alias:null};
-      document.getElementById('sheets-mod-title').textContent=editing?'Editar planilla':'Agregar planilla';
+    window.openSheetsModal=function(){
+      sheetsState={mode:'new',stage:1,spreadsheetId:'',spreadsheetTitle:'',tabs:[],selectedTab:null,originalAlias:null};
+      document.getElementById('sheets-mod-title').textContent='Agregar planilla';
       var urlInp=document.getElementById('sheets-mod-url');
-      var aliasInp=document.getElementById('sheets-mod-alias');
       var info=document.getElementById('sheets-file-info');
       urlInp.value='';
-      aliasInp.value='';
       info.hidden=true;info.className='sheets-file-info';info.innerHTML='';
       document.getElementById('sheets-tab-list').innerHTML='';
+      var prev=document.getElementById('sheets-preview');if(prev)prev.hidden=true;
       sheetsFetchSaEmail();
-
-      if(editing){
-        var row=document.querySelector('.sheets-row[data-account-id="'+alias+'"]');
-        if(row){
-          var id=row.dataset.sheetId||'';
-          urlInp.value='https://docs.google.com/spreadsheets/d/'+id;
-          aliasInp.value=alias;
-          // Si edita, saltamos a etapa 2 y lanzamos lookup
-          openModal('sheets-modal');
-          sheetsSetStage(2);
-          setTimeout(sheetsLookup,80);
-          return;
-        }
-      }
       openModal('sheets-modal');
       sheetsSetStage(1);
     };
@@ -3876,23 +3849,27 @@ export function renderClientEditView({ user, target, flash }) {
       el.classList.add('selected');
       var cb=el.querySelector('input');
       if(cb)cb.checked=true;
-      var aliasEl=document.getElementById('sheets-mod-alias');
-      if(aliasEl&&!aliasEl.value){
-        var suggested=name||sheetsState.spreadsheetTitle||'sheet';
-        aliasEl.value=suggested.toLowerCase().replace(/[^a-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'');
+      var prev=document.getElementById('sheets-preview');
+      var pname=document.getElementById('sheets-preview-name');
+      if(prev&&pname){
+        var label=(sheetsState.spreadsheetTitle||'(archivo)')+' › '+(name||'(archivo completo)');
+        pname.textContent=label;
+        prev.hidden=false;
       }
       sheetsRefreshNextBtn();
     };
 
     window.sheetsModalSave=async function(slug){
-      var alias=document.getElementById('sheets-mod-alias').value.trim();
-      if(!alias)return;
+      if(!sheetsState.spreadsheetId||sheetsState.selectedTab===null)return;
+      var title=sheetsState.spreadsheetTitle||'sheet';
+      var tab=sheetsState.selectedTab||'all';
+      var alias=sheetsSlug(title)+(tab?'_'+sheetsSlug(tab):'');
       var payload={
         alias:alias,
         spreadsheet_id:sheetsState.spreadsheetId,
+        spreadsheet_title:sheetsState.spreadsheetTitle||null,
         sheet_name:sheetsState.selectedTab||null,
       };
-      if(sheetsState.mode==='edit'&&sheetsState.originalAlias){payload.old_alias=sheetsState.originalAlias;}
       var btn=document.getElementById('sheets-mod-save');
       btn.disabled=true;btn.textContent='Guardando&#8230;';
       try{
