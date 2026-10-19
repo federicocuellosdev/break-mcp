@@ -657,7 +657,9 @@ export function createWebRouter() {
       const text = await r.text();
       let data;
       try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-      res.status(r.status).json({ ok: r.ok, status: r.status, data });
+      // Siempre devolvemos 200 — el status real de Kommo va dentro del payload
+      // (si devolviéramos 204 el body se descarta por el spec HTTP).
+      res.json({ ok: r.ok, status: r.status, data });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
