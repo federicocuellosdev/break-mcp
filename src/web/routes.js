@@ -43,7 +43,10 @@ import {
   renderClientForm,
   renderConfigView,
   renderLogsView,
+  renderSaturacion,
+  renderClientSaturacion,
 } from './pages/admin.js';
+import { computeSaturation, computeClientSaturation } from '../providers/saturation.js';
 import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
 import { listAlertsForUser, createAlert, dismissAlert } from '../alerts.js';
@@ -765,6 +768,50 @@ export function createWebRouter() {
       const { computeInvestment } = await import('../investment.js');
       const data = await computeInvestment({ clients, from, to });
       res.json({ from, to, clients: data });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // ─── Saturación (dev-only) ───────────────────────────────────────
+  router.get('/admin/saturacion', requireLogin, requireDev, (req, res) => {
+    res.set('Content-Type', 'text/html; charset=utf-8').send(renderSaturacion({ user: res.locals.user }));
+  });
+
+  router.get('/admin/saturacion/:slug', requireLogin, requireDev, (req, res) => {
+    let target;
+    try { target = getClient(req.params.slug); } catch { return res.status(404).send('Cliente no encontrado'); }
+    res
+      .set('Content-Type', 'text/html; charset=utf-8')
+      .send(renderClientSaturacion({ user: res.locals.user, slug: req.params.slug, clientName: target.name }));
+  });
+
+  router.get('/admin/api/saturacion', requireLogin, requireDev, async (req, res) => {
+    const from = String(req.query.from || '').slice(0, 10);
+    const to = String(req.query.to || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
+    }
+    const clients = listClients().filter((c) => c.active !== false && c.slug !== 'demo');
+    try {
+      const data = await computeSaturation({ clients, from, to });
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.get('/admin/api/saturacion/:slug', requireLogin, requireDev, async (req, res) => {
+    const from = String(req.query.from || '').slice(0, 10);
+    const to = String(req.query.to || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
+    }
+    let client;
+    try { client = { slug: req.params.slug, ...getClient(req.params.slug) }; } catch { return res.status(404).json({ error: 'cliente no encontrado' }); }
+    try {
+      const data = await computeClientSaturation({ client, from, to });
+      res.json(data);
     } catch (e) {
       res.status(500).json({ error: e.message });
     }

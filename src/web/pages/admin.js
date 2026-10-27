@@ -2016,6 +2016,7 @@ function sidebar(user, active) {
     { key: 'users', label: 'Usuarios', href: '/admin/users', adminOnly: true },
     { key: 'clients', label: 'Clientes', href: '/admin/clients' },
     { key: 'investment', label: 'Inversión', href: '/admin/investment' },
+    { key: 'saturacion', label: 'Saturación', href: '/admin/saturacion', dev: true },
     { key: 'logs', label: 'Logs', href: '/admin/logs', dev: true },
     { key: 'config', label: 'MCP', href: '/admin/config' },
   ];
@@ -4423,4 +4424,272 @@ export function renderClientForm({ user, mode, target, flash }) {
     allowedForUser: null,
     flash: flash || { type: 'ok', text: 'Us&#225; el modal desde la lista.' },
   });
+}
+
+/* ─────────── Saturación (dev-only) ─────────── */
+
+const SATURACION_CSS = `
+.sat-toolbar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.sat-toolbar input[type="date"]{padding:.5rem .7rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.86rem;background:var(--card);color:var(--ink)}
+.sat-toolbar .arrow{color:var(--muted);font-size:.9rem}
+.sat-toolbar .sat-presets{display:flex;gap:.4rem;margin-left:.4rem}
+.sat-toolbar .sat-preset{padding:.42rem .8rem;border:1px solid var(--line);background:var(--card);border-radius:100px;cursor:pointer;font:600 .74rem 'Inter',sans-serif;color:var(--muted);transition:all .15s}
+.sat-toolbar .sat-preset:hover{color:var(--ink);border-color:var(--ink)}
+.sat-toolbar .sat-preset.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sat-loading{padding:3rem;text-align:center;color:var(--muted)}
+
+.sat-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
+.sat-table th,.sat-table td{padding:.95rem 1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.sat-table thead th{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.sat-table tbody tr{cursor:pointer;transition:background .12s}
+.sat-table tbody tr:hover{background:var(--soft)}
+.sat-table tbody tr:last-child td{border-bottom:0}
+.sat-table tfoot td{background:var(--soft);font-weight:700;color:var(--ink);border-top:2px solid var(--line);border-bottom:0}
+.sat-table .client-cell{font-weight:600;color:var(--ink)}
+.sat-table .client-cell small{display:block;color:var(--muted);font-weight:400;font-size:.72rem;margin-top:.2rem}
+.sat-cell-bucket{min-width:140px}
+.sat-cell-bucket .inv{font-weight:700;color:var(--ink);font-size:.9rem}
+.sat-cell-bucket .meta{display:flex;flex-wrap:wrap;gap:.3rem .6rem;margin-top:.3rem;font-size:.72rem;color:var(--muted)}
+.sat-cell-bucket .meta span{display:inline-flex;align-items:center;gap:.2rem}
+.sat-cell-bucket .meta b{color:var(--ink);font-weight:600}
+.sat-cell-bucket .pct-bar{margin-top:.4rem;height:3px;background:var(--line);border-radius:100px;overflow:hidden;position:relative}
+.sat-cell-bucket .pct-bar>i{display:block;height:100%;background:var(--grad);border-radius:100px}
+.sat-cell-bucket.empty .inv{color:var(--muted);font-weight:400}
+.sat-cell-bucket.empty .meta,.sat-cell-bucket.empty .pct-bar{display:none}
+.sat-cell-total{min-width:120px;font-weight:700;color:var(--ink)}
+.sat-cell-total small{display:block;font-weight:400;color:var(--muted);font-size:.72rem;margin-top:.2rem}
+.sat-tr-noacc td{color:var(--muted)}
+.sat-tr-error td{background:var(--coral-soft);color:var(--coral)}
+.sat-tr-error .err{font-size:.75rem}
+
+/* Vista cliente */
+.sat-client-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0}
+.sat-client-head .totals{display:flex;gap:1.4rem;font-size:.82rem;color:var(--muted)}
+.sat-client-head .totals b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+
+.sat-cat{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:1rem;overflow:hidden}
+.sat-cat-head{display:flex;align-items:center;gap:.8rem;padding:1rem 1.3rem;background:var(--soft);border-bottom:1px solid var(--line)}
+.sat-cat-head h3{font-size:.98rem;font-weight:700;color:var(--ink);margin:0}
+.sat-cat-head .cat-stats{margin-left:auto;display:flex;gap:1.3rem;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sat-cat-head .cat-stats b{color:var(--ink);font-weight:700}
+.sat-cat-head .cat-pct{padding:.22rem .7rem;border-radius:100px;background:var(--ink);color:#fff;font-size:.72rem;font-weight:700}
+.sat-cat-empty{padding:1.4rem;color:var(--muted);font-size:.84rem;text-align:center}
+.sat-cat table{width:100%;border-collapse:collapse;font-size:.84rem;font-variant-numeric:tabular-nums}
+.sat-cat th,.sat-cat td{padding:.8rem 1.3rem;text-align:left;border-bottom:1px solid var(--line)}
+.sat-cat tbody tr:last-child td{border-bottom:0}
+.sat-cat th{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sat-cat td.n{text-align:right;font-variant-numeric:tabular-nums}
+.sat-cat td.name{font-weight:600;color:var(--ink)}
+.sat-cat td.obj{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+`;
+
+const SATURACION_JS = `
+(function(){
+  var fromEl=document.getElementById('sat-from');
+  var toEl=document.getElementById('sat-to');
+  var listEl=document.getElementById('sat-content');
+  var slug=document.getElementById('sat-slug') ? document.getElementById('sat-slug').value : null;
+
+  function iso(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
+  function parseISO(s){var p=(s||'').split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+
+  function fmtMoney(n, cur){
+    if(n==null||isNaN(n))return '—';
+    var sign = cur==='USD' ? 'US$ ' : (cur==='EUR' ? '€ ' : '$ ');
+    return sign + Math.round(n).toLocaleString('es-AR');
+  }
+  function fmtNum(n){ if(n==null||isNaN(n))return '—'; return Math.round(n).toLocaleString('es-AR'); }
+  function fmtFreq(f){ if(!f||isNaN(f))return '—'; return f.toFixed(2); }
+  function fmtPct(p){ if(p==null||isNaN(p))return '—'; return p.toFixed(1)+'%'; }
+
+  function setFromParams(){
+    var qp=new URLSearchParams(location.search);
+    var f=qp.get('from'), t=qp.get('to');
+    if(!f || !t){
+      var today=new Date();
+      var ago=new Date(today.getTime()-29*86400000);
+      f=iso(ago); t=iso(today);
+    }
+    fromEl.value=f; toEl.value=t;
+    return {from:f, to:t};
+  }
+
+  function applyPreset(preset){
+    var today=new Date();
+    var f, t;
+    if(preset==='7d'){ f=new Date(today.getTime()-6*86400000); t=today; }
+    else if(preset==='30d'){ f=new Date(today.getTime()-29*86400000); t=today; }
+    else if(preset==='mtd'){ f=new Date(today.getFullYear(),today.getMonth(),1); t=today; }
+    else if(preset==='prev'){ f=new Date(today.getFullYear(),today.getMonth()-1,1); t=new Date(today.getFullYear(),today.getMonth(),0); }
+    fromEl.value=iso(f); toEl.value=iso(t);
+    document.querySelectorAll('.sat-preset').forEach(function(b){b.classList.toggle('active', b.dataset.preset===preset)});
+    load();
+  }
+  document.querySelectorAll('.sat-preset').forEach(function(b){
+    b.addEventListener('click', function(){ applyPreset(b.dataset.preset); });
+  });
+  fromEl.addEventListener('change', load);
+  toEl.addEventListener('change', load);
+
+  async function load(){
+    listEl.innerHTML='<div class="sat-loading">Cargando datos de Meta…</div>';
+    var qs='from='+fromEl.value+'&to='+toEl.value;
+    history.replaceState(null,'',(slug ? '/admin/saturacion/'+slug : '/admin/saturacion')+'?'+qs);
+    try{
+      var url = slug ? '/admin/api/saturacion/'+slug+'?'+qs : '/admin/api/saturacion?'+qs;
+      var r=await fetch(url);
+      var data=await r.json();
+      if(!r.ok) throw new Error(data.error||'HTTP '+r.status);
+      if(slug) renderClient(data); else renderMain(data);
+    }catch(e){
+      listEl.innerHTML='<div class="sat-loading" style="color:var(--coral)">Error: '+e.message+'</div>';
+    }
+  }
+
+  function bucketCell(b, cur){
+    if(!b || !b.spend){ return '<td class="sat-cell-bucket empty"><div class="inv">—</div></td>'; }
+    var pct=Math.max(0, Math.min(100, b.pct||0));
+    return '<td class="sat-cell-bucket">'
+      + '<div class="inv">'+fmtMoney(b.spend, cur)+'</div>'
+      + '<div class="meta">'
+      +   '<span>alcance <b>'+fmtNum(b.reach)+'</b></span>'
+      +   '<span>frec <b>'+fmtFreq(b.frequency)+'</b></span>'
+      +   '<span><b>'+fmtPct(b.pct)+'</b></span>'
+      + '</div>'
+      + '<div class="pct-bar"><i style="width:'+pct+'%"></i></div>'
+      + '</td>';
+  }
+
+  function renderMain(data){
+    var cats=['Reconocimiento','Interacción','Conversión'];
+    var html='<table class="sat-table"><thead><tr>'
+      + '<th>Cliente</th>'
+      + cats.map(function(c){return '<th>'+c+'</th>'}).join('')
+      + '<th>Total</th>'
+      + '</tr></thead><tbody>';
+    for(var i=0;i<data.clients.length;i++){
+      var c=data.clients[i];
+      if(c.no_account){
+        html += '<tr class="sat-tr-noacc" onclick="location.href=\\'/admin/clients/'+c.slug+'/edit\\'"><td class="client-cell">'+c.name+'<small>sin cuenta Meta configurada</small></td><td colspan="4">—</td></tr>';
+        continue;
+      }
+      if(c.error){
+        html += '<tr class="sat-tr-error"><td class="client-cell">'+c.name+'</td><td colspan="4" class="err">'+c.error+'</td></tr>';
+        continue;
+      }
+      var sh='/admin/saturacion/'+c.slug+'?from='+fromEl.value+'&to='+toEl.value;
+      html += '<tr onclick="location.href=\\''+sh+'\\'">';
+      html += '<td class="client-cell">'+c.name+'<small>'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</small></td>';
+      for(var k=0;k<cats.length;k++){ html += bucketCell(c.buckets[cats[k]], c.currency); }
+      html += '<td class="sat-cell-total">'+fmtMoney(c.totals.spend, c.currency)+'<small>alc '+fmtNum(c.totals.reach)+' · frec '+fmtFreq(c.totals.frequency)+'</small></td>';
+      html += '</tr>';
+    }
+    html += '</tbody>';
+    // totales globales
+    var g=data.global;
+    html += '<tfoot><tr>';
+    html += '<td>TOTAL</td>';
+    for(var k2=0;k2<cats.length;k2++){
+      var gb=g.buckets[cats[k2]];
+      html += '<td class="sat-cell-bucket"><div class="inv">'+fmtMoney(gb.spend)+'</div><div class="meta"><span>alc <b>'+fmtNum(gb.reach)+'</b></span><span>frec <b>'+fmtFreq(gb.frequency)+'</b></span><span><b>'+fmtPct(gb.pct)+'</b></span></div></td>';
+    }
+    html += '<td class="sat-cell-total">'+fmtMoney(g.totals.spend)+'<small>alc '+fmtNum(g.totals.reach)+' · frec '+fmtFreq(g.totals.frequency)+'</small></td>';
+    html += '</tr></tfoot></table>';
+    listEl.innerHTML = html;
+  }
+
+  function renderClient(data){
+    if(data.no_account){ listEl.innerHTML='<div class="sat-loading">Este cliente no tiene cuenta Meta configurada.</div>'; return; }
+    var cats=['Reconocimiento','Interacción','Conversión','Otros'];
+    var html='<div class="sat-client-head">'
+      + '<h2>'+data.name+'</h2>'
+      + '<div class="totals">'
+      +   '<span>Inversión total <b>'+fmtMoney(data.totals.spend, data.currency)+'</b></span>'
+      +   '<span>Alcance <b>'+fmtNum(data.totals.reach)+'</b></span>'
+      +   '<span>Frecuencia <b>'+fmtFreq(data.totals.frequency)+'</b></span>'
+      + '</div></div>';
+
+    for(var i=0;i<cats.length;i++){
+      var cat=cats[i];
+      var b=data.buckets[cat];
+      if(!b) continue;
+      if(cat==='Otros' && (!b.campaigns || !b.campaigns.length)) continue;
+      html += '<div class="sat-cat">';
+      html += '<div class="sat-cat-head">';
+      html += '<h3>'+cat+'</h3>';
+      html += '<div class="cat-stats">';
+      html += '<span>Inv <b>'+fmtMoney(b.spend, data.currency)+'</b></span>';
+      html += '<span>Alcance <b>'+fmtNum(b.reach)+'</b></span>';
+      html += '<span>Frecuencia <b>'+fmtFreq(b.frequency)+'</b></span>';
+      html += '</div>';
+      html += '<span class="cat-pct">'+fmtPct(b.pct)+'</span>';
+      html += '</div>';
+      if(!b.campaigns || !b.campaigns.length){
+        html += '<div class="sat-cat-empty">Sin campañas con datos en este período.</div>';
+      } else {
+        html += '<table><thead><tr><th>Campaña</th><th>Objetivo</th><th class="n">Inversión</th><th class="n">Alcance</th><th class="n">Frecuencia</th><th class="n">% del cliente</th></tr></thead><tbody>';
+        for(var j=0;j<b.campaigns.length;j++){
+          var c=b.campaigns[j];
+          html += '<tr>';
+          html += '<td class="name">'+c.campaign_name+'</td>';
+          html += '<td class="obj">'+(c.objective||'—')+'</td>';
+          html += '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>';
+          html += '<td class="n">'+fmtNum(c.reach)+'</td>';
+          html += '<td class="n">'+fmtFreq(c.frequency)+'</td>';
+          html += '<td class="n">'+fmtPct(c.pct_client)+'</td>';
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  setFromParams();
+  load();
+})();
+`;
+
+export function renderSaturacion({ user }) {
+  const body = `
+    <style>${SATURACION_CSS}</style>
+    <div class="sat-toolbar">
+      <input type="date" id="sat-from">
+      <span class="arrow">→</span>
+      <input type="date" id="sat-to">
+      <div class="sat-presets">
+        <button type="button" class="sat-preset" data-preset="7d">7 días</button>
+        <button type="button" class="sat-preset active" data-preset="30d">30 días</button>
+        <button type="button" class="sat-preset" data-preset="mtd">Mes actual</button>
+        <button type="button" class="sat-preset" data-preset="prev">Mes anterior</button>
+      </div>
+    </div>
+    <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
+    <script>${SATURACION_JS}</script>
+  `;
+  return layout({ user, active: 'saturacion', title: 'Saturación', body });
+}
+
+export function renderClientSaturacion({ user, slug, clientName }) {
+  const actions = `<a class="btn-back" href="/admin/saturacion"><span class="arrow">&#8592;</span> Saturación</a>`;
+  const body = `
+    <style>${SATURACION_CSS}</style>
+    <input type="hidden" id="sat-slug" value="${esc(slug)}">
+    <div class="sat-toolbar">
+      <input type="date" id="sat-from">
+      <span class="arrow">→</span>
+      <input type="date" id="sat-to">
+      <div class="sat-presets">
+        <button type="button" class="sat-preset" data-preset="7d">7 días</button>
+        <button type="button" class="sat-preset active" data-preset="30d">30 días</button>
+        <button type="button" class="sat-preset" data-preset="mtd">Mes actual</button>
+        <button type="button" class="sat-preset" data-preset="prev">Mes anterior</button>
+      </div>
+    </div>
+    <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
+    <script>${SATURACION_JS}</script>
+  `;
+  return layout({ user, active: 'saturacion', title: `Saturación · ${clientName || slug}`, actions, body });
 }
