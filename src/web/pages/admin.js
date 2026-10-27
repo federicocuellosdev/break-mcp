@@ -4429,13 +4429,6 @@ export function renderClientForm({ user, mode, target, flash }) {
 /* ─────────── Saturación (dev-only) ─────────── */
 
 const SATURACION_CSS = `
-.sat-toolbar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.2rem}
-.sat-toolbar input[type="date"]{padding:.5rem .7rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.86rem;background:var(--card);color:var(--ink)}
-.sat-toolbar .arrow{color:var(--muted);font-size:.9rem}
-.sat-toolbar .sat-presets{display:flex;gap:.4rem;margin-left:.4rem}
-.sat-toolbar .sat-preset{padding:.42rem .8rem;border:1px solid var(--line);background:var(--card);border-radius:100px;cursor:pointer;font:600 .74rem 'Inter',sans-serif;color:var(--muted);transition:all .15s}
-.sat-toolbar .sat-preset:hover{color:var(--ink);border-color:var(--ink)}
-.sat-toolbar .sat-preset.active{background:var(--ink);color:#fff;border-color:var(--ink)}
 .sat-loading{padding:3rem;text-align:center;color:var(--muted)}
 
 .sat-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -4468,84 +4461,196 @@ const SATURACION_CSS = `
 .sat-client-head .totals{display:flex;gap:1.4rem;font-size:.82rem;color:var(--muted)}
 .sat-client-head .totals b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 
-.sat-cat{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:1rem;overflow:hidden}
-.sat-cat-head{display:flex;align-items:center;gap:.8rem;padding:1rem 1.3rem;background:var(--soft);border-bottom:1px solid var(--line)}
-.sat-cat-head h3{font-size:.98rem;font-weight:700;color:var(--ink);margin:0}
-.sat-cat-head .cat-stats{margin-left:auto;display:flex;gap:1.3rem;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.sat-cat-head .cat-stats b{color:var(--ink);font-weight:700}
-.sat-cat-head .cat-pct{padding:.22rem .7rem;border-radius:100px;background:var(--ink);color:#fff;font-size:.72rem;font-weight:700}
-.sat-cat-empty{padding:1.4rem;color:var(--muted);font-size:.84rem;text-align:center}
-.sat-cat table{width:100%;border-collapse:collapse;font-size:.84rem;font-variant-numeric:tabular-nums}
-.sat-cat th,.sat-cat td{padding:.8rem 1.3rem;text-align:left;border-bottom:1px solid var(--line)}
-.sat-cat tbody tr:last-child td{border-bottom:0}
-.sat-cat th{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.sat-cat td.n{text-align:right;font-variant-numeric:tabular-nums}
-.sat-cat td.name{font-weight:600;color:var(--ink)}
-.sat-cat td.obj{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+/* Chip de categoría */
+.sat-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.22rem .7rem;border-radius:100px;font-size:.72rem;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.sat-chip::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%}
+.sat-chip.cat-rec{background:#faeed7;color:#8a6d00}
+.sat-chip.cat-rec::before{background:#d4a85a}
+.sat-chip.cat-int{background:#efe6fb;color:#6d4ca8}
+.sat-chip.cat-int::before{background:#9b7dd8}
+.sat-chip.cat-con{background:#fde0eb;color:#c0526a}
+.sat-chip.cat-con::before{background:#e8177a}
+.sat-chip.cat-otr{background:var(--soft);color:var(--muted)}
+.sat-chip.cat-otr::before{background:var(--muted)}
+
+/* Tabla resumen de categorías (apilada) */
+.sat-summary{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums;margin-bottom:1.4rem}
+.sat-summary th,.sat-summary td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.sat-summary thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.sat-summary tbody tr:last-child td{border-bottom:0}
+.sat-summary td.n{text-align:right;font-weight:700;color:var(--ink)}
+.sat-summary td.pct{text-align:right;font-weight:700;color:var(--ink);min-width:60px}
+.sat-summary td.cat{width:170px}
+
+/* Tabla de campañas (lista flat con chip) */
+.sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
+.sat-campaigns th,.sat-campaigns td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.sat-campaigns tbody tr:last-child td{border-bottom:0}
+.sat-campaigns td.name{font-weight:600;color:var(--ink)}
+.sat-campaigns td.n{text-align:right;font-weight:600;color:var(--ink)}
+.sat-campaigns td.obj{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.sat-campaigns td.cat{width:150px}
 `;
 
 const SATURACION_JS = `
 (function(){
-  var fromEl=document.getElementById('sat-from');
-  var toEl=document.getElementById('sat-to');
   var listEl=document.getElementById('sat-content');
+  if(!listEl)return;
   var slug=document.getElementById('sat-slug') ? document.getElementById('sat-slug').value : null;
-
+  var fromEl=document.getElementById('inv-from');
+  var toEl=document.getElementById('inv-to');
   function iso(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
   function parseISO(s){var p=(s||'').split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+  function fmtDMY(iso){var p=(iso||'').split('-');return p[2]+'/'+p[1]+'/'+p[0]}
 
-  function fmtMoney(n, cur){
-    if(n==null||isNaN(n))return '—';
-    var sign = cur==='USD' ? 'US$ ' : (cur==='EUR' ? '€ ' : '$ ');
-    return sign + Math.round(n).toLocaleString('es-AR');
+  // ─── Range picker (idéntico al de Inversión) ──────────────────
+  var trigger=document.getElementById('rp-trigger');
+  var panel=document.getElementById('rp-panel');
+  var DOW=['DO','LU','MA','MI','JU','VI','SA'];
+  var MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var rpState={from:null,to:null,leftMonth:null,pending:null};
+  function sameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+  function ymd(d){return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
+  function inRange(d,a,b){if(!a||!b)return false;var x=ymd(d),lo=ymd(a),hi=ymd(b);if(lo>hi){var t=lo;lo=hi;hi=t}return x>lo&&x<hi}
+  function today(){var t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())}
+  function renderCal(baseDate,side){
+    var y=baseDate.getFullYear(),m=baseDate.getMonth();
+    var first=new Date(y,m,1);
+    var startDow=first.getDay();
+    var daysInMonth=new Date(y,m+1,0).getDate();
+    var t=today();
+    var cells=[];
+    for(var i=0;i<startDow;i++){var prev=new Date(y,m,-startDow+i+1);cells.push({d:prev,out:true})}
+    for(var d=1;d<=daysInMonth;d++)cells.push({d:new Date(y,m,d),out:false});
+    while(cells.length%7!==0){var next=new Date(y,m+1,cells.length-startDow-daysInMonth+1);cells.push({d:next,out:true})}
+    var from=rpState.pending||rpState.from,to=rpState.to;
+    var html='<div class="rp-cal-head">'
+      +'<div class="rp-cal-title">'+MONTHS[m]+' '+y+'</div>'
+      +(side==='left'?'<div class="rp-nav"><button type="button" onclick="rpShift(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button></div>':'<div class="rp-nav"><button type="button" onclick="rpShift(1)" '+(y===t.getFullYear()&&m>=t.getMonth()?'disabled':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>')
+      +'</div>'
+      +'<div class="rp-dow">'+DOW.map(function(x){return '<span>'+x+'</span>'}).join('')+'</div>'
+      +'<div class="rp-grid">'
+      +cells.map(function(c){
+        var cls=['rp-cell'];
+        if(c.out)cls.push('out');
+        if(ymd(c.d)>ymd(t))cls.push('disabled');
+        if(sameDay(c.d,t))cls.push('today');
+        var isStart=sameDay(c.d,from),isEnd=sameDay(c.d,to);
+        var hasRange=from&&to&&!sameDay(from,to);
+        if(isStart)cls.push('start'+(hasRange?' has-range':''));
+        if(isEnd)cls.push('end'+(hasRange?' has-range':''));
+        if(inRange(c.d,from,to))cls.push('in-range');
+        var attr=c.out||ymd(c.d)>ymd(t)?'':'onclick="rpPick(\\''+iso(c.d)+'\\')"';
+        return '<div class="'+cls.join(' ')+'" '+attr+'>'+c.d.getDate()+'</div>';
+      }).join('')
+      +'</div>';
+    return html;
   }
+  function renderPanel(){
+    var lm=rpState.leftMonth||new Date();
+    var rm=new Date(lm.getFullYear(),lm.getMonth()+1,1);
+    var pendingText=rpState.pending?'Seleccioná el fin':(rpState.from&&rpState.to?fmtDMY(iso(rpState.from))+' → '+fmtDMY(iso(rpState.to)):'Elegí un rango');
+    panel.innerHTML='<div class="rp-months">'
+      +'<div class="rp-cal">'+renderCal(lm,'left')+'</div>'
+      +'<div class="rp-cal">'+renderCal(rm,'right')+'</div>'
+      +'</div>'
+      +'<div class="rp-foot">'
+      +'<div class="rp-info">'+pendingText+'</div>'
+      +'<div class="rp-btns">'
+      +'<button type="button" class="rp-btn" onclick="rpClose()">Cancelar</button>'
+      +'<button type="button" class="rp-btn primary" onclick="rpApply()" '+(!rpState.from||!rpState.to||rpState.pending?'disabled':'')+'>Aplicar</button>'
+      +'</div></div>';
+  }
+  window.rpToggle=function(){
+    if(!panel.hidden){rpClose();return}
+    rpState.pending=null;
+    var base=rpState.from||new Date();
+    rpState.leftMonth=new Date(base.getFullYear(),base.getMonth()-1,1);
+    var t=today();
+    if(rpState.leftMonth.getFullYear()>t.getFullYear()||(rpState.leftMonth.getFullYear()===t.getFullYear()&&rpState.leftMonth.getMonth()>t.getMonth())){
+      rpState.leftMonth=new Date(t.getFullYear(),t.getMonth()-1,1);
+    }
+    renderPanel();
+    panel.hidden=false;
+    trigger.classList.add('open');
+  };
+  window.rpClose=function(){panel.hidden=true;trigger.classList.remove('open');rpState.pending=null};
+  window.rpShift=function(n){var d=rpState.leftMonth;rpState.leftMonth=new Date(d.getFullYear(),d.getMonth()+n,1);renderPanel()};
+  window.rpPick=function(isoStr){
+    var d=parseISO(isoStr);
+    if(!rpState.pending&&(!rpState.from||rpState.to)){rpState.pending=d;rpState.from=d;rpState.to=null;renderPanel();return}
+    var start=rpState.pending||rpState.from;
+    if(ymd(d)<ymd(start)){rpState.from=d;rpState.to=start}else{rpState.from=start;rpState.to=d}
+    rpState.pending=null;renderPanel();
+  };
+  window.rpApply=function(){
+    if(!rpState.from||!rpState.to)return;
+    fromEl.value=iso(rpState.from);toEl.value=iso(rpState.to);
+    updateTrigger();setActive('');reload();rpClose();
+  };
+  function updateTrigger(){
+    trigger.querySelector('[data-role=from]').textContent=fromEl.value?fmtDMY(fromEl.value):'—';
+    trigger.querySelector('[data-role=to]').textContent=toEl.value?fmtDMY(toEl.value):'—';
+  }
+  document.addEventListener('click',function(e){
+    if(!panel.hidden&&!panel.contains(e.target)&&!trigger.contains(e.target))rpClose();
+  });
+
+  function computePreset(k){
+    var now=new Date();
+    var y=now.getFullYear(),m=now.getMonth();
+    if(k==='mtd')return {from:iso(new Date(y,m,1)),to:iso(now)};
+    if(k==='7d'){var f=new Date(now);f.setDate(f.getDate()-6);return {from:iso(f),to:iso(now)}}
+    if(k==='30d'){var f2=new Date(now);f2.setDate(f2.getDate()-29);return {from:iso(f2),to:iso(now)}}
+    if(k==='prev'){var pm=new Date(y,m-1,1);var end=new Date(y,m,0);return {from:iso(pm),to:iso(end)}}
+    return {from:iso(new Date(y,m,1)),to:iso(now)};
+  }
+  function setActive(k){
+    document.querySelectorAll('.inv-preset').forEach(function(b){b.classList.toggle('active',b.dataset.preset===k)});
+  }
+
+  // ─── Search filter (idéntico al de Inversión) ─────────────────
+  var searchInput=document.getElementById('inv-search-input');
+  function normalize(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')}
+  function applyFilter(){
+    var q=normalize(searchInput?searchInput.value:'');
+    document.querySelectorAll('[data-client-name]').forEach(function(el){
+      var name=el.dataset.clientName||'';
+      el.hidden=!!q&&name.indexOf(q)<0;
+    });
+  }
+  if(searchInput)searchInput.addEventListener('input',applyFilter);
+
+  // ─── Formatters ───────────────────────────────────────────────
+  function fmtMoney(n, cur){ if(n==null||isNaN(n))return '—'; var sign = cur==='USD' ? 'US$ ' : (cur==='EUR' ? '€ ' : '$ '); return sign + Math.round(n).toLocaleString('es-AR'); }
   function fmtNum(n){ if(n==null||isNaN(n))return '—'; return Math.round(n).toLocaleString('es-AR'); }
   function fmtFreq(f){ if(!f||isNaN(f))return '—'; return f.toFixed(2); }
   function fmtPct(p){ if(p==null||isNaN(p))return '—'; return p.toFixed(1)+'%'; }
 
-  function setFromParams(){
-    var qp=new URLSearchParams(location.search);
-    var f=qp.get('from'), t=qp.get('to');
-    if(!f || !t){
-      var today=new Date();
-      var ago=new Date(today.getTime()-29*86400000);
-      f=iso(ago); t=iso(today);
-    }
-    fromEl.value=f; toEl.value=t;
-    return {from:f, to:t};
-  }
-
-  function applyPreset(preset){
-    var today=new Date();
-    var f, t;
-    if(preset==='7d'){ f=new Date(today.getTime()-6*86400000); t=today; }
-    else if(preset==='30d'){ f=new Date(today.getTime()-29*86400000); t=today; }
-    else if(preset==='mtd'){ f=new Date(today.getFullYear(),today.getMonth(),1); t=today; }
-    else if(preset==='prev'){ f=new Date(today.getFullYear(),today.getMonth()-1,1); t=new Date(today.getFullYear(),today.getMonth(),0); }
-    fromEl.value=iso(f); toEl.value=iso(t);
-    document.querySelectorAll('.sat-preset').forEach(function(b){b.classList.toggle('active', b.dataset.preset===preset)});
-    load();
-  }
-  document.querySelectorAll('.sat-preset').forEach(function(b){
-    b.addEventListener('click', function(){ applyPreset(b.dataset.preset); });
-  });
-  fromEl.addEventListener('change', load);
-  toEl.addEventListener('change', load);
-
-  async function load(){
+  function reload(){
+    var from=fromEl.value, to=toEl.value;
+    if(!from||!to)return;
     listEl.innerHTML='<div class="sat-loading">Cargando datos de Meta…</div>';
-    var qs='from='+fromEl.value+'&to='+toEl.value;
+    var qs='from='+from+'&to='+to;
     history.replaceState(null,'',(slug ? '/admin/saturacion/'+slug : '/admin/saturacion')+'?'+qs);
-    try{
-      var url = slug ? '/admin/api/saturacion/'+slug+'?'+qs : '/admin/api/saturacion?'+qs;
-      var r=await fetch(url);
-      var data=await r.json();
-      if(!r.ok) throw new Error(data.error||'HTTP '+r.status);
-      if(slug) renderClient(data); else renderMain(data);
-    }catch(e){
+    var url = slug ? '/admin/api/saturacion/'+slug+'?'+qs : '/admin/api/saturacion?'+qs;
+    fetch(url).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'HTTP '+r.status);return d})}).then(function(d){
+      if(slug) renderClient(d); else renderMain(d);
+      applyFilter();
+    }).catch(function(e){
       listEl.innerHTML='<div class="sat-loading" style="color:var(--coral)">Error: '+e.message+'</div>';
-    }
+    });
   }
+
+  document.querySelectorAll('.inv-preset').forEach(function(b){
+    b.addEventListener('click',function(){
+      var r=computePreset(b.dataset.preset);
+      fromEl.value=r.from;toEl.value=r.to;
+      rpState.from=parseISO(r.from);rpState.to=parseISO(r.to);
+      updateTrigger();setActive(b.dataset.preset);reload();
+    });
+  });
 
   function bucketCell(b, cur){
     if(!b || !b.spend){ return '<td class="sat-cell-bucket empty"><div class="inv">—</div></td>'; }
@@ -4570,16 +4675,17 @@ const SATURACION_JS = `
       + '</tr></thead><tbody>';
     for(var i=0;i<data.clients.length;i++){
       var c=data.clients[i];
+      var normName=normalize(c.name);
       if(c.no_account){
-        html += '<tr class="sat-tr-noacc" onclick="location.href=\\'/admin/clients/'+c.slug+'/edit\\'"><td class="client-cell">'+c.name+'<small>sin cuenta Meta configurada</small></td><td colspan="4">—</td></tr>';
+        html += '<tr class="sat-tr-noacc" data-client-name="'+normName+'" onclick="location.href=\\'/admin/clients/'+c.slug+'/edit\\'"><td class="client-cell">'+c.name+'<small>sin cuenta Meta configurada</small></td><td colspan="4">—</td></tr>';
         continue;
       }
       if(c.error){
-        html += '<tr class="sat-tr-error"><td class="client-cell">'+c.name+'</td><td colspan="4" class="err">'+c.error+'</td></tr>';
+        html += '<tr class="sat-tr-error" data-client-name="'+normName+'"><td class="client-cell">'+c.name+'</td><td colspan="4" class="err">'+c.error+'</td></tr>';
         continue;
       }
       var sh='/admin/saturacion/'+c.slug+'?from='+fromEl.value+'&to='+toEl.value;
-      html += '<tr onclick="location.href=\\''+sh+'\\'">';
+      html += '<tr data-client-name="'+normName+'" onclick="location.href=\\''+sh+'\\'">';
       html += '<td class="client-cell">'+c.name+'<small>'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</small></td>';
       for(var k=0;k<cats.length;k++){ html += bucketCell(c.buckets[cats[k]], c.currency); }
       html += '<td class="sat-cell-total">'+fmtMoney(c.totals.spend, c.currency)+'<small>alc '+fmtNum(c.totals.reach)+' · frec '+fmtFreq(c.totals.frequency)+'</small></td>';
@@ -4599,6 +4705,11 @@ const SATURACION_JS = `
     listEl.innerHTML = html;
   }
 
+  function catChip(cat){
+    var cls = cat==='Reconocimiento'?'cat-rec' : cat==='Interacción'?'cat-int' : cat==='Conversión'?'cat-con' : 'cat-otr';
+    return '<span class="sat-chip '+cls+'">'+cat+'</span>';
+  }
+
   function renderClient(data){
     if(data.no_account){ listEl.innerHTML='<div class="sat-loading">Este cliente no tiene cuenta Meta configurada.</div>'; return; }
     var cats=['Reconocimiento','Interacción','Conversión','Otros'];
@@ -4610,62 +4721,113 @@ const SATURACION_JS = `
       +   '<span>Frecuencia <b>'+fmtFreq(data.totals.frequency)+'</b></span>'
       + '</div></div>';
 
+    // ─── Tabla resumen de categorías (3 filas apiladas) ───
+    html += '<table class="sat-summary"><thead><tr>'
+      + '<th>Categoría</th>'
+      + '<th class="n">Inversión</th>'
+      + '<th class="n">Alcance</th>'
+      + '<th class="n">Frecuencia</th>'
+      + '<th class="n">% del cliente</th>'
+      + '</tr></thead><tbody>';
     for(var i=0;i<cats.length;i++){
       var cat=cats[i];
       var b=data.buckets[cat];
       if(!b) continue;
       if(cat==='Otros' && (!b.campaigns || !b.campaigns.length)) continue;
-      html += '<div class="sat-cat">';
-      html += '<div class="sat-cat-head">';
-      html += '<h3>'+cat+'</h3>';
-      html += '<div class="cat-stats">';
-      html += '<span>Inv <b>'+fmtMoney(b.spend, data.currency)+'</b></span>';
-      html += '<span>Alcance <b>'+fmtNum(b.reach)+'</b></span>';
-      html += '<span>Frecuencia <b>'+fmtFreq(b.frequency)+'</b></span>';
-      html += '</div>';
-      html += '<span class="cat-pct">'+fmtPct(b.pct)+'</span>';
-      html += '</div>';
-      if(!b.campaigns || !b.campaigns.length){
-        html += '<div class="sat-cat-empty">Sin campañas con datos en este período.</div>';
-      } else {
-        html += '<table><thead><tr><th>Campaña</th><th>Objetivo</th><th class="n">Inversión</th><th class="n">Alcance</th><th class="n">Frecuencia</th><th class="n">% del cliente</th></tr></thead><tbody>';
-        for(var j=0;j<b.campaigns.length;j++){
-          var c=b.campaigns[j];
-          html += '<tr>';
-          html += '<td class="name">'+c.campaign_name+'</td>';
-          html += '<td class="obj">'+(c.objective||'—')+'</td>';
-          html += '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>';
-          html += '<td class="n">'+fmtNum(c.reach)+'</td>';
-          html += '<td class="n">'+fmtFreq(c.frequency)+'</td>';
-          html += '<td class="n">'+fmtPct(c.pct_client)+'</td>';
-          html += '</tr>';
-        }
-        html += '</tbody></table>';
+      html += '<tr>'
+        + '<td class="cat">'+catChip(cat)+'</td>'
+        + '<td class="n">'+fmtMoney(b.spend, data.currency)+'</td>'
+        + '<td class="n">'+fmtNum(b.reach)+'</td>'
+        + '<td class="n">'+fmtFreq(b.frequency)+'</td>'
+        + '<td class="pct">'+fmtPct(b.pct)+'</td>'
+        + '</tr>';
+    }
+    html += '</tbody></table>';
+
+    // ─── Tabla única de campañas (con chip de categoría) ───
+    var allCampaigns=[];
+    for(var k=0;k<cats.length;k++){
+      var bb=data.buckets[cats[k]];
+      if(bb && bb.campaigns) allCampaigns=allCampaigns.concat(bb.campaigns);
+    }
+    allCampaigns.sort(function(a,b){return b.spend-a.spend});
+
+    if(!allCampaigns.length){
+      html += '<div class="sat-loading">Sin campañas con datos en este período.</div>';
+    } else {
+      html += '<table class="sat-campaigns"><thead><tr>'
+        + '<th>Campaña</th>'
+        + '<th>Categoría</th>'
+        + '<th>Objetivo</th>'
+        + '<th class="n">Inversión</th>'
+        + '<th class="n">Alcance</th>'
+        + '<th class="n">Frecuencia</th>'
+        + '<th class="n">% del cliente</th>'
+        + '</tr></thead><tbody>';
+      for(var m=0;m<allCampaigns.length;m++){
+        var c=allCampaigns[m];
+        html += '<tr>'
+          + '<td class="name">'+c.campaign_name+'</td>'
+          + '<td class="cat">'+catChip(c.category)+'</td>'
+          + '<td class="obj">'+(c.objective||'—')+'</td>'
+          + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
+          + '<td class="n">'+fmtNum(c.reach)+'</td>'
+          + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
+          + '<td class="n">'+fmtPct(c.pct_client)+'</td>'
+          + '</tr>';
       }
-      html += '</div>';
+      html += '</tbody></table>';
     }
     listEl.innerHTML = html;
   }
 
-  setFromParams();
-  load();
+  // ─── Init ─────────────────────────────────────────────────────
+  var qp=new URLSearchParams(location.search);
+  var qpFrom=qp.get('from'), qpTo=qp.get('to');
+  if(qpFrom && qpTo){
+    fromEl.value=qpFrom; toEl.value=qpTo;
+    rpState.from=parseISO(qpFrom); rpState.to=parseISO(qpTo);
+    updateTrigger(); setActive(''); reload();
+  } else {
+    var init=computePreset('30d');
+    fromEl.value=init.from; toEl.value=init.to;
+    rpState.from=parseISO(init.from); rpState.to=parseISO(init.to);
+    updateTrigger(); setActive('30d'); reload();
+  }
 })();
 `;
+
+function satToolbar() {
+  return `
+    <div class="inv-toolbar">
+      <label class="inv-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="text" id="inv-search-input" placeholder="Buscar cliente&#8230;" autocomplete="off">
+      </label>
+      <div class="presets">
+        <button type="button" class="inv-preset" data-preset="mtd">Mes actual</button>
+        <button type="button" class="inv-preset" data-preset="7d">&#218;ltimos 7 d&#237;as</button>
+        <button type="button" class="inv-preset" data-preset="30d">&#218;ltimos 30 d&#237;as</button>
+        <button type="button" class="inv-preset" data-preset="prev">Mes anterior</button>
+      </div>
+      <div class="rp">
+        <button type="button" class="rp-trigger" id="rp-trigger" onclick="rpToggle()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span data-role="from">&#8212;</span>
+          <span class="sep">&#8594;</span>
+          <span data-role="to">&#8212;</span>
+        </button>
+        <div class="rp-panel" id="rp-panel" hidden></div>
+      </div>
+      <input type="hidden" id="inv-from">
+      <input type="hidden" id="inv-to">
+    </div>`;
+}
 
 export function renderSaturacion({ user }) {
   const body = `
     <style>${SATURACION_CSS}</style>
-    <div class="sat-toolbar">
-      <input type="date" id="sat-from">
-      <span class="arrow">→</span>
-      <input type="date" id="sat-to">
-      <div class="sat-presets">
-        <button type="button" class="sat-preset" data-preset="7d">7 días</button>
-        <button type="button" class="sat-preset active" data-preset="30d">30 días</button>
-        <button type="button" class="sat-preset" data-preset="mtd">Mes actual</button>
-        <button type="button" class="sat-preset" data-preset="prev">Mes anterior</button>
-      </div>
-    </div>
+    ${satToolbar()}
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
     <script>${SATURACION_JS}</script>
   `;
@@ -4677,17 +4839,7 @@ export function renderClientSaturacion({ user, slug, clientName }) {
   const body = `
     <style>${SATURACION_CSS}</style>
     <input type="hidden" id="sat-slug" value="${esc(slug)}">
-    <div class="sat-toolbar">
-      <input type="date" id="sat-from">
-      <span class="arrow">→</span>
-      <input type="date" id="sat-to">
-      <div class="sat-presets">
-        <button type="button" class="sat-preset" data-preset="7d">7 días</button>
-        <button type="button" class="sat-preset active" data-preset="30d">30 días</button>
-        <button type="button" class="sat-preset" data-preset="mtd">Mes actual</button>
-        <button type="button" class="sat-preset" data-preset="prev">Mes anterior</button>
-      </div>
-    </div>
+    ${satToolbar()}
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
     <script>${SATURACION_JS}</script>
   `;
