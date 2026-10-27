@@ -4440,12 +4440,12 @@ const SATURACION_CSS = `
 .sat-table tfoot td{background:var(--soft);font-weight:700;color:var(--ink);border-top:2px solid var(--line);border-bottom:0}
 .sat-table .client-cell{font-weight:600;color:var(--ink)}
 .sat-table .client-cell small{display:block;color:var(--muted);font-weight:400;font-size:.72rem;margin-top:.2rem}
-.sat-cell-bucket{min-width:140px}
-.sat-cell-bucket .inv{font-weight:700;color:var(--ink);font-size:.9rem}
-.sat-cell-bucket .meta{display:flex;flex-wrap:wrap;gap:.3rem .6rem;margin-top:.3rem;font-size:.72rem;color:var(--muted)}
-.sat-cell-bucket .meta span{display:inline-flex;align-items:center;gap:.2rem}
-.sat-cell-bucket .meta b{color:var(--ink);font-weight:600}
-.sat-cell-bucket .pct-bar{margin-top:.4rem;height:3px;background:var(--line);border-radius:100px;overflow:hidden;position:relative}
+.sat-cell-bucket{min-width:170px}
+.sat-cell-bucket .inv{font-weight:700;color:var(--ink);font-size:.95rem;margin-bottom:.5rem}
+.sat-cell-bucket .meta{display:grid;grid-template-columns:auto 1fr;gap:.15rem .7rem;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sat-cell-bucket .meta dt{font-weight:500;color:var(--muted)}
+.sat-cell-bucket .meta dd{margin:0;font-weight:600;color:var(--ink);text-align:right}
+.sat-cell-bucket .pct-bar{margin-top:.55rem;height:3px;background:var(--line);border-radius:100px;overflow:hidden;position:relative}
 .sat-cell-bucket .pct-bar>i{display:block;height:100%;background:var(--grad);border-radius:100px}
 .sat-cell-bucket.empty .inv{color:var(--muted);font-weight:400}
 .sat-cell-bucket.empty .meta,.sat-cell-bucket.empty .pct-bar{display:none}
@@ -4657,11 +4657,11 @@ const SATURACION_JS = `
     var pct=Math.max(0, Math.min(100, b.pct||0));
     return '<td class="sat-cell-bucket">'
       + '<div class="inv">'+fmtMoney(b.spend, cur)+'</div>'
-      + '<div class="meta">'
-      +   '<span>alcance <b>'+fmtNum(b.reach)+'</b></span>'
-      +   '<span>frec <b>'+fmtFreq(b.frequency)+'</b></span>'
-      +   '<span><b>'+fmtPct(b.pct)+'</b></span>'
-      + '</div>'
+      + '<dl class="meta">'
+      +   '<dt>Alcance</dt><dd>'+fmtNum(b.reach)+'</dd>'
+      +   '<dt>Frecuencia</dt><dd>'+fmtFreq(b.frequency)+'</dd>'
+      +   '<dt>% total</dt><dd>'+fmtPct(b.pct)+'</dd>'
+      + '</dl>'
       + '<div class="pct-bar"><i style="width:'+pct+'%"></i></div>'
       + '</td>';
   }
@@ -4698,7 +4698,12 @@ const SATURACION_JS = `
     html += '<td>TOTAL</td>';
     for(var k2=0;k2<cats.length;k2++){
       var gb=g.buckets[cats[k2]];
-      html += '<td class="sat-cell-bucket"><div class="inv">'+fmtMoney(gb.spend)+'</div><div class="meta"><span>alc <b>'+fmtNum(gb.reach)+'</b></span><span>frec <b>'+fmtFreq(gb.frequency)+'</b></span><span><b>'+fmtPct(gb.pct)+'</b></span></div></td>';
+      html += '<td class="sat-cell-bucket"><div class="inv">'+fmtMoney(gb.spend)+'</div>'
+        + '<dl class="meta">'
+        +   '<dt>Alcance</dt><dd>'+fmtNum(gb.reach)+'</dd>'
+        +   '<dt>Frecuencia</dt><dd>'+fmtFreq(gb.frequency)+'</dd>'
+        +   '<dt>% total</dt><dd>'+fmtPct(gb.pct)+'</dd>'
+        + '</dl></td>';
     }
     html += '<td class="sat-cell-total">'+fmtMoney(g.totals.spend)+'<small>alc '+fmtNum(g.totals.reach)+' · frec '+fmtFreq(g.totals.frequency)+'</small></td>';
     html += '</tr></tfoot></table>';
