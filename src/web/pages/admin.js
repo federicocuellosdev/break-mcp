@@ -4441,7 +4441,7 @@ const SATURACION_CSS = `
 .sat-block-head .campaigns{color:var(--muted);font-size:.75rem;font-weight:500}
 .sat-block table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
 .sat-block th,.sat-block td{padding:.78rem 1.3rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
-.sat-block thead th{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left}
+.sat-block thead th{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;background:#ededf2}
 .sat-block tbody tr:last-child td{border-bottom:0}
 .sat-block td.cat{width:170px}
 .sat-block td.n,.sat-block th.n,.sat-block tfoot td.n{text-align:right;font-variant-numeric:tabular-nums}
@@ -4713,7 +4713,7 @@ const SATURACION_JS = `
         + '<th class="n">Alcance</th>'
         + '<th class="n">Frecuencia</th>'
         + '<th class="n">Inversión</th>'
-        + '<th class="n">% del cliente</th>'
+        + '<th class="n">% de inversión</th>'
         + '</tr></thead><tbody>';
       for(var k=0;k<cats.length;k++){
         var cat=cats[k];
@@ -4830,7 +4830,7 @@ const SATURACION_JS = `
         + '<th class="n">Inversión</th>'
         + '<th>KPI clave</th>'
         + '<th class="n">Costo / resultado</th>'
-        + '<th class="n">% del cliente</th>'
+        + '<th class="n">% de inversión</th>'
         + '</tr></thead><tbody>';
       for(var m=0;m<allCampaigns.length;m++){
         var c=allCampaigns[m];
