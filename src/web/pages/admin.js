@@ -4472,23 +4472,26 @@ const SATURACION_CSS = `
 .sat-ads-head .close svg{width:18px;height:18px}
 .sat-ads-body{padding:1.3rem 1.6rem;overflow-y:auto;flex:1}
 .sat-ads-body .loading{text-align:center;color:var(--muted);padding:3rem;font-size:.9rem}
-.sat-ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
-.sat-ad-card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-.sat-ad-media{aspect-ratio:1/1;background:var(--soft);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+/* Modal de anuncios · listado horizontal */
+.sat-ads-list{display:flex;flex-direction:column;gap:.75rem}
+.sat-ad-row{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;align-items:stretch;transition:border-color .15s}
+.sat-ad-row:hover{border-color:var(--text-soft,var(--muted))}
+.sat-ad-media{width:170px;flex-shrink:0;aspect-ratio:1/1;background:var(--soft);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .sat-ad-media img{width:100%;height:100%;object-fit:cover}
-.sat-ad-media .no-media{color:var(--muted);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
-.sat-ad-media .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(0,0,0,.5);border-radius:100px;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:none}
-.sat-ad-media .play svg{width:22px;height:22px;margin-left:3px}
-.sat-ad-info{padding:.85rem 1rem 1rem;display:flex;flex-direction:column;gap:.45rem}
-.sat-ad-adset{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.sat-ad-name{font-size:.86rem;font-weight:600;color:var(--ink);line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.sat-ad-kpi{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;padding-top:.55rem;border-top:1px solid var(--line);margin-top:.3rem}
-.sat-ad-kpi .v{font-weight:700;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
-.sat-ad-kpi .l{color:var(--muted);font-size:.72rem;font-weight:500}
-.sat-ad-kpi .cost{color:var(--muted);font-size:.76rem;font-variant-numeric:tabular-nums}
-.sat-ad-kpi .cost b{color:var(--ink);font-weight:600}
-.sat-ad-stats{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.sat-ad-stats b{color:var(--ink);font-weight:600}
+.sat-ad-media .no-media{color:var(--muted);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.sat-ad-media .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:rgba(0,0,0,.55);border-radius:100px;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:none}
+.sat-ad-media .play svg{width:20px;height:20px;margin-left:3px}
+.sat-ad-content{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto;gap:.4rem 1.4rem;padding:1rem 1.3rem;align-items:start}
+.sat-ad-content .head{grid-column:1/-1;display:flex;flex-direction:column;gap:.15rem}
+.sat-ad-title{font-size:.95rem;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:-.005em}
+.sat-ad-adset{font-size:.72rem;color:var(--muted);font-weight:500}
+.sat-ad-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem 1.4rem;margin-top:.3rem}
+.sat-ad-metric{display:flex;flex-direction:column;gap:.1rem}
+.sat-ad-metric .k{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sat-ad-metric .v{font-size:.9rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.sat-ad-metric .v .l{color:var(--muted);font-weight:500;font-size:.76rem;margin-left:.3rem}
+.sat-ad-metric.highlight .v{color:var(--pink)}
+.sat-ad-metric.cost .v{font-weight:600}
 
 /* Fila de campaña clickeable */
 .sat-campaigns tbody tr{cursor:pointer;transition:background .12s}
@@ -4499,7 +4502,7 @@ const SATURACION_CSS = `
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
 
 .sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem}
-.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:.45rem;min-height:112px}
+.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.65rem}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em}
@@ -4838,7 +4841,7 @@ const SATURACION_JS = `
   function renderAds(ads){
     var body = document.getElementById('sat-ads-body');
     if(!ads.length){ body.innerHTML = '<div class="loading">Sin anuncios con datos en este período.</div>'; return; }
-    var html = '<div class="sat-ads-grid">';
+    var html = '<div class="sat-ads-list">';
     for(var i=0;i<ads.length;i++){
       var a = ads[i];
       var media;
@@ -4850,20 +4853,32 @@ const SATURACION_JS = `
       } else {
         media = '<span class="no-media">sin preview</span>';
       }
-      var kpi = '';
+      var kpiMetric = '';
+      var costMetric = '';
       if(a.kpi_value!=null && a.kpi_label){
-        kpi = '<div class="sat-ad-kpi">'
-          + '<div><span class="v">'+fmtNum(a.kpi_value)+'</span> <span class="l">'+a.kpi_label+'</span></div>'
-          + (a.kpi_cost!=null ? '<span class="cost"><b>'+fmtMoney(a.kpi_cost,null)+'</b> c/u</span>' : '')
+        kpiMetric = '<div class="sat-ad-metric highlight">'
+          + '<span class="k">'+a.kpi_label+'</span>'
+          + '<span class="v">'+fmtNum(a.kpi_value)+'</span>'
+          + '</div>';
+        costMetric = '<div class="sat-ad-metric cost">'
+          + '<span class="k">Costo '+a.kpi_label.toLowerCase()+'</span>'
+          + '<span class="v">'+(a.kpi_cost!=null ? fmtMoney(a.kpi_cost,null) : '—')+'</span>'
           + '</div>';
       }
-      html += '<div class="sat-ad-card">'
+      html += '<div class="sat-ad-row">'
         + '<div class="sat-ad-media">'+media+'</div>'
-        + '<div class="sat-ad-info">'
-        +   (a.adset_name ? '<div class="sat-ad-adset">'+a.adset_name+'</div>' : '')
-        +   '<div class="sat-ad-name" title="'+(a.ad_name||'').replace(/"/g,'&quot;')+'">'+(a.ad_name||'—')+'</div>'
-        +   '<div class="sat-ad-stats"><span>Inv <b>'+fmtMoney(a.spend,null)+'</b></span><span>Alc <b>'+fmtNum(a.reach)+'</b></span><span>Frec <b>'+fmtFreq(a.frequency)+'</b></span></div>'
-        +   kpi
+        + '<div class="sat-ad-content">'
+        +   '<div class="head">'
+        +     '<div class="sat-ad-title">'+(a.ad_name||'—')+'</div>'
+        +     (a.adset_name ? '<div class="sat-ad-adset">'+a.adset_name+'</div>' : '')
+        +   '</div>'
+        +   '<div class="sat-ad-grid">'
+        +     '<div class="sat-ad-metric"><span class="k">Alcance</span><span class="v">'+fmtNum(a.reach)+'</span></div>'
+        +     '<div class="sat-ad-metric"><span class="k">Frecuencia</span><span class="v">'+fmtFreq(a.frequency)+'</span></div>'
+        +     kpiMetric
+        +     costMetric
+        +     '<div class="sat-ad-metric"><span class="k">Inversión</span><span class="v">'+fmtMoney(a.spend,null)+'</span></div>'
+        +   '</div>'
         + '</div></div>';
     }
     html += '</div>';
