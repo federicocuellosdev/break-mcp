@@ -4497,6 +4497,37 @@ const SATURACION_CSS = `
 .sat-campaigns tbody tr{cursor:pointer;transition:background .12s}
 .sat-campaigns tbody tr:hover{background:#fafafd}
 
+/* Pills de "Entrega" (status + rendimiento) */
+.sat-delivery{display:flex;flex-direction:column;align-items:flex-start;gap:.25rem;min-width:140px}
+.sat-pill{display:inline-flex;align-items:center;gap:.4rem;padding:.14rem .55rem;border-radius:100px;font-size:.7rem;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.sat-pill::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* status */
+.sat-pill.st-active{background:#e6f6ee;color:var(--green,#0f8a5f)}
+.sat-pill.st-active::before{background:var(--green,#0f8a5f)}
+.sat-pill.st-paused{background:var(--soft);color:var(--muted)}
+.sat-pill.st-paused::before{background:var(--muted)}
+.sat-pill.st-issues{background:#fdecef;color:var(--coral,#c81c40)}
+.sat-pill.st-issues::before{background:var(--coral,#c81c40)}
+.sat-pill.st-process{background:#e3eaf8;color:#1a3a6e}
+.sat-pill.st-process::before{background:#4a90e2}
+.sat-pill.st-archived{background:var(--soft);color:var(--muted);opacity:.7}
+.sat-pill.st-archived::before{background:var(--muted)}
+.sat-pill.st-unknown,.sat-pill.st-other{background:var(--soft);color:var(--muted)}
+.sat-pill.st-unknown::before,.sat-pill.st-other::before{background:var(--muted)}
+/* performance */
+.sat-pill.perf-high{background:#e3eaf8;color:#1a3a6e}
+.sat-pill.perf-high::before{background:#4a90e2}
+.sat-pill.perf-normal{background:var(--soft);color:var(--muted)}
+.sat-pill.perf-normal::before{background:var(--muted)}
+.sat-pill.perf-limited{background:#faeed7;color:#8a6d00}
+.sat-pill.perf-limited::before{background:#d4a85a}
+.sat-pill.perf-low{background:#fdecef;color:var(--coral,#c81c40)}
+.sat-pill.perf-low::before{background:var(--coral,#c81c40)}
+.sat-pill.perf-issue{background:#fff6d6;color:#8a6d00}
+.sat-pill.perf-issue::before{background:#d4a85a}
+/* alineación de header de la col "Entrega" */
+.sat-campaigns th.entrega{text-align:left}
+
 /* Vista cliente */
 .sat-client-head{margin-bottom:1.2rem}
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
@@ -4796,6 +4827,19 @@ const SATURACION_JS = `
     return '<span class="sat-chip '+cls+'">'+cat+'</span>';
   }
 
+  // Entrega: pill de status + pill de rendimiento (si aplica)
+  function deliveryPills(obj){
+    var html = '<div class="sat-delivery">';
+    var st = obj.delivery_status || 'unknown';
+    var stLbl = obj.delivery_status_label || '—';
+    html += '<span class="sat-pill st-'+st+'">'+stLbl+'</span>';
+    if(obj.performance){
+      html += '<span class="sat-pill perf-'+obj.performance+'">'+(obj.performance_label||obj.performance)+'</span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   var EXT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
   function adsManagerUrl(accountId){
     if(!accountId) return null;
@@ -4865,12 +4909,21 @@ const SATURACION_JS = `
           + '<span class="v">'+(a.kpi_cost!=null ? fmtMoney(a.kpi_cost,null) : '—')+'</span>'
           + '</div>';
       }
+      // Pills de entrega + rendimiento del anuncio
+      var pills = '';
+      if(a.delivery_status || a.performance){
+        pills = '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.1rem">';
+        if(a.delivery_status) pills += '<span class="sat-pill st-'+a.delivery_status+'">'+(a.delivery_status_label||'—')+'</span>';
+        if(a.performance) pills += '<span class="sat-pill perf-'+a.performance+'">'+(a.performance_label||a.performance)+'</span>';
+        pills += '</div>';
+      }
       html += '<div class="sat-ad-row">'
         + '<div class="sat-ad-media">'+media+'</div>'
         + '<div class="sat-ad-content">'
         +   '<div class="head">'
         +     '<div class="sat-ad-title">'+(a.ad_name||'—')+'</div>'
         +     (a.adset_name ? '<div class="sat-ad-adset">'+a.adset_name+'</div>' : '')
+        +     pills
         +   '</div>'
         +   '<div class="sat-ad-grid">'
         +     '<div class="sat-ad-metric"><span class="k">Alcance</span><span class="v">'+fmtNum(a.reach)+'</span></div>'
@@ -4976,6 +5029,7 @@ const SATURACION_JS = `
       html += '<div class="sat-campaigns-wrap"><table class="sat-campaigns"><thead><tr>'
         + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
+        + '<th class="entrega">Entrega</th>'
         + '<th class="n">Frecuencia</th>'
         + '<th class="n">Costo / resultado</th>'
         + '<th>Resultado</th>'
@@ -5005,6 +5059,7 @@ const SATURACION_JS = `
         html += '<tr '+trAttrs+'>'
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
+          + '<td>'+deliveryPills(c)+'</td>'
           + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
           + costHtml
           + resultHtml
@@ -5014,7 +5069,7 @@ const SATURACION_JS = `
       }
       // Fila de total
       html += '</tbody><tfoot><tr>'
-        + '<td class="label" colspan="5">Total Meta Ads</td>'
+        + '<td class="label" colspan="6">Total Meta Ads</td>'
         + '<td class="n">'+fmtMoney(data.totals.spend, data.currency)+'</td>'
         + '<td class="n">100%</td>'
         + '</tr></tfoot></table></div>';

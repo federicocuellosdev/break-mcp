@@ -106,6 +106,51 @@ async function metaGet(path, params = {}) {
   return j;
 }
 
+// Heurística de "Entrega" (status + rendimiento) a partir de los campos de Meta.
+// Para campañas: solo contamos con effective_status + issues_info. Rendimiento se infiere
+// de la presencia de issues (LEARNING_LIMITED, policy, etc.).
+// Para anuncios: incluimos los rankings (quality / engagement / conversion rate).
+function computeDelivery({ effectiveStatus, issuesInfo, hasSpend, qualityRanking, engagementRanking, conversionRanking }) {
+  const status = String(effectiveStatus || '').toUpperCase();
+  const issues = Array.isArray(issuesInfo) ? issuesInfo : [];
+  const issueTypes = issues.map((i) => String(i.level || i.error_message || i.error_code || '').toUpperCase());
+
+  // STATUS
+  let statusKey = 'unknown';
+  let statusLabel = '—';
+  if (status === 'ACTIVE') { statusKey = 'active'; statusLabel = 'Activa'; }
+  else if (status === 'IN_PROCESS') { statusKey = 'process'; statusLabel = 'En proceso'; }
+  else if (status === 'WITH_ISSUES') { statusKey = 'issues'; statusLabel = 'Con problemas'; }
+  else if (status === 'PAUSED' || status === 'CAMPAIGN_PAUSED' || status === 'ADSET_PAUSED' || status === 'DISAPPROVED') { statusKey = 'paused'; statusLabel = 'Pausada'; }
+  else if (status === 'DELETED' || status === 'ARCHIVED') { statusKey = 'archived'; statusLabel = 'Archivada'; }
+  else if (status) { statusKey = 'other'; statusLabel = status.replace(/_/g, ' ').toLowerCase(); statusLabel = statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1); }
+
+  // PERFORMANCE
+  const rankings = [qualityRanking, engagementRanking, conversionRanking]
+    .filter((r) => r && r !== 'UNKNOWN')
+    .map((r) => String(r).toLowerCase());
+
+  let perfKey = null;
+  let perfLabel = null;
+
+  if (statusKey === 'active') {
+    const hasAboveAverage = rankings.some((r) => r.includes('above_average'));
+    const hasBelowAverage = rankings.some((r) => r.includes('below_average'));
+    const hasLearningLimited = issueTypes.some((t) => t.includes('LEARNING') && t.includes('LIMITED'));
+    const hasCriticalIssue = issues.length > 0 && !hasLearningLimited;
+
+    if (hasBelowAverage) { perfKey = 'low'; perfLabel = 'Rendimiento bajo'; }
+    else if (hasLearningLimited) { perfKey = 'limited'; perfLabel = 'Rendimiento limitado'; }
+    else if (hasAboveAverage) { perfKey = 'high'; perfLabel = 'Rendimiento alto'; }
+    else if (rankings.length > 0) { perfKey = 'normal'; perfLabel = 'Rendimiento normal'; }
+    else if (hasCriticalIssue) { perfKey = 'issue'; perfLabel = 'Con observaciones'; }
+    else if (hasSpend) { perfKey = 'high'; perfLabel = 'Rendimiento alto'; }
+    // else: sin señales suficientes → no mostramos pill
+  }
+
+  return { status: statusKey, status_label: statusLabel, performance: perfKey, performance_label: perfLabel };
+}
+
 function emptyBuckets() {
   const b = {};
   for (const cat of CATEGORIES) b[cat] = { spend: 0, reach: 0, impressions: 0, campaigns: 0 };
@@ -131,6 +176,22 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
         time_range: { since: from, until: to },
         limit: 500,
       });
+
+      // 2da call: metadata de campañas (effective_status + issues_info) para construir "Entrega"
+      const statusByCampaign = new Map();
+      try {
+        const meta = await metaGet(`/${acc}/campaigns`, {
+          fields: 'id,effective_status,issues_info',
+          limit: 500,
+        });
+        for (const c of meta.data || []) {
+          statusByCampaign.set(String(c.id), {
+            effective_status: c.effective_status || null,
+            issues_info: c.issues_info || [],
+          });
+        }
+      } catch { /* opcional */ }
+
       for (const row of j.data || []) {
         if (row.account_currency && !currency) currency = row.account_currency;
         const spend = Number(row.spend || 0);
@@ -140,6 +201,12 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
         const category = classifyObjective(row.objective);
         const actions = Array.isArray(row.actions) ? row.actions : [];
         const kpi = computeKpi({ objective: row.objective, actions, reach, impressions, spend });
+        const meta = statusByCampaign.get(String(row.campaign_id)) || {};
+        const delivery = computeDelivery({
+          effectiveStatus: meta.effective_status,
+          issuesInfo: meta.issues_info,
+          hasSpend: spend > 0,
+        });
         out.push({
           account_id: acc,
           campaign_id: row.campaign_id,
@@ -154,6 +221,11 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
           kpi_value: kpi.value,
           kpi_cost: kpi.cost,
           kpi_cost_label: kpi.cost_label || null,
+          delivery_status: delivery.status,
+          delivery_status_label: delivery.status_label,
+          performance: delivery.performance,
+          performance_label: delivery.performance_label,
+          effective_status: meta.effective_status || null,
         });
       }
     } catch (e) {
@@ -257,10 +329,10 @@ export async function computeCampaignAds({ metaAccount, campaignId, campaignObje
   if (!acc) throw new Error('metaAccount es obligatorio');
   if (!campaignId) throw new Error('campaignId es obligatorio');
 
-  // 1) Insights a nivel ad filtrados por campaña
+  // 1) Insights a nivel ad filtrados por campaña (incluye rankings de calidad)
   const insightsResp = await metaGet(`/${acc}/insights`, {
     level: 'ad',
-    fields: 'ad_id,ad_name,adset_id,adset_name,spend,reach,impressions,actions',
+    fields: 'ad_id,ad_name,adset_id,adset_name,spend,reach,impressions,actions,quality_ranking,engagement_rate_ranking,conversion_rate_ranking',
     filtering: [{ field: 'campaign.id', operator: 'EQUAL', value: String(campaignId) }],
     time_range: { since: from, until: to },
     limit: 200,
@@ -283,12 +355,15 @@ export async function computeCampaignAds({ metaAccount, campaignId, campaignObje
       kpi_label: kpi.label,
       kpi_value: kpi.value,
       kpi_cost: kpi.cost,
+      quality_ranking: row.quality_ranking || null,
+      engagement_rate_ranking: row.engagement_rate_ranking || null,
+      conversion_rate_ranking: row.conversion_rate_ranking || null,
     });
   }
 
-  // 2) Ads con sus creatives
+  // 2) Ads con sus creatives + effective_status + issues_info
   const adsResp = await metaGet(`/${campaignId}/ads`, {
-    fields: 'id,name,adset_id,status,effective_status,creative{id,image_url,thumbnail_url,video_id,object_story_spec,asset_feed_spec,effective_object_story_id,instagram_permalink_url}',
+    fields: 'id,name,adset_id,status,effective_status,issues_info,creative{id,image_url,thumbnail_url,video_id,object_story_spec,asset_feed_spec,effective_object_story_id,instagram_permalink_url}',
     limit: 200,
   });
 
@@ -308,6 +383,14 @@ export async function computeCampaignAds({ metaAccount, campaignId, campaignObje
     if (!image_url && Array.isArray(feed.images) && feed.images[0] && feed.images[0].url) image_url = feed.images[0].url;
     if (!video_id && Array.isArray(feed.videos) && feed.videos[0] && feed.videos[0].video_id) video_id = feed.videos[0].video_id;
 
+    const delivery = computeDelivery({
+      effectiveStatus: ad.effective_status || ad.status,
+      issuesInfo: ad.issues_info || [],
+      hasSpend: (metrics.spend || 0) > 0,
+      qualityRanking: metrics.quality_ranking,
+      engagementRanking: metrics.engagement_rate_ranking,
+      conversionRanking: metrics.conversion_rate_ranking,
+    });
     results.push({
       ad_id: ad.id,
       ad_name: ad.name || metrics.ad_name,
@@ -323,12 +406,25 @@ export async function computeCampaignAds({ metaAccount, campaignId, campaignObje
       kpi_label: metrics.kpi_label,
       kpi_value: metrics.kpi_value,
       kpi_cost: metrics.kpi_cost,
+      delivery_status: delivery.status,
+      delivery_status_label: delivery.status_label,
+      performance: delivery.performance,
+      performance_label: delivery.performance_label,
+      quality_ranking: metrics.quality_ranking,
+      engagement_rate_ranking: metrics.engagement_rate_ranking,
+      conversion_rate_ranking: metrics.conversion_rate_ranking,
     });
   }
 
   // Agregar los que están en insights pero no en /ads (dark ads)
   for (const [adId, m] of byAdId.entries()) {
     if (results.some((r) => String(r.ad_id) === adId)) continue;
+    const delivery = computeDelivery({
+      hasSpend: (m.spend || 0) > 0,
+      qualityRanking: m.quality_ranking,
+      engagementRanking: m.engagement_rate_ranking,
+      conversionRanking: m.conversion_rate_ranking,
+    });
     results.push({
       ad_id: adId,
       ad_name: m.ad_name,
@@ -344,6 +440,13 @@ export async function computeCampaignAds({ metaAccount, campaignId, campaignObje
       kpi_label: m.kpi_label,
       kpi_value: m.kpi_value,
       kpi_cost: m.kpi_cost,
+      delivery_status: delivery.status,
+      delivery_status_label: delivery.status_label,
+      performance: delivery.performance,
+      performance_label: delivery.performance_label,
+      quality_ranking: m.quality_ranking,
+      engagement_rate_ranking: m.engagement_rate_ranking,
+      conversion_rate_ranking: m.conversion_rate_ranking,
     });
   }
 
