@@ -46,8 +46,8 @@ export function classifyObjective(objective) {
 // "derived" usa una métrica directa (reach/impressions). Si action_type es un array,
 // se suman todos los matches (para capturar múltiples variantes del evento).
 const KPI_BY_OBJECTIVE = {
-  LEAD_GENERATION: { label: 'Formularios', action_type: ['lead'] },
-  OUTCOME_LEADS: { label: 'Leads', action_type: ['lead', 'onsite_conversion.lead_grouped'] },
+  LEAD_GENERATION: { label: 'Clientes potenciales', action_type: ['lead'] },
+  OUTCOME_LEADS: { label: 'Clientes potenciales', action_type: ['lead', 'onsite_conversion.lead_grouped'] },
   CONVERSIONS: { label: 'Conversiones', action_type: ['offsite_conversion.fb_pixel_purchase', 'offsite_conversion.fb_pixel_complete_registration', 'onsite_conversion.purchase'] },
   OUTCOME_SALES: { label: 'Compras', action_type: ['purchase', 'offsite_conversion.fb_pixel_purchase', 'onsite_conversion.purchase'] },
   CATALOG_SALES: { label: 'Compras', action_type: ['purchase'] },

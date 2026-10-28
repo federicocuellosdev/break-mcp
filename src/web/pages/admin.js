@@ -4499,26 +4499,26 @@ const SATURACION_CSS = `
 .sat-summary th.pct{text-align:right}
 .sat-summary td.cat{width:170px}
 
-/* Tabla de campañas (lista flat con chip) */
+/* Tabla de campañas · patrón Argenway "Meta Ads" */
 .sat-campaigns-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .sat-campaigns-wrap::-webkit-scrollbar{height:6px}
 .sat-campaigns-wrap::-webkit-scrollbar-track{background:transparent}
 .sat-campaigns-wrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:100px}
 .sat-campaigns-wrap:hover::-webkit-scrollbar-thumb{background:var(--text-soft,var(--muted))}
 .sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
-.sat-campaigns th,.sat-campaigns td{padding:.85rem 1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
-.sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft);position:sticky;top:0}
+.sat-campaigns th,.sat-campaigns td{padding:1rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:#ededf2;position:sticky;top:0}
 .sat-campaigns th.n,.sat-campaigns td.n{text-align:right;font-variant-numeric:tabular-nums}
 .sat-campaigns tbody tr:last-child td{border-bottom:0}
-.sat-campaigns td.name{font-weight:600;color:var(--ink);max-width:280px;overflow:hidden;text-overflow:ellipsis}
-.sat-campaigns td.n{font-weight:600;color:var(--ink)}
-.sat-campaigns td.obj{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.sat-campaigns td.kpi{font-size:.84rem;color:var(--ink)}
-.sat-campaigns td.kpi .v{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.sat-campaigns td.kpi .l{color:var(--muted);text-transform:lowercase;margin-left:.2rem}
-.sat-campaigns td.kpi .cost{color:var(--muted);margin-left:.5rem;font-size:.78rem}
-.sat-campaigns td.kpi .cost b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-.sat-campaigns td.kpi.empty{color:var(--muted);font-weight:400}
+.sat-campaigns td.name{font-weight:700;color:var(--ink);font-size:.95rem;max-width:320px;overflow:hidden;text-overflow:ellipsis}
+.sat-campaigns td.n{font-weight:700;color:var(--ink)}
+.sat-campaigns td.result{font-size:.9rem}
+.sat-campaigns td.result .v{font-weight:700;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
+.sat-campaigns td.result .l{color:var(--muted);font-weight:500;margin-left:.4rem;font-size:.8rem}
+.sat-campaigns td.result.empty{color:var(--muted);font-weight:400}
+/* Fila de total */
+.sat-campaigns tfoot td{background:#f8f8fc;border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink);padding:1.05rem 1.1rem}
+.sat-campaigns tfoot td.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
 `;
 
 const SATURACION_JS = `
@@ -4822,26 +4822,23 @@ const SATURACION_JS = `
       html += '<div class="sat-loading">Sin campañas con datos en este período.</div>';
     } else {
       html += '<div class="sat-campaigns-wrap"><table class="sat-campaigns"><thead><tr>'
-        + '<th>Campaña</th>'
+        + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
-        + '<th>Objetivo</th>'
-        + '<th class="n">Alcance</th>'
-        + '<th class="n">Frecuencia</th>'
-        + '<th class="n">Inversión</th>'
-        + '<th>KPI clave</th>'
+        + '<th>Resultado</th>'
         + '<th class="n">Costo / resultado</th>'
-        + '<th class="n">% de inversión</th>'
+        + '<th class="n">Inversión</th>'
+        + '<th class="n">% total</th>'
         + '</tr></thead><tbody>';
       for(var m=0;m<allCampaigns.length;m++){
         var c=allCampaigns[m];
-        var kpiHtml, costHtml;
+        var resultHtml, costHtml;
         if(!c.kpi_label || c.kpi_value==null){
-          kpiHtml = '<td class="kpi empty">—</td>';
+          resultHtml = '<td class="result empty">—</td>';
           costHtml = '<td class="n" style="color:var(--muted);font-weight:400">—</td>';
         } else {
-          kpiHtml = '<td class="kpi">'
+          resultHtml = '<td class="result">'
             + '<span class="v">'+fmtNum(c.kpi_value)+'</span>'
-            + '<span class="l">'+c.kpi_label.toLowerCase()+'</span>'
+            + '<span class="l">('+c.kpi_label+')</span>'
             + '</td>';
           costHtml = c.kpi_cost!=null
             ? '<td class="n">'+fmtMoney(c.kpi_cost, data.currency)+'</td>'
@@ -4850,16 +4847,18 @@ const SATURACION_JS = `
         html += '<tr>'
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
-          + '<td class="obj">'+(c.objective||'—')+'</td>'
-          + '<td class="n">'+fmtNum(c.reach)+'</td>'
-          + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
-          + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
-          + kpiHtml
+          + resultHtml
           + costHtml
+          + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
           + '<td class="n">'+fmtPct(c.pct_client)+'</td>'
           + '</tr>';
       }
-      html += '</tbody></table></div>';
+      // Fila de total
+      html += '</tbody><tfoot><tr>'
+        + '<td class="label" colspan="4">Total Meta Ads</td>'
+        + '<td class="n">'+fmtMoney(data.totals.spend, data.currency)+'</td>'
+        + '<td class="n">100%</td>'
+        + '</tr></tfoot></table></div>';
     }
     listEl.innerHTML = html;
   }
