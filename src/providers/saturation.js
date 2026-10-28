@@ -258,7 +258,7 @@ export async function computeClientSaturation({ client, from, to }) {
   };
 
   if (!accs.length) {
-    return { slug: client.slug, name: client.name, no_account: true, budget, buckets: {}, totals: { spend: 0, reach: 0, impressions: 0, frequency: 0 }, conversion_total: null };
+    return { slug: client.slug, name: client.name, no_account: true, budget, meta_ad_accounts: [], buckets: {}, totals: { spend: 0, reach: 0, impressions: 0, frequency: 0 }, conversion_total: null };
   }
   const { currency, campaigns } = await fetchClientCampaigns({ metaAccounts: accs, from, to });
   const campaignsClean = campaigns.filter((x) => !x.error);
@@ -301,6 +301,7 @@ export async function computeClientSaturation({ client, from, to }) {
     currency,
     from, to,
     budget,
+    meta_ad_accounts: accs,
     buckets: byCategory,
     totals: agg.totals,
     conversion: {

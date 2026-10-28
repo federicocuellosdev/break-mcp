@@ -4454,6 +4454,12 @@ const SATURACION_CSS = `
 .sat-block.sat-error{border-color:var(--coral)}
 .sat-block.sat-error .sat-block-empty{color:var(--coral)}
 
+/* Icon-link jerarquizado hacia Ads Manager */
+.sat-ads-link{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:100px;background:var(--pink-soft);color:var(--pink);text-decoration:none;transition:all .18s;flex-shrink:0;border:1px solid var(--pink-soft)}
+.sat-ads-link:hover{background:var(--pink);color:#fff;border-color:var(--pink);transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,23,122,.25)}
+.sat-ads-link svg{width:15px;height:15px}
+.sat-block-head .campaigns-wrap{display:flex;align-items:center;gap:.7rem}
+
 /* Vista cliente */
 .sat-client-head{margin-bottom:1.2rem}
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
@@ -4505,16 +4511,15 @@ const SATURACION_CSS = `
 .sat-campaigns-wrap::-webkit-scrollbar-track{background:transparent}
 .sat-campaigns-wrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:100px}
 .sat-campaigns-wrap:hover::-webkit-scrollbar-thumb{background:var(--text-soft,var(--muted))}
-.sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
-.sat-campaigns th,.sat-campaigns td{padding:1rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:.88rem}
+.sat-campaigns th,.sat-campaigns td{padding:.95rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 .sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:#ededf2;position:sticky;top:0}
 .sat-campaigns th.n,.sat-campaigns td.n{text-align:right;font-variant-numeric:tabular-nums}
 .sat-campaigns tbody tr:last-child td{border-bottom:0}
-.sat-campaigns td.name{font-weight:700;color:var(--ink);font-size:.95rem;max-width:320px;overflow:hidden;text-overflow:ellipsis}
-.sat-campaigns td.n{font-weight:700;color:var(--ink)}
-.sat-campaigns td.result{font-size:.9rem}
-.sat-campaigns td.result .v{font-weight:700;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
-.sat-campaigns td.result .l{color:var(--muted);font-weight:500;margin-left:.4rem;font-size:.8rem}
+.sat-campaigns td.name{font-weight:600;color:var(--ink);font-size:.88rem;max-width:320px;overflow:hidden;text-overflow:ellipsis}
+.sat-campaigns td.n{font-weight:600;color:var(--ink)}
+.sat-campaigns td.result .v{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.sat-campaigns td.result .l{color:var(--muted);font-weight:500;margin-left:.4rem;font-size:.78rem}
 .sat-campaigns td.result.empty{color:var(--muted);font-weight:400}
 /* Fila de total */
 .sat-campaigns tfoot td{background:#f8f8fc;border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink);padding:1.05rem 1.1rem}
@@ -4702,7 +4707,13 @@ const SATURACION_JS = `
       }
       var sh='/admin/saturacion/'+c.slug+'?from='+fromEl.value+'&to='+toEl.value;
       html += '<div class="sat-block" data-client-name="'+normName+'" onclick="location.href=\\''+sh+'\\'">';
-      html += '<div class="sat-block-head"><h3>'+c.name+'</h3><span class="campaigns">'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</span></div>';
+      var firstAcc = (c.meta_ad_accounts && c.meta_ad_accounts[0]) || null;
+      html += '<div class="sat-block-head"><h3>'+c.name+'</h3>'
+        + '<div class="campaigns-wrap">'
+        +   '<span class="campaigns">'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</span>'
+        +   adsLink(firstAcc, 'Abrir '+c.name+' en Ads Manager')
+        + '</div>'
+        + '</div>';
       // Si no hay inversión total, mostrar vacío
       if(!c.totals.spend){
         html += '<div class="sat-block-empty">Sin campañas con datos en este período.</div></div>';
@@ -4748,9 +4759,32 @@ const SATURACION_JS = `
     return '<span class="sat-chip '+cls+'">'+cat+'</span>';
   }
 
+  var EXT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+  function adsManagerUrl(accountId){
+    if(!accountId) return null;
+    var bid = window.SAT_BUSINESS_ID || '';
+    var raw = String(accountId).replace(/^act_/,'');
+    var qs = 'act='+raw;
+    if(bid) qs += '&business_id='+bid;
+    qs += '&nav_entry_point=mbs_sub_nav';
+    return 'https://adsmanager.facebook.com/adsmanager/manage/campaigns?'+qs;
+  }
+  function adsLink(accountId, title){
+    var url = adsManagerUrl(accountId);
+    if(!url) return '';
+    return '<a class="sat-ads-link" href="'+url+'" target="_blank" rel="noopener" title="'+(title||'Abrir en Ads Manager')+'" onclick="event.stopPropagation()">'+EXT_ICON+'</a>';
+  }
+
   function renderClient(data){
     if(data.no_account){ listEl.innerHTML='<div class="sat-loading">Este cliente no tiene cuenta Meta configurada.</div>'; return; }
     var cats=['Reconocimiento','Interacción','Conversión','Otros'];
+
+    // Pintar el icon-link al lado del date range en el toolbar
+    var firstAcc = (data.meta_ad_accounts && data.meta_ad_accounts[0]) || null;
+    var holder = document.getElementById('sat-ads-holder');
+    if(holder){
+      holder.innerHTML = adsLink(firstAcc, 'Abrir '+data.name+' en Ads Manager');
+    }
 
     // ─── Header + 3 cards ───
     var html='<div class="sat-client-head"><h2>'+data.name+'</h2>';
@@ -4881,7 +4915,7 @@ const SATURACION_JS = `
 })();
 `;
 
-function satToolbar() {
+function satToolbar({ withAdsHolder = false } = {}) {
   return `
     <div class="inv-toolbar">
       <label class="inv-search">
@@ -4903,14 +4937,21 @@ function satToolbar() {
         </button>
         <div class="rp-panel" id="rp-panel" hidden></div>
       </div>
+      ${withAdsHolder ? '<div id="sat-ads-holder"></div>' : ''}
       <input type="hidden" id="inv-from">
       <input type="hidden" id="inv-to">
     </div>`;
 }
 
+function satBidScript() {
+  const bid = process.env.META_BUSINESS_ID || '';
+  return `<script>window.SAT_BUSINESS_ID='${bid}';</script>`;
+}
+
 export function renderSaturacion({ user }) {
   const body = `
     <style>${SATURACION_CSS}</style>
+    ${satBidScript()}
     ${satToolbar()}
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
     <script>${SATURACION_JS}</script>
@@ -4922,8 +4963,9 @@ export function renderClientSaturacion({ user, slug, clientName }) {
   const actions = `<a class="btn-back" href="/admin/saturacion"><span class="arrow">&#8592;</span> Saturación</a>`;
   const body = `
     <style>${SATURACION_CSS}</style>
+    ${satBidScript()}
     <input type="hidden" id="sat-slug" value="${esc(slug)}">
-    ${satToolbar()}
+    ${satToolbar({ withAdsHolder: true })}
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
     <script>${SATURACION_JS}</script>
   `;
