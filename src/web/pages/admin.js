@@ -4459,17 +4459,19 @@ const SATURACION_CSS = `
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
 
 .sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem}
-.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.65rem;min-height:140px}
+.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.6rem;min-height:150px}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.sat-card .big{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.025em;line-height:1;font-variant-numeric:tabular-nums}
+.sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em}
+.sat-card .big-sub b{color:var(--ink);font-weight:700}
 .sat-card .sub{font-size:.78rem;color:var(--muted);font-weight:500;line-height:1.4}
 .sat-card .sub b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .sat-card .bar{height:4px;background:var(--line);border-radius:100px;overflow:hidden;margin-top:auto}
 .sat-card .bar>i{display:block;height:100%;background:var(--grad);border-radius:100px;transition:width .3s}
 .sat-card .bar.over>i{background:var(--coral)}
 .sat-card .bar.warn>i{background:#d4a85a}
-.sat-card .conv-list{display:flex;flex-direction:column;gap:.3rem}
-.sat-card .conv-list .row{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;font-size:.82rem;color:var(--muted)}
+.sat-card .conv-list{display:flex;flex-direction:column;gap:.3rem;margin-top:.35rem}
+.sat-card .conv-list .row{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;font-size:.78rem;color:var(--muted)}
 .sat-card .conv-list .row b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .sat-card .conv-list .row small{font-size:.68rem;color:var(--muted);font-weight:500}
 @media(max-width:900px){.sat-cards{grid-template-columns:1fr}}
@@ -4498,20 +4500,21 @@ const SATURACION_CSS = `
 .sat-summary td.cat{width:170px}
 
 /* Tabla de campañas (lista flat con chip) */
-.sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
-.sat-campaigns th,.sat-campaigns td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
-.sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.sat-campaigns-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow-x:auto;overflow-y:visible}
+.sat-campaigns{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.sat-campaigns th,.sat-campaigns td{padding:.85rem 1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.sat-campaigns thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft);position:sticky;top:0}
+.sat-campaigns th.n,.sat-campaigns td.n{text-align:right;font-variant-numeric:tabular-nums}
 .sat-campaigns tbody tr:last-child td{border-bottom:0}
-.sat-campaigns td.name{font-weight:600;color:var(--ink)}
-.sat-campaigns td.n{text-align:right;font-weight:600;color:var(--ink)}
+.sat-campaigns td.name{font-weight:600;color:var(--ink);max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.sat-campaigns td.n{font-weight:600;color:var(--ink)}
 .sat-campaigns td.obj{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.sat-campaigns td.cat{width:150px}
-.sat-campaigns td.kpi{min-width:140px}
-.sat-campaigns td.kpi .v{font-weight:700;color:var(--ink);font-size:.9rem;font-variant-numeric:tabular-nums}
-.sat-campaigns td.kpi .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
-.sat-campaigns td.kpi .cost{font-size:.72rem;color:var(--muted);margin-top:.2rem;font-variant-numeric:tabular-nums}
-.sat-campaigns td.kpi .cost b{color:var(--ink);font-weight:600}
-.sat-campaigns td.kpi.empty .v{color:var(--muted);font-weight:400}
+.sat-campaigns td.kpi{font-size:.84rem;color:var(--ink)}
+.sat-campaigns td.kpi .v{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.sat-campaigns td.kpi .l{color:var(--muted);text-transform:lowercase;margin-left:.2rem}
+.sat-campaigns td.kpi .cost{color:var(--muted);margin-left:.5rem;font-size:.78rem}
+.sat-campaigns td.kpi .cost b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.sat-campaigns td.kpi.empty{color:var(--muted);font-weight:400}
 `;
 
 const SATURACION_JS = `
@@ -4785,8 +4788,18 @@ const SATURACION_JS = `
     if(!conv.breakdown.length){
       html += '<div class="big" style="color:var(--muted)">—</div>'
         + '<div class="sub">Sin campañas de conversión en el período</div>';
+    } else if(conv.breakdown.length===1){
+      // Un solo tipo: valor grande + etiqueta y costo abajo
+      var only=conv.breakdown[0];
+      html += '<div class="big">'+fmtNum(only.value)+'</div>'
+        + '<div class="big-sub">'+only.label
+        + (only.cost ? ' · <b>'+fmtMoney(only.cost, data.currency)+' c/u</b>' : '')
+        + '</div>';
     } else {
-      html += '<div class="conv-list">';
+      // Varios tipos: total grande + breakdown chico abajo
+      html += '<div class="big">'+fmtNum(conv.total_value)+'</div>'
+        + '<div class="big-sub">conversiones totales</div>'
+        + '<div class="conv-list">';
       for(var cv=0; cv<conv.breakdown.length; cv++){
         var cb=conv.breakdown[cv];
         html += '<div class="row">'
@@ -4812,7 +4825,7 @@ const SATURACION_JS = `
     if(!allCampaigns.length){
       html += '<div class="sat-loading">Sin campañas con datos en este período.</div>';
     } else {
-      html += '<table class="sat-campaigns"><thead><tr>'
+      html += '<div class="sat-campaigns-wrap"><table class="sat-campaigns"><thead><tr>'
         + '<th>Campaña</th>'
         + '<th>Categoría</th>'
         + '<th>Objetivo</th>'
@@ -4826,16 +4839,16 @@ const SATURACION_JS = `
         var c=allCampaigns[m];
         var kpiHtml;
         if(!c.kpi_label || c.kpi_value==null){
-          kpiHtml = '<td class="kpi empty"><div class="v">—</div></td>';
+          kpiHtml = '<td class="kpi empty">—</td>';
         } else {
           kpiHtml = '<td class="kpi">'
-            + '<div class="v">'+fmtNum(c.kpi_value)+'</div>'
-            + '<div class="l">'+c.kpi_label+'</div>'
-            + (c.kpi_cost!=null ? '<div class="cost">'+(c.kpi_cost_label||'Costo')+' <b>'+fmtMoney(c.kpi_cost, data.currency)+'</b></div>' : '')
+            + '<span class="v">'+fmtNum(c.kpi_value)+'</span>'
+            + '<span class="l">'+c.kpi_label.toLowerCase()+'</span>'
+            + (c.kpi_cost!=null ? '<span class="cost">· <b>'+fmtMoney(c.kpi_cost, data.currency)+'</b> c/u</span>' : '')
             + '</td>';
         }
         html += '<tr>'
-          + '<td class="name">'+c.campaign_name+'</td>'
+          + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
           + '<td class="obj">'+(c.objective||'—')+'</td>'
           + '<td class="n">'+fmtNum(c.reach)+'</td>'
@@ -4845,7 +4858,7 @@ const SATURACION_JS = `
           + '<td class="n">'+fmtPct(c.pct_client)+'</td>'
           + '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
     }
     listEl.innerHTML = html;
   }
