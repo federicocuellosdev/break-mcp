@@ -4435,7 +4435,7 @@ const SATURACION_CSS = `
 .sat-list{display:flex;flex-direction:column;gap:1rem}
 .sat-block{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
 .sat-block:hover{border-color:var(--ink)}
-.sat-block-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:1rem 1.3rem;background:var(--soft);border-bottom:1px solid var(--line)}
+.sat-block-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:1rem 1.3rem;background:var(--card);border-bottom:1px solid var(--line)}
 .sat-block-head h3{font-size:1.02rem;font-weight:700;color:var(--ink);margin:0;letter-spacing:-.01em}
 .sat-block-head small{color:var(--muted);font-size:.75rem;font-weight:500}
 .sat-block-head .campaigns{color:var(--muted);font-size:.75rem;font-weight:500}
@@ -4446,7 +4446,7 @@ const SATURACION_CSS = `
 .sat-block td.cat{width:170px}
 .sat-block td.n,.sat-block th.n,.sat-block tfoot td.n{text-align:right;font-variant-numeric:tabular-nums}
 .sat-block td.n{font-weight:600;color:var(--ink)}
-.sat-block tfoot td{background:var(--soft);border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink)}
+.sat-block tfoot td{background:var(--card);border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink)}
 .sat-block tfoot td.label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
 .sat-block-empty{padding:1.4rem 1.3rem;color:var(--muted);font-size:.84rem;text-align:center}
 .sat-block.sat-noacc{opacity:.6;cursor:pointer}
