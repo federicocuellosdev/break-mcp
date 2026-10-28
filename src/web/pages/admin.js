@@ -4824,6 +4824,7 @@ const SATURACION_JS = `
       html += '<div class="sat-campaigns-wrap"><table class="sat-campaigns"><thead><tr>'
         + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
+        + '<th class="n">Frecuencia</th>'
         + '<th>Resultado</th>'
         + '<th class="n">Costo / resultado</th>'
         + '<th class="n">Inversión</th>'
@@ -4847,6 +4848,7 @@ const SATURACION_JS = `
         html += '<tr>'
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
+          + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
           + resultHtml
           + costHtml
           + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
@@ -4855,7 +4857,7 @@ const SATURACION_JS = `
       }
       // Fila de total
       html += '</tbody><tfoot><tr>'
-        + '<td class="label" colspan="4">Total Meta Ads</td>'
+        + '<td class="label" colspan="5">Total Meta Ads</td>'
         + '<td class="n">'+fmtMoney(data.totals.spend, data.currency)+'</td>'
         + '<td class="n">100%</td>'
         + '</tr></tfoot></table></div>';
