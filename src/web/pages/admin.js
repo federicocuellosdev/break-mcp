@@ -4454,18 +4454,52 @@ const SATURACION_CSS = `
 .sat-block.sat-error{border-color:var(--coral)}
 .sat-block.sat-error .sat-block-empty{color:var(--coral)}
 
-/* Icon-link jerarquizado hacia Ads Manager */
-.sat-ads-link{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:100px;background:var(--pink-soft);color:var(--pink);text-decoration:none;transition:all .18s;flex-shrink:0;border:1px solid var(--pink-soft)}
+/* Icon-link jerarquizado hacia Ads Manager · altura = inv-preset / rp-trigger */
+.sat-ads-link{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:100px;background:var(--pink-soft);color:var(--pink);text-decoration:none;transition:all .18s;flex-shrink:0;border:1px solid var(--pink);box-sizing:border-box}
 .sat-ads-link:hover{background:var(--pink);color:#fff;border-color:var(--pink);transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,23,122,.25)}
 .sat-ads-link svg{width:15px;height:15px}
 .sat-block-head .campaigns-wrap{display:flex;align-items:center;gap:.7rem}
+
+/* Modal de anuncios por campaña */
+.sat-ads-modal{position:fixed;inset:0;background:rgba(27,27,29,.55);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:1.5rem}
+.sat-ads-modal.show{display:flex}
+.sat-ads-dialog{background:var(--card);border-radius:14px;max-width:1100px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.sat-ads-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.3rem 1.6rem;border-bottom:1px solid var(--line)}
+.sat-ads-head h3{font-size:1.05rem;font-weight:700;color:var(--ink);margin:0;letter-spacing:-.01em;line-height:1.3}
+.sat-ads-head .sub{font-size:.78rem;color:var(--muted);margin-top:.25rem;font-weight:500}
+.sat-ads-head .close{background:transparent;border:0;cursor:pointer;color:var(--muted);padding:.4rem;border-radius:100px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.sat-ads-head .close:hover{background:var(--line);color:var(--ink)}
+.sat-ads-head .close svg{width:18px;height:18px}
+.sat-ads-body{padding:1.3rem 1.6rem;overflow-y:auto;flex:1}
+.sat-ads-body .loading{text-align:center;color:var(--muted);padding:3rem;font-size:.9rem}
+.sat-ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+.sat-ad-card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.sat-ad-media{aspect-ratio:1/1;background:var(--soft);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sat-ad-media img{width:100%;height:100%;object-fit:cover}
+.sat-ad-media .no-media{color:var(--muted);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.sat-ad-media .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(0,0,0,.5);border-radius:100px;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:none}
+.sat-ad-media .play svg{width:22px;height:22px;margin-left:3px}
+.sat-ad-info{padding:.85rem 1rem 1rem;display:flex;flex-direction:column;gap:.45rem}
+.sat-ad-adset{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sat-ad-name{font-size:.86rem;font-weight:600;color:var(--ink);line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sat-ad-kpi{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;padding-top:.55rem;border-top:1px solid var(--line);margin-top:.3rem}
+.sat-ad-kpi .v{font-weight:700;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
+.sat-ad-kpi .l{color:var(--muted);font-size:.72rem;font-weight:500}
+.sat-ad-kpi .cost{color:var(--muted);font-size:.76rem;font-variant-numeric:tabular-nums}
+.sat-ad-kpi .cost b{color:var(--ink);font-weight:600}
+.sat-ad-stats{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sat-ad-stats b{color:var(--ink);font-weight:600}
+
+/* Fila de campaña clickeable */
+.sat-campaigns tbody tr{cursor:pointer;transition:background .12s}
+.sat-campaigns tbody tr:hover{background:#fafafd}
 
 /* Vista cliente */
 .sat-client-head{margin-bottom:1.2rem}
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
 
 .sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem}
-.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.4rem;display:flex;flex-direction:column;gap:.6rem;min-height:150px}
+.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:.45rem;min-height:112px}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em}
@@ -4620,7 +4654,7 @@ const SATURACION_JS = `
   window.rpApply=function(){
     if(!rpState.from||!rpState.to)return;
     fromEl.value=iso(rpState.from);toEl.value=iso(rpState.to);
-    updateTrigger();setActive('');reload();rpClose();
+    updateTrigger();setActive(matchPreset(fromEl.value,toEl.value));reload();rpClose();
   };
   function updateTrigger(){
     trigger.querySelector('[data-role=from]').textContent=fromEl.value?fmtDMY(fromEl.value):'—';
@@ -4775,6 +4809,75 @@ const SATURACION_JS = `
     return '<a class="sat-ads-link" href="'+url+'" target="_blank" rel="noopener" title="'+(title||'Abrir en Ads Manager')+'" onclick="event.stopPropagation()">'+EXT_ICON+'</a>';
   }
 
+  // ─── Modal de anuncios por campaña ────────────────────────────
+  var PLAY_ICON = '<div class="play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>';
+  window.satCloseAds = function(){
+    var m = document.getElementById('sat-ads-modal');
+    if(m){ m.classList.remove('show'); document.body.style.overflow=''; }
+  };
+  window.satOpenAds = async function(tr){
+    var m = document.getElementById('sat-ads-modal');
+    if(!m) return;
+    var cid = tr.dataset.campaignId, obj = tr.dataset.objective, acc = tr.dataset.account;
+    var name = tr.dataset.campaignName || '—';
+    document.getElementById('sat-ads-title').textContent = name;
+    document.getElementById('sat-ads-sub').textContent = (obj||'—')+' · '+fromEl.value+' → '+toEl.value;
+    var body = document.getElementById('sat-ads-body');
+    body.innerHTML = '<div class="loading">Cargando anuncios…</div>';
+    m.classList.add('show'); document.body.style.overflow='hidden';
+    var qs = 'from='+fromEl.value+'&to='+toEl.value+'&objective='+encodeURIComponent(obj||'')+(acc?'&account='+encodeURIComponent(acc):'');
+    try{
+      var r = await fetch('/admin/api/saturacion/'+slug+'/campaign/'+cid+'/ads?'+qs);
+      var data = await r.json();
+      if(!r.ok) throw new Error(data.error||'HTTP '+r.status);
+      renderAds(data.ads||[]);
+    }catch(e){
+      body.innerHTML = '<div class="loading" style="color:var(--coral)">Error: '+e.message+'</div>';
+    }
+  };
+  function renderAds(ads){
+    var body = document.getElementById('sat-ads-body');
+    if(!ads.length){ body.innerHTML = '<div class="loading">Sin anuncios con datos en este período.</div>'; return; }
+    var html = '<div class="sat-ads-grid">';
+    for(var i=0;i<ads.length;i++){
+      var a = ads[i];
+      var media;
+      if(a.image_url){
+        media = '<img src="'+a.image_url+'" alt="" loading="lazy" onerror="this.parentNode.innerHTML=\\'<span class=no-media>sin preview</span>\\'">';
+        if(a.video_id) media += PLAY_ICON;
+      } else if(a.video_id){
+        media = '<span class="no-media">video</span>'+PLAY_ICON;
+      } else {
+        media = '<span class="no-media">sin preview</span>';
+      }
+      var kpi = '';
+      if(a.kpi_value!=null && a.kpi_label){
+        kpi = '<div class="sat-ad-kpi">'
+          + '<div><span class="v">'+fmtNum(a.kpi_value)+'</span> <span class="l">'+a.kpi_label+'</span></div>'
+          + (a.kpi_cost!=null ? '<span class="cost"><b>'+fmtMoney(a.kpi_cost,null)+'</b> c/u</span>' : '')
+          + '</div>';
+      }
+      html += '<div class="sat-ad-card">'
+        + '<div class="sat-ad-media">'+media+'</div>'
+        + '<div class="sat-ad-info">'
+        +   (a.adset_name ? '<div class="sat-ad-adset">'+a.adset_name+'</div>' : '')
+        +   '<div class="sat-ad-name" title="'+(a.ad_name||'').replace(/"/g,'&quot;')+'">'+(a.ad_name||'—')+'</div>'
+        +   '<div class="sat-ad-stats"><span>Inv <b>'+fmtMoney(a.spend,null)+'</b></span><span>Alc <b>'+fmtNum(a.reach)+'</b></span><span>Frec <b>'+fmtFreq(a.frequency)+'</b></span></div>'
+        +   kpi
+        + '</div></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  }
+  // Cerrar con click fuera y con Esc
+  document.addEventListener('click', function(e){
+    var m = document.getElementById('sat-ads-modal');
+    if(m && m.classList.contains('show') && e.target===m) satCloseAds();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape') satCloseAds();
+  });
+
   function renderClient(data){
     if(data.no_account){ listEl.innerHTML='<div class="sat-loading">Este cliente no tiene cuenta Meta configurada.</div>'; return; }
     var cats=['Reconocimiento','Interacción','Conversión','Otros'];
@@ -4879,7 +4982,12 @@ const SATURACION_JS = `
             ? '<td class="n">'+fmtMoney(c.kpi_cost, data.currency)+'</td>'
             : '<td class="n" style="color:var(--muted);font-weight:400">—</td>';
         }
-        html += '<tr>'
+        var trAttrs = 'data-campaign-id="'+c.campaign_id+'"'
+          + ' data-objective="'+(c.objective||'')+'"'
+          + ' data-account="'+(c.account_id||'')+'"'
+          + ' data-campaign-name="'+c.campaign_name.replace(/"/g,'&quot;')+'"'
+          + ' onclick="satOpenAds(this)"';
+        html += '<tr '+trAttrs+'>'
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
           + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
@@ -4900,12 +5008,20 @@ const SATURACION_JS = `
   }
 
   // ─── Init ─────────────────────────────────────────────────────
+  function matchPreset(from, to){
+    var presets=['mtd','7d','30d','prev'];
+    for(var i=0;i<presets.length;i++){
+      var p=computePreset(presets[i]);
+      if(p.from===from && p.to===to) return presets[i];
+    }
+    return '';
+  }
   var qp=new URLSearchParams(location.search);
   var qpFrom=qp.get('from'), qpTo=qp.get('to');
   if(qpFrom && qpTo){
     fromEl.value=qpFrom; toEl.value=qpTo;
     rpState.from=parseISO(qpFrom); rpState.to=parseISO(qpTo);
-    updateTrigger(); setActive(''); reload();
+    updateTrigger(); setActive(matchPreset(qpFrom, qpTo)); reload();
   } else {
     var init=computePreset('30d');
     fromEl.value=init.from; toEl.value=init.to;
@@ -4967,6 +5083,20 @@ export function renderClientSaturacion({ user, slug, clientName }) {
     <input type="hidden" id="sat-slug" value="${esc(slug)}">
     ${satToolbar({ withAdsHolder: true })}
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
+    <div class="sat-ads-modal" id="sat-ads-modal">
+      <div class="sat-ads-dialog" onclick="event.stopPropagation()">
+        <div class="sat-ads-head">
+          <div>
+            <h3 id="sat-ads-title">—</h3>
+            <div class="sub" id="sat-ads-sub">—</div>
+          </div>
+          <button type="button" class="close" onclick="satCloseAds()" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="sat-ads-body" id="sat-ads-body"><div class="loading">Cargando anuncios…</div></div>
+      </div>
+    </div>
     <script>${SATURACION_JS}</script>
   `;
   return layout({ user, active: 'saturacion', title: `Saturación · ${clientName || slug}`, actions, body });

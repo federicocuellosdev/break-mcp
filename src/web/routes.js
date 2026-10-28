@@ -46,7 +46,7 @@ import {
   renderSaturacion,
   renderClientSaturacion,
 } from './pages/admin.js';
-import { computeSaturation, computeClientSaturation } from '../providers/saturation.js';
+import { computeSaturation, computeClientSaturation, computeCampaignAds } from '../providers/saturation.js';
 import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
 import { listAlertsForUser, createAlert, dismissAlert } from '../alerts.js';
@@ -811,6 +811,33 @@ export function createWebRouter() {
     try { client = { slug: req.params.slug, ...getClient(req.params.slug) }; } catch { return res.status(404).json({ error: 'cliente no encontrado' }); }
     try {
       const data = await computeClientSaturation({ client, from, to });
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.get('/admin/api/saturacion/:slug/campaign/:cid/ads', requireLogin, requireDev, async (req, res) => {
+    const from = String(req.query.from || '').slice(0, 10);
+    const to = String(req.query.to || '').slice(0, 10);
+    const objective = String(req.query.objective || '').slice(0, 60);
+    const account = String(req.query.account || '').slice(0, 50);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
+    }
+    let client;
+    try { client = { slug: req.params.slug, ...getClient(req.params.slug) }; } catch { return res.status(404).json({ error: 'cliente no encontrado' }); }
+    // Elegir cuenta: la del query o la primera configurada
+    const accs = (client.meta_ad_accounts || []).filter(Boolean);
+    const metaAccount = account && accs.includes(account) ? account : accs[0];
+    if (!metaAccount) return res.status(400).json({ error: 'cliente sin cuenta Meta configurada' });
+    try {
+      const data = await computeCampaignAds({
+        metaAccount,
+        campaignId: req.params.cid,
+        campaignObjective: objective,
+        from, to,
+      });
       res.json(data);
     } catch (e) {
       res.status(500).json({ error: e.message });

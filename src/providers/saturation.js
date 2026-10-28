@@ -248,6 +248,109 @@ export async function computeSaturation({ clients, from, to }) {
   };
 }
 
+// Detalle de anuncios de una campaña: imágenes/videos + ad set + KPI por anuncio.
+// Hace 2 llamadas a Meta Graph:
+//   1) GET /{account_id}/insights?level=ad&filtering=[campaign.id=X]  → métricas por ad
+//   2) GET /{campaign_id}/ads?fields=...creative{...}                → creatives
+export async function computeCampaignAds({ metaAccount, campaignId, campaignObjective, from, to }) {
+  const acc = metaAccount;
+  if (!acc) throw new Error('metaAccount es obligatorio');
+  if (!campaignId) throw new Error('campaignId es obligatorio');
+
+  // 1) Insights a nivel ad filtrados por campaña
+  const insightsResp = await metaGet(`/${acc}/insights`, {
+    level: 'ad',
+    fields: 'ad_id,ad_name,adset_id,adset_name,spend,reach,impressions,actions',
+    filtering: [{ field: 'campaign.id', operator: 'EQUAL', value: String(campaignId) }],
+    time_range: { since: from, until: to },
+    limit: 200,
+  });
+  const byAdId = new Map();
+  for (const row of insightsResp.data || []) {
+    const spend = Number(row.spend || 0);
+    const reach = Number(row.reach || 0);
+    const impressions = Number(row.impressions || 0);
+    const kpi = computeKpi({ objective: campaignObjective, actions: row.actions || [], reach, impressions, spend });
+    byAdId.set(String(row.ad_id), {
+      ad_id: row.ad_id,
+      ad_name: row.ad_name || '',
+      adset_id: row.adset_id || null,
+      adset_name: row.adset_name || '',
+      spend,
+      reach,
+      impressions,
+      frequency: reach > 0 ? impressions / reach : 0,
+      kpi_label: kpi.label,
+      kpi_value: kpi.value,
+      kpi_cost: kpi.cost,
+    });
+  }
+
+  // 2) Ads con sus creatives
+  const adsResp = await metaGet(`/${campaignId}/ads`, {
+    fields: 'id,name,adset_id,status,effective_status,creative{id,image_url,thumbnail_url,video_id,object_story_spec,asset_feed_spec,effective_object_story_id,instagram_permalink_url}',
+    limit: 200,
+  });
+
+  const results = [];
+  for (const ad of adsResp.data || []) {
+    const metrics = byAdId.get(String(ad.id)) || null;
+    if (!metrics) continue; // sin datos en el período
+    // Extraer media del creative
+    const cr = ad.creative || {};
+    let image_url = cr.image_url || cr.thumbnail_url || null;
+    let video_id = cr.video_id || null;
+    const spec = cr.object_story_spec || {};
+    if (!image_url && spec.link_data && spec.link_data.picture) image_url = spec.link_data.picture;
+    if (!image_url && spec.video_data && spec.video_data.image_url) image_url = spec.video_data.image_url;
+    if (!video_id && spec.video_data && spec.video_data.video_id) video_id = spec.video_data.video_id;
+    const feed = cr.asset_feed_spec || {};
+    if (!image_url && Array.isArray(feed.images) && feed.images[0] && feed.images[0].url) image_url = feed.images[0].url;
+    if (!video_id && Array.isArray(feed.videos) && feed.videos[0] && feed.videos[0].video_id) video_id = feed.videos[0].video_id;
+
+    results.push({
+      ad_id: ad.id,
+      ad_name: ad.name || metrics.ad_name,
+      adset_name: metrics.adset_name || '',
+      status: ad.effective_status || ad.status || null,
+      image_url,
+      video_id,
+      instagram_permalink_url: cr.instagram_permalink_url || null,
+      spend: metrics.spend,
+      reach: metrics.reach,
+      impressions: metrics.impressions,
+      frequency: metrics.frequency,
+      kpi_label: metrics.kpi_label,
+      kpi_value: metrics.kpi_value,
+      kpi_cost: metrics.kpi_cost,
+    });
+  }
+
+  // Agregar los que están en insights pero no en /ads (dark ads)
+  for (const [adId, m] of byAdId.entries()) {
+    if (results.some((r) => String(r.ad_id) === adId)) continue;
+    results.push({
+      ad_id: adId,
+      ad_name: m.ad_name,
+      adset_name: m.adset_name,
+      status: null,
+      image_url: null,
+      video_id: null,
+      instagram_permalink_url: null,
+      spend: m.spend,
+      reach: m.reach,
+      impressions: m.impressions,
+      frequency: m.frequency,
+      kpi_label: m.kpi_label,
+      kpi_value: m.kpi_value,
+      kpi_cost: m.kpi_cost,
+    });
+  }
+
+  results.sort((a, b) => b.spend - a.spend);
+  return { campaign_id: campaignId, ads: results };
+}
+
 // Vista detalle del cliente: todas las campañas con datos en el período, agrupadas por categoría.
 export async function computeClientSaturation({ client, from, to }) {
   const accs = (client.meta_ad_accounts || []).filter(Boolean);
