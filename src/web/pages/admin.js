@@ -4441,10 +4441,10 @@ const SATURACION_CSS = `
 .sat-block-head .campaigns{color:var(--muted);font-size:.75rem;font-weight:500}
 .sat-block table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
 .sat-block th,.sat-block td{padding:.78rem 1.3rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
-.sat-block thead th{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sat-block thead th{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left}
 .sat-block tbody tr:last-child td{border-bottom:0}
 .sat-block td.cat{width:170px}
-.sat-block td.n,.sat-block th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sat-block td.n,.sat-block th.n,.sat-block tfoot td.n{text-align:right;font-variant-numeric:tabular-nums}
 .sat-block td.n{font-weight:600;color:var(--ink)}
 .sat-block tfoot td{background:var(--soft);border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink)}
 .sat-block tfoot td.label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
@@ -4455,10 +4455,24 @@ const SATURACION_CSS = `
 .sat-block.sat-error .sat-block-empty{color:var(--coral)}
 
 /* Vista cliente */
-.sat-client-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
-.sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0}
-.sat-client-head .totals{display:flex;gap:1.4rem;font-size:.82rem;color:var(--muted)}
-.sat-client-head .totals b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.sat-client-head{margin-bottom:1.2rem}
+.sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
+
+.sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem}
+.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.65rem;min-height:140px}
+.sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sat-card .big{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.025em;line-height:1;font-variant-numeric:tabular-nums}
+.sat-card .sub{font-size:.78rem;color:var(--muted);font-weight:500;line-height:1.4}
+.sat-card .sub b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.sat-card .bar{height:4px;background:var(--line);border-radius:100px;overflow:hidden;margin-top:auto}
+.sat-card .bar>i{display:block;height:100%;background:var(--grad);border-radius:100px;transition:width .3s}
+.sat-card .bar.over>i{background:var(--coral)}
+.sat-card .bar.warn>i{background:#d4a85a}
+.sat-card .conv-list{display:flex;flex-direction:column;gap:.3rem}
+.sat-card .conv-list .row{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;font-size:.82rem;color:var(--muted)}
+.sat-card .conv-list .row b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.sat-card .conv-list .row small{font-size:.68rem;color:var(--muted);font-weight:500}
+@media(max-width:900px){.sat-cards{grid-template-columns:1fr}}
 
 /* Chip de categoría */
 .sat-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.22rem .7rem;border-radius:100px;font-size:.72rem;font-weight:600;letter-spacing:.01em;white-space:nowrap}
@@ -4476,9 +4490,11 @@ const SATURACION_CSS = `
 .sat-summary{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums;margin-bottom:1.4rem}
 .sat-summary th,.sat-summary td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
 .sat-summary thead th{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.sat-summary th.n,.sat-summary td.n{text-align:right;font-variant-numeric:tabular-nums}
+.sat-summary td.n{font-weight:700;color:var(--ink)}
 .sat-summary tbody tr:last-child td{border-bottom:0}
-.sat-summary td.n{text-align:right;font-weight:700;color:var(--ink)}
 .sat-summary td.pct{text-align:right;font-weight:700;color:var(--ink);min-width:60px}
+.sat-summary th.pct{text-align:right}
 .sat-summary td.cat{width:170px}
 
 /* Tabla de campañas (lista flat con chip) */
@@ -4490,6 +4506,12 @@ const SATURACION_CSS = `
 .sat-campaigns td.n{text-align:right;font-weight:600;color:var(--ink)}
 .sat-campaigns td.obj{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .sat-campaigns td.cat{width:150px}
+.sat-campaigns td.kpi{min-width:140px}
+.sat-campaigns td.kpi .v{font-weight:700;color:var(--ink);font-size:.9rem;font-variant-numeric:tabular-nums}
+.sat-campaigns td.kpi .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
+.sat-campaigns td.kpi .cost{font-size:.72rem;color:var(--muted);margin-top:.2rem;font-variant-numeric:tabular-nums}
+.sat-campaigns td.kpi .cost b{color:var(--ink);font-weight:600}
+.sat-campaigns td.kpi.empty .v{color:var(--muted);font-weight:400}
 `;
 
 const SATURACION_JS = `
@@ -4681,9 +4703,9 @@ const SATURACION_JS = `
       }
       html += '<table><thead><tr>'
         + '<th>Categoría</th>'
-        + '<th class="n">Inversión</th>'
         + '<th class="n">Alcance</th>'
         + '<th class="n">Frecuencia</th>'
+        + '<th class="n">Inversión</th>'
         + '<th class="n">% del cliente</th>'
         + '</tr></thead><tbody>';
       for(var k=0;k<cats.length;k++){
@@ -4695,17 +4717,17 @@ const SATURACION_JS = `
         }
         html += '<tr>'
           + '<td class="cat">'+catChip(cat)+'</td>'
-          + '<td class="n">'+fmtMoney(b.spend, c.currency)+'</td>'
           + '<td class="n">'+fmtNum(b.reach)+'</td>'
           + '<td class="n">'+fmtFreq(b.frequency)+'</td>'
+          + '<td class="n">'+fmtMoney(b.spend, c.currency)+'</td>'
           + '<td class="n">'+fmtPct(b.pct)+'</td>'
           + '</tr>';
       }
       html += '</tbody><tfoot><tr>'
         + '<td class="label">Total cliente</td>'
-        + '<td class="n">'+fmtMoney(c.totals.spend, c.currency)+'</td>'
         + '<td class="n">'+fmtNum(c.totals.reach)+'</td>'
         + '<td class="n">'+fmtFreq(c.totals.frequency)+'</td>'
+        + '<td class="n">'+fmtMoney(c.totals.spend, c.currency)+'</td>'
         + '<td class="n">100%</td>'
         + '</tr></tfoot></table>';
       html += '</div>';
@@ -4722,38 +4744,64 @@ const SATURACION_JS = `
   function renderClient(data){
     if(data.no_account){ listEl.innerHTML='<div class="sat-loading">Este cliente no tiene cuenta Meta configurada.</div>'; return; }
     var cats=['Reconocimiento','Interacción','Conversión','Otros'];
-    var html='<div class="sat-client-head">'
-      + '<h2>'+data.name+'</h2>'
-      + '<div class="totals">'
-      +   '<span>Inversión total <b>'+fmtMoney(data.totals.spend, data.currency)+'</b></span>'
-      +   '<span>Alcance <b>'+fmtNum(data.totals.reach)+'</b></span>'
-      +   '<span>Frecuencia <b>'+fmtFreq(data.totals.frequency)+'</b></span>'
-      + '</div></div>';
 
-    // ─── Tabla resumen de categorías (3 filas apiladas) ───
-    html += '<table class="sat-summary"><thead><tr>'
-      + '<th>Categoría</th>'
-      + '<th class="n">Inversión</th>'
-      + '<th class="n">Alcance</th>'
-      + '<th class="n">Frecuencia</th>'
-      + '<th class="n">% del cliente</th>'
-      + '</tr></thead><tbody>';
-    for(var i=0;i<cats.length;i++){
-      var cat=cats[i];
-      var b=data.buckets[cat];
-      if(!b) continue;
-      if(cat==='Otros' && (!b.campaigns || !b.campaigns.length)) continue;
-      html += '<tr>'
-        + '<td class="cat">'+catChip(cat)+'</td>'
-        + '<td class="n">'+fmtMoney(b.spend, data.currency)+'</td>'
-        + '<td class="n">'+fmtNum(b.reach)+'</td>'
-        + '<td class="n">'+fmtFreq(b.frequency)+'</td>'
-        + '<td class="pct">'+fmtPct(b.pct)+'</td>'
-        + '</tr>';
+    // ─── Header + 3 cards ───
+    var html='<div class="sat-client-head"><h2>'+data.name+'</h2>';
+
+    // Card 1: Inversión vs Presupuesto
+    var spend=data.totals.spend||0;
+    var budget=(data.budget && data.budget.amount)||0;
+    var alertPct=(data.budget && data.budget.alert_pct)||80;
+    var hasBudget=budget>0;
+    var consumedPct=hasBudget ? (spend/budget)*100 : null;
+    var barClass='';
+    if(hasBudget){
+      if(consumedPct>=100) barClass=' over';
+      else if(consumedPct>=alertPct) barClass=' warn';
     }
-    html += '</tbody></table>';
+    var barWidth=hasBudget ? Math.min(100, Math.max(0, consumedPct)) : 0;
 
-    // ─── Tabla única de campañas (con chip de categoría) ───
+    html += '<div class="sat-cards">';
+    html += '<div class="sat-card">'
+      + '<span class="lbl">Inversión vs Presupuesto</span>'
+      + '<div class="big">'+fmtMoney(spend, data.currency)+'</div>'
+      + '<div class="sub">'+(hasBudget
+          ? 'de <b>'+fmtMoney(budget, data.currency)+'</b> · <b>'+fmtPct(consumedPct)+'</b> consumido'
+          : 'Sin presupuesto configurado')+'</div>'
+      + '<div class="bar'+barClass+'"><i style="width:'+barWidth+'%"></i></div>'
+      + '</div>';
+
+    // Card 2: Alcance total
+    html += '<div class="sat-card">'
+      + '<span class="lbl">Alcance de la cuenta</span>'
+      + '<div class="big">'+fmtNum(data.totals.reach)+'</div>'
+      + '<div class="sub">'+fmtNum(data.totals.impressions)+' impresiones · frec <b>'+fmtFreq(data.totals.frequency)+'</b></div>'
+      + '</div>';
+
+    // Card 3: Objetivo de conversión totalizado
+    var conv=data.conversion||{breakdown:[], total_value:0, total_spend:0};
+    html += '<div class="sat-card">'
+      + '<span class="lbl">Objetivo de conversión</span>';
+    if(!conv.breakdown.length){
+      html += '<div class="big" style="color:var(--muted)">—</div>'
+        + '<div class="sub">Sin campañas de conversión en el período</div>';
+    } else {
+      html += '<div class="conv-list">';
+      for(var cv=0; cv<conv.breakdown.length; cv++){
+        var cb=conv.breakdown[cv];
+        html += '<div class="row">'
+          + '<span>'+cb.label+'</span>'
+          + '<span><b>'+fmtNum(cb.value)+'</b>'
+          +   (cb.cost ? ' <small>· '+fmtMoney(cb.cost, data.currency)+' c/u</small>' : '')
+          + '</span></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '</div></div>'; // close .sat-cards + .sat-client-head
+
+    // ─── Tabla única de campañas (con chip de categoría + KPI clave) ───
     var allCampaigns=[];
     for(var k=0;k<cats.length;k++){
       var bb=data.buckets[cats[k]];
@@ -4768,20 +4816,32 @@ const SATURACION_JS = `
         + '<th>Campaña</th>'
         + '<th>Categoría</th>'
         + '<th>Objetivo</th>'
-        + '<th class="n">Inversión</th>'
         + '<th class="n">Alcance</th>'
         + '<th class="n">Frecuencia</th>'
+        + '<th class="n">Inversión</th>'
+        + '<th>KPI clave</th>'
         + '<th class="n">% del cliente</th>'
         + '</tr></thead><tbody>';
       for(var m=0;m<allCampaigns.length;m++){
         var c=allCampaigns[m];
+        var kpiHtml;
+        if(!c.kpi_label || c.kpi_value==null){
+          kpiHtml = '<td class="kpi empty"><div class="v">—</div></td>';
+        } else {
+          kpiHtml = '<td class="kpi">'
+            + '<div class="v">'+fmtNum(c.kpi_value)+'</div>'
+            + '<div class="l">'+c.kpi_label+'</div>'
+            + (c.kpi_cost!=null ? '<div class="cost">'+(c.kpi_cost_label||'Costo')+' <b>'+fmtMoney(c.kpi_cost, data.currency)+'</b></div>' : '')
+            + '</td>';
+        }
         html += '<tr>'
           + '<td class="name">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
           + '<td class="obj">'+(c.objective||'—')+'</td>'
-          + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
           + '<td class="n">'+fmtNum(c.reach)+'</td>'
           + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
+          + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
+          + kpiHtml
           + '<td class="n">'+fmtPct(c.pct_client)+'</td>'
           + '</tr>';
       }

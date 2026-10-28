@@ -42,6 +42,54 @@ export function classifyObjective(objective) {
   return CATEGORY_MAP[String(objective).toUpperCase()] || 'Otros';
 }
 
+// KPI clave por objetivo. "action_type" matchea los valores del campo actions de Meta;
+// "derived" usa una métrica directa (reach/impressions). Si action_type es un array,
+// se suman todos los matches (para capturar múltiples variantes del evento).
+const KPI_BY_OBJECTIVE = {
+  LEAD_GENERATION: { label: 'Formularios', action_type: ['lead'] },
+  OUTCOME_LEADS: { label: 'Leads', action_type: ['lead', 'onsite_conversion.lead_grouped'] },
+  CONVERSIONS: { label: 'Conversiones', action_type: ['offsite_conversion.fb_pixel_purchase', 'offsite_conversion.fb_pixel_complete_registration', 'onsite_conversion.purchase'] },
+  OUTCOME_SALES: { label: 'Compras', action_type: ['purchase', 'offsite_conversion.fb_pixel_purchase', 'onsite_conversion.purchase'] },
+  CATALOG_SALES: { label: 'Compras', action_type: ['purchase'] },
+  PRODUCT_CATALOG_SALES: { label: 'Compras', action_type: ['purchase'] },
+  STORE_VISITS: { label: 'Visitas tienda', action_type: ['store_visit'] },
+  OUTCOME_STORE_VISITS: { label: 'Visitas tienda', action_type: ['store_visit'] },
+  MESSAGES: { label: 'Mensajes', action_type: ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.total_messaging_connection'] },
+  TRAFFIC: { label: 'Clics al enlace', action_type: ['link_click'] },
+  OUTCOME_TRAFFIC: { label: 'Clics al enlace', action_type: ['link_click'] },
+  LINK_CLICKS: { label: 'Clics al enlace', action_type: ['link_click'] },
+  REACH: { label: 'Alcance', derived: 'reach' },
+  OUTCOME_AWARENESS: { label: 'Alcance', derived: 'reach' },
+  BRAND_AWARENESS: { label: 'Alcance', derived: 'reach' },
+  VIDEO_VIEWS: { label: 'Reproducciones', action_type: ['video_view'] },
+  ENGAGEMENT: { label: 'Interacciones', action_type: ['post_engagement'] },
+  POST_ENGAGEMENT: { label: 'Interacciones', action_type: ['post_engagement'] },
+  OUTCOME_ENGAGEMENT: { label: 'Interacciones', action_type: ['post_engagement'] },
+  PAGE_LIKES: { label: 'Likes', action_type: ['like'] },
+  APP_INSTALLS: { label: 'Instalaciones', action_type: ['app_install', 'mobile_app_install'] },
+  OUTCOME_APP_PROMOTION: { label: 'Instalaciones', action_type: ['app_install', 'mobile_app_install'] },
+  EVENT_RESPONSES: { label: 'Respuestas', action_type: ['rsvp'] },
+};
+
+function computeKpi({ objective, actions, reach, impressions, spend }) {
+  const kpiDef = KPI_BY_OBJECTIVE[String(objective || '').toUpperCase()];
+  if (!kpiDef) return { label: null, value: null, cost: null };
+  if (kpiDef.derived === 'reach') {
+    const value = reach;
+    return { label: kpiDef.label, value, cost: value > 0 ? spend / value * 1000 : null, cost_label: 'CPM' };
+  }
+  if (kpiDef.derived === 'impressions') {
+    const value = impressions;
+    return { label: kpiDef.label, value, cost: value > 0 ? spend / value * 1000 : null, cost_label: 'CPM' };
+  }
+  const types = kpiDef.action_type || [];
+  let value = 0;
+  for (const a of actions || []) {
+    if (types.includes(a.action_type)) value += Number(a.value || 0);
+  }
+  return { label: kpiDef.label, value, cost: value > 0 ? spend / value : null, cost_label: 'Costo / ' + kpiDef.label.toLowerCase() };
+}
+
 async function metaGet(path, params = {}) {
   const token = process.env.META_ACCESS_TOKEN;
   if (!token) throw new Error('META_ACCESS_TOKEN not set');
@@ -79,7 +127,7 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
     try {
       const j = await metaGet(`/${acc}/insights`, {
         level: 'campaign',
-        fields: 'campaign_id,campaign_name,objective,spend,reach,impressions,account_currency',
+        fields: 'campaign_id,campaign_name,objective,spend,reach,impressions,actions,account_currency',
         time_range: { since: from, until: to },
         limit: 500,
       });
@@ -90,6 +138,8 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
         const impressions = Number(row.impressions || 0);
         if (spend === 0 && impressions === 0) continue; // sin datos en el período
         const category = classifyObjective(row.objective);
+        const actions = Array.isArray(row.actions) ? row.actions : [];
+        const kpi = computeKpi({ objective: row.objective, actions, reach, impressions, spend });
         out.push({
           account_id: acc,
           campaign_id: row.campaign_id,
@@ -100,6 +150,10 @@ export async function fetchClientCampaigns({ metaAccounts, from, to }) {
           reach,
           impressions,
           frequency: computeFrequency(reach, impressions),
+          kpi_label: kpi.label,
+          kpi_value: kpi.value,
+          kpi_cost: kpi.cost,
+          kpi_cost_label: kpi.cost_label || null,
         });
       }
     } catch (e) {
@@ -197,8 +251,14 @@ export async function computeSaturation({ clients, from, to }) {
 // Vista detalle del cliente: todas las campañas con datos en el período, agrupadas por categoría.
 export async function computeClientSaturation({ client, from, to }) {
   const accs = (client.meta_ad_accounts || []).filter(Boolean);
+  const budgetEntry = client.budgets && client.budgets.meta ? client.budgets.meta : null;
+  const budget = {
+    amount: budgetEntry ? Number(budgetEntry.amount) || 0 : null,
+    alert_pct: budgetEntry ? Number(budgetEntry.alert_pct) || 80 : 80,
+  };
+
   if (!accs.length) {
-    return { slug: client.slug, name: client.name, no_account: true, buckets: {}, totals: { spend: 0, reach: 0, impressions: 0, frequency: 0 } };
+    return { slug: client.slug, name: client.name, no_account: true, budget, buckets: {}, totals: { spend: 0, reach: 0, impressions: 0, frequency: 0 }, conversion_total: null };
   }
   const { currency, campaigns } = await fetchClientCampaigns({ metaAccounts: accs, from, to });
   const campaignsClean = campaigns.filter((x) => !x.error);
@@ -216,13 +276,38 @@ export async function computeClientSaturation({ client, from, to }) {
       campaigns: camps,
     };
   }
+
+  // KPI total de conversión: suma de kpi_value para campañas en categoría Conversión.
+  // Si distintos tipos de KPI en la categoría (ej. leads + compras), devolver un desglose.
+  const convCampaigns = campaignsClean.filter((c) => c.category === 'Conversión' && c.kpi_value != null);
+  const conversionBreakdown = {};
+  let conversionSpend = 0;
+  for (const c of convCampaigns) {
+    const key = c.kpi_label || '—';
+    if (!conversionBreakdown[key]) conversionBreakdown[key] = { label: key, value: 0, spend: 0, campaigns: 0 };
+    conversionBreakdown[key].value += c.kpi_value || 0;
+    conversionBreakdown[key].spend += c.spend || 0;
+    conversionBreakdown[key].campaigns += 1;
+    conversionSpend += c.spend || 0;
+  }
+  const conversionList = Object.values(conversionBreakdown).map((b) => ({
+    ...b,
+    cost: b.value > 0 ? b.spend / b.value : null,
+  }));
+
   return {
     slug: client.slug,
     name: client.name,
     currency,
     from, to,
+    budget,
     buckets: byCategory,
     totals: agg.totals,
+    conversion: {
+      total_value: conversionList.reduce((a, b) => a + b.value, 0),
+      total_spend: conversionSpend,
+      breakdown: conversionList,
+    },
     errors: campaigns.filter((x) => x.error),
   };
 }
