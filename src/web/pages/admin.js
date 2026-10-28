@@ -4431,29 +4431,28 @@ export function renderClientForm({ user, mode, target, flash }) {
 const SATURACION_CSS = `
 .sat-loading{padding:3rem;text-align:center;color:var(--muted)}
 
-.sat-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
-.sat-table th,.sat-table td{padding:.95rem 1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
-.sat-table thead th{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
-.sat-table tbody tr{cursor:pointer;transition:background .12s}
-.sat-table tbody tr:hover{background:var(--soft)}
-.sat-table tbody tr:last-child td{border-bottom:0}
-.sat-table tfoot td{background:var(--soft);font-weight:700;color:var(--ink);border-top:2px solid var(--line);border-bottom:0}
-.sat-table .client-cell{font-weight:600;color:var(--ink)}
-.sat-table .client-cell small{display:block;color:var(--muted);font-weight:400;font-size:.72rem;margin-top:.2rem}
-.sat-cell-bucket{min-width:170px}
-.sat-cell-bucket .inv{font-weight:700;color:var(--ink);font-size:.95rem;margin-bottom:.5rem}
-.sat-cell-bucket .meta{display:grid;grid-template-columns:auto 1fr;gap:.15rem .7rem;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.sat-cell-bucket .meta dt{font-weight:500;color:var(--muted)}
-.sat-cell-bucket .meta dd{margin:0;font-weight:600;color:var(--ink);text-align:right}
-.sat-cell-bucket .pct-bar{margin-top:.55rem;height:3px;background:var(--line);border-radius:100px;overflow:hidden;position:relative}
-.sat-cell-bucket .pct-bar>i{display:block;height:100%;background:var(--grad);border-radius:100px}
-.sat-cell-bucket.empty .inv{color:var(--muted);font-weight:400}
-.sat-cell-bucket.empty .meta,.sat-cell-bucket.empty .pct-bar{display:none}
-.sat-cell-total{min-width:120px;font-weight:700;color:var(--ink)}
-.sat-cell-total small{display:block;font-weight:400;color:var(--muted);font-size:.72rem;margin-top:.2rem}
-.sat-tr-noacc td{color:var(--muted)}
-.sat-tr-error td{background:var(--coral-soft);color:var(--coral)}
-.sat-tr-error .err{font-size:.75rem}
+/* Vista principal: bloques por cliente */
+.sat-list{display:flex;flex-direction:column;gap:1rem}
+.sat-block{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+.sat-block:hover{border-color:var(--ink)}
+.sat-block-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:1rem 1.3rem;background:var(--soft);border-bottom:1px solid var(--line)}
+.sat-block-head h3{font-size:1.02rem;font-weight:700;color:var(--ink);margin:0;letter-spacing:-.01em}
+.sat-block-head small{color:var(--muted);font-size:.75rem;font-weight:500}
+.sat-block-head .campaigns{color:var(--muted);font-size:.75rem;font-weight:500}
+.sat-block table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.sat-block th,.sat-block td{padding:.78rem 1.3rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.sat-block thead th{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sat-block tbody tr:last-child td{border-bottom:0}
+.sat-block td.cat{width:170px}
+.sat-block td.n,.sat-block th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sat-block td.n{font-weight:600;color:var(--ink)}
+.sat-block tfoot td{background:var(--soft);border-top:2px solid var(--line);border-bottom:0;font-weight:700;color:var(--ink)}
+.sat-block tfoot td.label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.sat-block-empty{padding:1.4rem 1.3rem;color:var(--muted);font-size:.84rem;text-align:center}
+.sat-block.sat-noacc{opacity:.6;cursor:pointer}
+.sat-block.sat-noacc .sat-block-empty{color:var(--muted);font-style:italic}
+.sat-block.sat-error{border-color:var(--coral)}
+.sat-block.sat-error .sat-block-empty{color:var(--coral)}
 
 /* Vista cliente */
 .sat-client-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
@@ -4652,61 +4651,66 @@ const SATURACION_JS = `
     });
   });
 
-  function bucketCell(b, cur){
-    if(!b || !b.spend){ return '<td class="sat-cell-bucket empty"><div class="inv">—</div></td>'; }
-    var pct=Math.max(0, Math.min(100, b.pct||0));
-    return '<td class="sat-cell-bucket">'
-      + '<div class="inv">'+fmtMoney(b.spend, cur)+'</div>'
-      + '<dl class="meta">'
-      +   '<dt>Alcance</dt><dd>'+fmtNum(b.reach)+'</dd>'
-      +   '<dt>Frecuencia</dt><dd>'+fmtFreq(b.frequency)+'</dd>'
-      +   '<dt>% total</dt><dd>'+fmtPct(b.pct)+'</dd>'
-      + '</dl>'
-      + '<div class="pct-bar"><i style="width:'+pct+'%"></i></div>'
-      + '</td>';
-  }
-
   function renderMain(data){
     var cats=['Reconocimiento','Interacción','Conversión'];
-    var html='<table class="sat-table"><thead><tr>'
-      + '<th>Cliente</th>'
-      + cats.map(function(c){return '<th>'+c+'</th>'}).join('')
-      + '<th>Total</th>'
-      + '</tr></thead><tbody>';
+    var html='<div class="sat-list">';
     for(var i=0;i<data.clients.length;i++){
       var c=data.clients[i];
       var normName=normalize(c.name);
       if(c.no_account){
-        html += '<tr class="sat-tr-noacc" data-client-name="'+normName+'" onclick="location.href=\\'/admin/clients/'+c.slug+'/edit\\'"><td class="client-cell">'+c.name+'<small>sin cuenta Meta configurada</small></td><td colspan="4">—</td></tr>';
+        html += '<div class="sat-block sat-noacc" data-client-name="'+normName+'" onclick="location.href=\\'/admin/clients/'+c.slug+'/edit\\'">'
+          + '<div class="sat-block-head"><h3>'+c.name+'</h3><small>sin cuenta Meta configurada</small></div>'
+          + '<div class="sat-block-empty">Configurá la cuenta publicitaria desde la ficha del cliente.</div>'
+          + '</div>';
         continue;
       }
       if(c.error){
-        html += '<tr class="sat-tr-error" data-client-name="'+normName+'"><td class="client-cell">'+c.name+'</td><td colspan="4" class="err">'+c.error+'</td></tr>';
+        html += '<div class="sat-block sat-error" data-client-name="'+normName+'">'
+          + '<div class="sat-block-head"><h3>'+c.name+'</h3></div>'
+          + '<div class="sat-block-empty">Error: '+c.error+'</div>'
+          + '</div>';
         continue;
       }
       var sh='/admin/saturacion/'+c.slug+'?from='+fromEl.value+'&to='+toEl.value;
-      html += '<tr data-client-name="'+normName+'" onclick="location.href=\\''+sh+'\\'">';
-      html += '<td class="client-cell">'+c.name+'<small>'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</small></td>';
-      for(var k=0;k<cats.length;k++){ html += bucketCell(c.buckets[cats[k]], c.currency); }
-      html += '<td class="sat-cell-total">'+fmtMoney(c.totals.spend, c.currency)+'<small>alc '+fmtNum(c.totals.reach)+' · frec '+fmtFreq(c.totals.frequency)+'</small></td>';
-      html += '</tr>';
+      html += '<div class="sat-block" data-client-name="'+normName+'" onclick="location.href=\\''+sh+'\\'">';
+      html += '<div class="sat-block-head"><h3>'+c.name+'</h3><span class="campaigns">'+(c.campaigns_count||0)+' campaña'+((c.campaigns_count||0)===1?'':'s')+' con datos</span></div>';
+      // Si no hay inversión total, mostrar vacío
+      if(!c.totals.spend){
+        html += '<div class="sat-block-empty">Sin campañas con datos en este período.</div></div>';
+        continue;
+      }
+      html += '<table><thead><tr>'
+        + '<th>Categoría</th>'
+        + '<th class="n">Inversión</th>'
+        + '<th class="n">Alcance</th>'
+        + '<th class="n">Frecuencia</th>'
+        + '<th class="n">% del cliente</th>'
+        + '</tr></thead><tbody>';
+      for(var k=0;k<cats.length;k++){
+        var cat=cats[k];
+        var b=c.buckets[cat];
+        if(!b || !b.spend){
+          html += '<tr><td class="cat">'+catChip(cat)+'</td><td class="n" colspan="4" style="color:var(--muted);font-weight:400;text-align:right">—</td></tr>';
+          continue;
+        }
+        html += '<tr>'
+          + '<td class="cat">'+catChip(cat)+'</td>'
+          + '<td class="n">'+fmtMoney(b.spend, c.currency)+'</td>'
+          + '<td class="n">'+fmtNum(b.reach)+'</td>'
+          + '<td class="n">'+fmtFreq(b.frequency)+'</td>'
+          + '<td class="n">'+fmtPct(b.pct)+'</td>'
+          + '</tr>';
+      }
+      html += '</tbody><tfoot><tr>'
+        + '<td class="label">Total cliente</td>'
+        + '<td class="n">'+fmtMoney(c.totals.spend, c.currency)+'</td>'
+        + '<td class="n">'+fmtNum(c.totals.reach)+'</td>'
+        + '<td class="n">'+fmtFreq(c.totals.frequency)+'</td>'
+        + '<td class="n">100%</td>'
+        + '</tr></tfoot></table>';
+      html += '</div>';
     }
-    html += '</tbody>';
-    // totales globales
-    var g=data.global;
-    html += '<tfoot><tr>';
-    html += '<td>TOTAL</td>';
-    for(var k2=0;k2<cats.length;k2++){
-      var gb=g.buckets[cats[k2]];
-      html += '<td class="sat-cell-bucket"><div class="inv">'+fmtMoney(gb.spend)+'</div>'
-        + '<dl class="meta">'
-        +   '<dt>Alcance</dt><dd>'+fmtNum(gb.reach)+'</dd>'
-        +   '<dt>Frecuencia</dt><dd>'+fmtFreq(gb.frequency)+'</dd>'
-        +   '<dt>% total</dt><dd>'+fmtPct(gb.pct)+'</dd>'
-        + '</dl></td>';
-    }
-    html += '<td class="sat-cell-total">'+fmtMoney(g.totals.spend)+'<small>alc '+fmtNum(g.totals.reach)+' · frec '+fmtFreq(g.totals.frequency)+'</small></td>';
-    html += '</tr></tfoot></table>';
+    html += '</div>';
     listEl.innerHTML = html;
   }
 
