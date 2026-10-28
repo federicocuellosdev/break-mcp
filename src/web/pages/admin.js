@@ -4825,8 +4825,8 @@ const SATURACION_JS = `
         + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
         + '<th class="n">Frecuencia</th>'
-        + '<th>Resultado</th>'
         + '<th class="n">Costo / resultado</th>'
+        + '<th>Resultado</th>'
         + '<th class="n">Inversión</th>'
         + '<th class="n">% total</th>'
         + '</tr></thead><tbody>';
@@ -4849,8 +4849,8 @@ const SATURACION_JS = `
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
           + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
-          + resultHtml
           + costHtml
+          + resultHtml
           + '<td class="n">'+fmtMoney(c.spend, data.currency)+'</td>'
           + '<td class="n">'+fmtPct(c.pct_client)+'</td>'
           + '</tr>';
