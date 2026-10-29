@@ -22,8 +22,8 @@ const html = `<!doctype html>
       <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#6B7280;font-weight:600;padding-bottom:14px;border-bottom:1px solid #E5E7EB;">Break · MCP · Novedad</div>
     </td></tr>
     <tr><td style="padding:14px 32px 8px 32px;" align="center">
-      <div style="width:56px;height:56px;border-radius:100px;background:#FDF2F8;display:inline-flex;align-items:center;justify-content:center;line-height:1;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#E13B7D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div style="width:64px;height:64px;border-radius:100px;background:#FDF2F8;display:inline-flex;align-items:center;justify-content:center;line-height:1;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#E13B7D"><polygon points="7 4 21 12 7 20 7 4"/></svg>
       </div>
     </td></tr>
     <tr><td style="padding:4px 32px 6px 32px;" align="center">
