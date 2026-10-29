@@ -4481,14 +4481,14 @@ const SATURACION_CSS = `
 .sat-ad-media .no-media{color:var(--muted);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 .sat-ad-media .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:rgba(0,0,0,.55);border-radius:100px;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:none}
 .sat-ad-media .play svg{width:20px;height:20px;margin-left:3px}
-.sat-ad-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:.75rem;padding:1rem 1.3rem}
-.sat-ad-content .head{display:flex;flex-direction:column;gap:.15rem}
+.sat-ad-content{flex:1;min-width:0;display:flex;flex-direction:column;padding:1rem 1.3rem}
+.sat-ad-content .head{flex:1;display:flex;flex-direction:column;gap:.15rem;justify-content:center}
 .sat-ad-content .head .title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:.9rem}
 .sat-ad-content .head .title-row .pills{display:flex;gap:.4rem;flex-wrap:wrap;flex-shrink:0}
-.sat-ad-content .divider{height:1px;background:var(--line);width:100%}
+.sat-ad-content .divider{height:1px;background:var(--line);width:100%;flex-shrink:0}
 .sat-ad-title{font-size:.95rem;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:-.005em}
 .sat-ad-adset{font-size:.72rem;color:var(--muted);font-weight:500}
-.sat-ad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem 1.4rem}
+.sat-ad-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem 1.4rem;align-content:center}
 .sat-ad-metric{display:flex;flex-direction:column;gap:.1rem}
 .sat-ad-metric .k{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .sat-ad-metric .v{font-size:.9rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
