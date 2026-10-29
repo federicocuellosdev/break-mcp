@@ -4984,7 +4984,7 @@ const SATURACION_JS = `
     html += '<div class="sat-card">'
       + '<span class="lbl">Alcance de la cuenta</span>'
       + '<div class="big">'+fmtNum(data.totals.reach)+'</div>'
-      + '<div class="big-sub">'+fmtNum(data.totals.impressions)+' impresiones · frec <b>'+fmtFreq(data.totals.frequency)+'</b></div>'
+      + '<div class="big-sub">Frecuencia de la cuenta · <b>'+fmtFreq(data.totals.frequency)+'</b></div>'
       + '</div>';
 
     // Card 3: Objetivo de conversión totalizado
