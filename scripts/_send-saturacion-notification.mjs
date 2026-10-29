@@ -23,7 +23,7 @@ const html = `<!doctype html>
     </td></tr>
     <tr><td style="padding:14px 32px 8px 32px;" align="center">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" valign="middle" style="width:76px;height:76px;background:#FDF2F8;border-radius:100px;">
-        <img src="https://mcp.breakmkt.com.ar/public/img/notif-saturation.png" width="40" height="40" alt="Saturación" style="display:block;border:0;">
+        <img src="https://mcp.breakmkt.com.ar/public/img/notif-saturation.png?v=3" width="40" height="40" alt="Saturación" style="display:block;border:0;">
       </td></tr></table>
     </td></tr>
     <tr><td style="padding:4px 32px 6px 32px;" align="center">
