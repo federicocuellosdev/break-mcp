@@ -4535,8 +4535,8 @@ const SATURACION_CSS = `
 .sat-client-head{margin-bottom:1.2rem}
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
 
-.sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem}
-.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.4rem 1.05rem;display:flex;flex-direction:column;gap:.95rem}
+.sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem;align-items:start}
+.sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.15rem 1.4rem .95rem;display:flex;flex-direction:column;gap:.95rem}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em}
@@ -4830,17 +4830,16 @@ const SATURACION_JS = `
     return '<span class="sat-chip '+cls+'">'+cat+'</span>';
   }
 
-  // Entrega: pill de status + pill de rendimiento (si aplica)
-  function deliveryPills(obj){
-    var html = '<div class="sat-delivery">';
+  // Entrega: solo pill de status
+  function deliveryPill(obj){
     var st = obj.delivery_status || 'unknown';
     var stLbl = obj.delivery_status_label || '—';
-    html += '<span class="sat-pill st-'+st+'">'+stLbl+'</span>';
-    if(obj.performance){
-      html += '<span class="sat-pill perf-'+obj.performance+'">'+(obj.performance_label||obj.performance)+'</span>';
-    }
-    html += '</div>';
-    return html;
+    return '<span class="sat-pill st-'+st+'">'+stLbl+'</span>';
+  }
+  // Rendimiento: pill separado (puede no existir si no hay performance)
+  function performancePill(obj){
+    if(!obj.performance) return '<span style="color:var(--muted)">—</span>';
+    return '<span class="sat-pill perf-'+obj.performance+'">'+(obj.performance_label||obj.performance)+'</span>';
   }
 
   var EXT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
@@ -5036,6 +5035,7 @@ const SATURACION_JS = `
         + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
         + '<th class="entrega">Entrega</th>'
+        + '<th class="entrega">Rendimiento</th>'
         + '<th class="n">Frecuencia</th>'
         + '<th class="n">Costo / resultado</th>'
         + '<th>Resultado</th>'
@@ -5065,7 +5065,8 @@ const SATURACION_JS = `
         html += '<tr '+trAttrs+'>'
           + '<td class="name" title="'+c.campaign_name+'">'+c.campaign_name+'</td>'
           + '<td class="cat">'+catChip(c.category)+'</td>'
-          + '<td>'+deliveryPills(c)+'</td>'
+          + '<td>'+deliveryPill(c)+'</td>'
+          + '<td>'+performancePill(c)+'</td>'
           + '<td class="n">'+fmtFreq(c.frequency)+'</td>'
           + costHtml
           + resultHtml
@@ -5075,7 +5076,7 @@ const SATURACION_JS = `
       }
       // Fila de total
       html += '</tbody><tfoot><tr>'
-        + '<td class="label" colspan="6">Total Meta Ads</td>'
+        + '<td class="label" colspan="7">Total Meta Ads</td>'
         + '<td class="n">'+fmtMoney(data.totals.spend, data.currency)+'</td>'
         + '<td class="n">100%</td>'
         + '</tr></tfoot></table></div>';
