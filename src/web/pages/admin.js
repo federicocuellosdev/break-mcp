@@ -4563,7 +4563,10 @@ const SATURACION_CSS = `
 .sat-client-head{margin-bottom:1.2rem}
 .sat-client-head h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 1rem}
 
-.sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.4rem;align-items:start}
+.sat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2.4rem;align-items:start}
+.sat-section{margin-top:2.4rem}
+.sat-section:first-of-type{margin-top:0}
+.sat-section-title{font-size:1.1rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 1rem}
 .sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.15rem 1.4rem .95rem;display:flex;flex-direction:column;gap:.95rem}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
@@ -4605,7 +4608,7 @@ const SATURACION_CSS = `
 .sat-summary td.cat{width:170px}
 
 /* Tabla de campañas · patrón Argenway "Meta Ads" */
-.sat-chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem 1.3rem;margin-bottom:1.4rem}
+.sat-chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem 1.3rem}
 .sat-chart-head{display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
 .sat-chart-select{display:flex;flex-direction:column;gap:.3rem;min-width:260px;flex:1}
 .sat-chart-select .k{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -5077,35 +5080,11 @@ const SATURACION_JS = `
     }
     allCampaigns.sort(function(a,b){return b.spend-a.spend});
 
-    // ─── Gráfico de evolución (selección de campaña + KPIs) ───
-    if(allCampaigns.length){
-      var options='';
-      for(var ci=0;ci<allCampaigns.length;ci++){
-        var cc=allCampaigns[ci];
-        var cname=cc.campaign_name.replace(/</g,'&lt;');
-        options += '<option value="'+cc.campaign_id+'" data-objective="'+(cc.objective||'')+'" data-account="'+(cc.account_id||'')+'">'+cname+'</option>';
-      }
-      html += '<div class="sat-chart">'
-        + '<div class="sat-chart-head">'
-        +   '<label class="sat-chart-select">'
-        +     '<span class="k">Campaña</span>'
-        +     '<select id="sat-chart-campaign">'+options+'</select>'
-        +   '</label>'
-        +   '<div class="sat-chart-pills" id="sat-chart-pills">'
-        +     '<button type="button" class="sat-chart-pill active" data-metric="spend" style="--c:#E8177A">Inversión</button>'
-        +     '<button type="button" class="sat-chart-pill" data-metric="reach" style="--c:#0087F2">Alcance</button>'
-        +     '<button type="button" class="sat-chart-pill" data-metric="frequency" style="--c:#BF4FCD">Frecuencia</button>'
-        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_value" style="--c:#0f8a5f">Resultado</button>'
-        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_cost" style="--c:#d4a85a">Costo / resultado</button>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="sat-chart-canvas" id="sat-chart-canvas"><div class="sat-chart-empty">Elegí una campaña para ver su evolución.</div></div>'
-        + '</div>';
-    }
-
     if(!allCampaigns.length){
       html += '<div class="sat-loading">Sin campañas con datos en este período.</div>';
     } else {
+      // ─── Tabla "Visión general" ───
+      html += '<div class="sat-section"><h3 class="sat-section-title">Visión general</h3>';
       html += '<div class="sat-campaigns-wrap"><table class="sat-campaigns"><thead><tr>'
         + '<th>Nombre de la campaña</th>'
         + '<th>Categoría</th>'
@@ -5155,6 +5134,33 @@ const SATURACION_JS = `
         + '<td class="n">'+fmtMoney(data.totals.spend, data.currency)+'</td>'
         + '<td class="n">100%</td>'
         + '</tr></tfoot></table></div>';
+      html += '</div>'; // close .sat-section (Visión general)
+
+      // ─── Gráfico "Resultados por campaña" ───
+      var options='';
+      for(var ci=0;ci<allCampaigns.length;ci++){
+        var cc=allCampaigns[ci];
+        var cname=cc.campaign_name.replace(/</g,'&lt;');
+        options += '<option value="'+cc.campaign_id+'" data-objective="'+(cc.objective||'')+'" data-account="'+(cc.account_id||'')+'">'+cname+'</option>';
+      }
+      html += '<div class="sat-section">'
+        + '<h3 class="sat-section-title">Resultados por campaña</h3>'
+        + '<div class="sat-chart">'
+        + '<div class="sat-chart-head">'
+        +   '<label class="sat-chart-select">'
+        +     '<span class="k">Campaña</span>'
+        +     '<select id="sat-chart-campaign">'+options+'</select>'
+        +   '</label>'
+        +   '<div class="sat-chart-pills" id="sat-chart-pills">'
+        +     '<button type="button" class="sat-chart-pill active" data-metric="spend" style="--c:#E8177A">Inversión</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="reach" style="--c:#0087F2">Alcance</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="frequency" style="--c:#BF4FCD">Frecuencia</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_value" style="--c:#0f8a5f">Resultado</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_cost" style="--c:#d4a85a">Costo / resultado</button>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="sat-chart-canvas" id="sat-chart-canvas"><div class="sat-chart-empty">Elegí una campaña para ver su evolución.</div></div>'
+        + '</div></div>';
     }
     listEl.innerHTML = html;
     initChart();
