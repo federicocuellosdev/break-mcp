@@ -5,8 +5,9 @@ const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
 const SMTP_USER = process.env.SMTP_USER || 'no-reply@breakmkt.com.ar';
 const SMTP_PASS = process.env.SMTP_PASS;
 const FROM = process.env.MAIL_FROM || 'no-reply@breakmkt.com.ar';
-const TO = process.argv[2];
-if (!TO) { console.error('Usage: node scripts/_send-saturacion-notification.mjs <to>'); process.exit(1); }
+const TO_RAW = process.argv[2];
+if (!TO_RAW) { console.error('Usage: node scripts/_send-saturacion-notification.mjs <to>[,<to>...]'); process.exit(1); }
+const TO = TO_RAW.split(',').map((s) => s.trim()).filter(Boolean);
 if (!SMTP_PASS) { console.error('Missing SMTP_PASS env var'); process.exit(1); }
 
 const LANDING = 'https://mcp.breakmkt.com.ar/notificacion/saturacion-meta-ads/';
@@ -49,10 +50,16 @@ const transporter = nodemailer.createTransport({
   auth: { user: SMTP_USER, pass: SMTP_PASS },
 });
 
-const info = await transporter.sendMail({
-  from: `"Break MCP" <${FROM}>`,
-  to: TO,
-  subject: 'Break MCP · Nueva sección: Saturación Meta Ads',
-  html,
-});
-console.log('OK', info.messageId, 'accepted=', info.accepted);
+for (const addr of TO) {
+  try {
+    const info = await transporter.sendMail({
+      from: `"Break MCP" <${FROM}>`,
+      to: addr,
+      subject: 'Break MCP · Nueva sección: Saturación Meta Ads',
+      html,
+    });
+    console.log('OK', addr, info.messageId);
+  } catch (e) {
+    console.error('FAIL', addr, e.message);
+  }
+}
