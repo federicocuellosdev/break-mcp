@@ -4610,10 +4610,17 @@ const SATURACION_CSS = `
 /* Tabla de campañas · patrón Argenway "Meta Ads" */
 .sat-chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem 1.3rem}
 .sat-chart-head{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
-.sat-chart-select{position:relative;display:inline-flex;align-items:center;flex:1;min-width:260px;border:1px solid var(--line);border-radius:100px;background:var(--card);padding:.7rem 2.3rem .7rem 1.1rem;transition:border-color .15s;box-sizing:border-box}
-.sat-chart-select:focus-within{border-color:var(--pink)}
-.sat-chart-select select{flex:1;border:none;outline:none;background:transparent;font:600 .78rem 'Inter',sans-serif;letter-spacing:.02em;color:var(--ink);min-width:0;padding:0;line-height:1;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none}
-.sat-chart-select::after{content:'';position:absolute;right:1.1rem;top:50%;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.sat-chart-select{position:relative;flex:1;min-width:260px;box-sizing:border-box}
+.sat-chart-select-trigger{width:100%;display:inline-flex;align-items:center;justify-content:space-between;gap:.8rem;border:1px solid var(--line);border-radius:100px;background:var(--card);padding:.7rem 1.1rem;font:600 .78rem 'Inter',sans-serif;letter-spacing:.02em;color:var(--ink);cursor:pointer;transition:border-color .15s;text-align:left}
+.sat-chart-select-trigger:hover{border-color:var(--ink)}
+.sat-chart-select-trigger[aria-expanded="true"]{border-color:var(--pink)}
+.sat-chart-select-trigger .label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sat-chart-select-trigger .caret{flex-shrink:0;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-2px) rotate(45deg);transition:transform .18s}
+.sat-chart-select-trigger[aria-expanded="true"] .caret{transform:translateY(1px) rotate(-135deg)}
+.sat-chart-select-panel{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.12);padding:.35rem;z-index:50;max-height:300px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.sat-chart-opt{display:block;width:100%;background:transparent;border:0;text-align:left;padding:.65rem .85rem;border-radius:10px;font:500 .78rem 'Inter',sans-serif;color:var(--ink);cursor:pointer;transition:background .12s;letter-spacing:.01em;line-height:1.3}
+.sat-chart-opt:hover{background:var(--soft)}
+.sat-chart-opt.active{background:var(--pink-soft);color:var(--pink);font-weight:600}
 .sat-chart-pills{display:flex;gap:.45rem;flex-wrap:wrap}
 .sat-chart-pill{background:var(--card);border:1px solid var(--line);border-radius:100px;padding:.7rem 1.3rem .7rem 1.9rem;font:600 .74rem 'Inter',sans-serif;letter-spacing:.05em;color:var(--muted);cursor:pointer;transition:all .15s;position:relative}
 .sat-chart-pill::before{content:'';position:absolute;left:.95rem;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:100px;background:var(--c,var(--muted));opacity:.5;transition:opacity .15s}
@@ -5144,18 +5151,29 @@ const SATURACION_JS = `
 
       // ─── Gráfico "Resultados por campaña" ───
       var options='';
+      var firstName='';
       for(var ci=0;ci<allCampaigns.length;ci++){
         var cc=allCampaigns[ci];
         var cname=cc.campaign_name.replace(/</g,'&lt;');
-        options += '<option value="'+cc.campaign_id+'" data-objective="'+(cc.objective||'')+'" data-account="'+(cc.account_id||'')+'">'+cname+'</option>';
+        if(ci===0) firstName=cname;
+        var activeAttr = ci===0 ? ' aria-current="true"' : '';
+        options += '<button type="button" class="sat-chart-opt'+(ci===0?' active':'')+'"'
+          + ' data-value="'+cc.campaign_id+'"'
+          + ' data-objective="'+(cc.objective||'')+'"'
+          + ' data-account="'+(cc.account_id||'')+'"'
+          + activeAttr+'>'+cname+'</button>';
       }
       html += '<div class="sat-section">'
         + '<h3 class="sat-section-title">Resultados por campaña</h3>'
         + '<div class="sat-chart">'
         + '<div class="sat-chart-head">'
-        +   '<label class="sat-chart-select">'
-        +     '<select id="sat-chart-campaign">'+options+'</select>'
-        +   '</label>'
+        +   '<div class="sat-chart-select" id="sat-chart-select">'
+        +     '<button type="button" class="sat-chart-select-trigger" id="sat-chart-select-trigger" aria-haspopup="listbox" aria-expanded="false">'
+        +       '<span class="label" id="sat-chart-select-label">'+firstName+'</span>'
+        +       '<span class="caret" aria-hidden="true"></span>'
+        +     '</button>'
+        +     '<div class="sat-chart-select-panel" id="sat-chart-select-panel" role="listbox" hidden>'+options+'</div>'
+        +   '</div>'
         +   '<div class="sat-chart-pills" id="sat-chart-pills">'
         +     '<button type="button" class="sat-chart-pill active" data-metric="spend" style="--c:#E8177A">Inversión</button>'
         +     '<button type="button" class="sat-chart-pill" data-metric="reach" style="--c:#0087F2">Alcance</button>'
@@ -5177,14 +5195,56 @@ const SATURACION_JS = `
   }
 
   // ─── Chart de evolución ───────────────────────────────────────
-  var chartState = { data: null, selected: ['spend'], gran: 'D' };
+  var chartState = { data: null, selected: ['spend'], gran: 'D', campaign: null };
   function initChart(){
-    var sel = document.getElementById('sat-chart-campaign');
+    var selWrap = document.getElementById('sat-chart-select');
+    var trigger = document.getElementById('sat-chart-select-trigger');
+    var panel = document.getElementById('sat-chart-select-panel');
     var pills = document.getElementById('sat-chart-pills');
     var granBox = document.getElementById('sat-chart-gran');
-    if(!sel || !pills) return;
+    if(!selWrap || !pills) return;
     chartState.selected = ['spend'];
     chartState.gran = 'D';
+    chartState.campaign = null;
+
+    // Dropdown custom
+    var firstOpt = panel.querySelector('.sat-chart-opt');
+    if(firstOpt){
+      chartState.campaign = {
+        value: firstOpt.dataset.value,
+        objective: firstOpt.dataset.objective || '',
+        account: firstOpt.dataset.account || '',
+      };
+    }
+    function closePanel(){ panel.hidden = true; trigger.setAttribute('aria-expanded','false'); }
+    function openPanel(){ panel.hidden = false; trigger.setAttribute('aria-expanded','true'); }
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(panel.hidden) openPanel(); else closePanel();
+    });
+    panel.querySelectorAll('.sat-chart-opt').forEach(function(opt){
+      opt.addEventListener('click', function(){
+        panel.querySelectorAll('.sat-chart-opt').forEach(function(x){x.classList.remove('active'); x.removeAttribute('aria-current')});
+        opt.classList.add('active'); opt.setAttribute('aria-current','true');
+        document.getElementById('sat-chart-select-label').textContent = opt.textContent;
+        chartState.campaign = {
+          value: opt.dataset.value,
+          objective: opt.dataset.objective || '',
+          account: opt.dataset.account || '',
+        };
+        closePanel();
+        loadChart();
+      });
+    });
+    document.addEventListener('click', function(e){
+      if(panel.hidden) return;
+      if(selWrap.contains(e.target)) return;
+      closePanel();
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key==='Escape' && !panel.hidden) closePanel();
+    });
+
     pills.querySelectorAll('.sat-chart-pill').forEach(function(p){
       p.classList.toggle('active', p.dataset.metric==='spend');
       p.addEventListener('click', function(){
@@ -5216,16 +5276,14 @@ const SATURACION_JS = `
         });
       });
     }
-    sel.addEventListener('change', loadChart);
     loadChart();
   }
   async function loadChart(){
-    var sel = document.getElementById('sat-chart-campaign');
     var canvas = document.getElementById('sat-chart-canvas');
-    if(!sel || !canvas) return;
-    var opt = sel.selectedOptions[0];
-    if(!opt){ chartState.data=null; renderEmpty(canvas,'Elegí una campaña.'); return; }
-    var cid = opt.value, obj = opt.dataset.objective || '', acc = opt.dataset.account || '';
+    if(!canvas) return;
+    var cmp = chartState.campaign;
+    if(!cmp){ chartState.data=null; renderEmpty(canvas,'Elegí una campaña.'); return; }
+    var cid = cmp.value, obj = cmp.objective, acc = cmp.account;
     renderEmpty(canvas,'Cargando…');
     var qs = 'from='+fromEl.value+'&to='+toEl.value+'&objective='+encodeURIComponent(obj)+(acc?'&account='+encodeURIComponent(acc):'');
     try{
