@@ -4609,14 +4609,16 @@ const SATURACION_CSS = `
 
 /* Tabla de campañas · patrón Argenway "Meta Ads" */
 .sat-chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem 1.3rem}
-.sat-chart-head{display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
-.sat-chart-select{display:flex;flex-direction:column;gap:.3rem;min-width:260px;flex:1}
-.sat-chart-select .k{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.sat-chart-select select{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:.55rem .75rem;font:500 .85rem 'Inter',sans-serif;color:var(--ink);cursor:pointer}
-.sat-chart-pills{display:flex;gap:.4rem;flex-wrap:wrap}
-.sat-chart-pill{background:transparent;border:1px solid var(--line);color:var(--muted);padding:.4rem .75rem;border-radius:100px;font:600 .72rem 'Inter',sans-serif;cursor:pointer;transition:all .15s;position:relative;padding-left:1.4rem}
-.sat-chart-pill::before{content:'';position:absolute;left:.6rem;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:100px;background:var(--c,var(--muted));opacity:.4;transition:opacity .15s}
-.sat-chart-pill.active{color:var(--ink);border-color:var(--c)}
+.sat-chart-head{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.sat-chart-select{position:relative;display:inline-flex;align-items:center;flex:1;min-width:260px;border:1px solid var(--line);border-radius:100px;background:var(--card);padding:.7rem 2.3rem .7rem 1.1rem;transition:border-color .15s;box-sizing:border-box}
+.sat-chart-select:focus-within{border-color:var(--pink)}
+.sat-chart-select select{flex:1;border:none;outline:none;background:transparent;font:600 .78rem 'Inter',sans-serif;letter-spacing:.02em;color:var(--ink);min-width:0;padding:0;line-height:1;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none}
+.sat-chart-select::after{content:'';position:absolute;right:1.1rem;top:50%;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.sat-chart-pills{display:flex;gap:.45rem;flex-wrap:wrap}
+.sat-chart-pill{background:var(--card);border:1px solid var(--line);border-radius:100px;padding:.7rem 1.3rem .7rem 1.9rem;font:600 .74rem 'Inter',sans-serif;letter-spacing:.05em;color:var(--muted);cursor:pointer;transition:all .15s;position:relative}
+.sat-chart-pill::before{content:'';position:absolute;left:.95rem;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:100px;background:var(--c,var(--muted));opacity:.5;transition:opacity .15s}
+.sat-chart-pill:hover{border-color:var(--ink);color:var(--ink)}
+.sat-chart-pill.active{background:var(--pink-soft);border-color:var(--pink);color:var(--pink)}
 .sat-chart-pill.active::before{opacity:1}
 .sat-chart-canvas{position:relative;height:280px;border-top:1px solid var(--line);padding-top:.8rem}
 .sat-chart-canvas .sat-chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem}
@@ -5148,7 +5150,6 @@ const SATURACION_JS = `
         + '<div class="sat-chart">'
         + '<div class="sat-chart-head">'
         +   '<label class="sat-chart-select">'
-        +     '<span class="k">Campaña</span>'
         +     '<select id="sat-chart-campaign">'+options+'</select>'
         +   '</label>'
         +   '<div class="sat-chart-pills" id="sat-chart-pills">'
