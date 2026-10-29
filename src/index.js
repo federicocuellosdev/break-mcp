@@ -15,6 +15,7 @@ const app = express();
 app.use(cookieParser());
 
 app.use('/public', express.static('public', { maxAge: '7d' }));
+app.use('/notificacion', express.static('notificacion', { maxAge: '7d', index: 'index.html' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
