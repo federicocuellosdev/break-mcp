@@ -4620,6 +4620,10 @@ const SATURACION_CSS = `
 .sat-chart-pill:hover{border-color:var(--ink);color:var(--ink)}
 .sat-chart-pill.active{background:var(--pink-soft);border-color:var(--pink);color:var(--pink)}
 .sat-chart-pill.active::before{opacity:1}
+.sat-chart-gran{display:inline-flex;border:1px solid var(--line);border-radius:100px;background:var(--card);overflow:hidden;padding:3px}
+.sat-chart-gran-btn{background:transparent;border:0;color:var(--muted);width:34px;height:30px;font:700 .78rem 'Inter',sans-serif;cursor:pointer;transition:all .15s;border-radius:100px;display:inline-flex;align-items:center;justify-content:center}
+.sat-chart-gran-btn:hover{color:var(--ink)}
+.sat-chart-gran-btn.active{background:var(--pink);color:#fff}
 .sat-chart-canvas{position:relative;height:280px;border-top:1px solid var(--line);padding-top:.8rem}
 .sat-chart-canvas .sat-chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem}
 .sat-chart-canvas svg{width:100%;height:100%;display:block}
@@ -5159,6 +5163,11 @@ const SATURACION_JS = `
         +     '<button type="button" class="sat-chart-pill" data-metric="kpi_value" style="--c:#0f8a5f">Resultado</button>'
         +     '<button type="button" class="sat-chart-pill" data-metric="kpi_cost" style="--c:#d4a85a">Costo / resultado</button>'
         +   '</div>'
+        +   '<div class="sat-chart-gran" id="sat-chart-gran">'
+        +     '<button type="button" class="sat-chart-gran-btn active" data-gran="D" title="Diario">D</button>'
+        +     '<button type="button" class="sat-chart-gran-btn" data-gran="S" title="Semanal">S</button>'
+        +     '<button type="button" class="sat-chart-gran-btn" data-gran="M" title="Mensual">M</button>'
+        +   '</div>'
         + '</div>'
         + '<div class="sat-chart-canvas" id="sat-chart-canvas"><div class="sat-chart-empty">Elegí una campaña para ver su evolución.</div></div>'
         + '</div></div>';
@@ -5168,22 +5177,45 @@ const SATURACION_JS = `
   }
 
   // ─── Chart de evolución ───────────────────────────────────────
-  var chartState = { data: null, selected: ['spend'] };
+  var chartState = { data: null, selected: ['spend'], gran: 'D' };
   function initChart(){
     var sel = document.getElementById('sat-chart-campaign');
     var pills = document.getElementById('sat-chart-pills');
+    var granBox = document.getElementById('sat-chart-gran');
     if(!sel || !pills) return;
     chartState.selected = ['spend'];
+    chartState.gran = 'D';
     pills.querySelectorAll('.sat-chart-pill').forEach(function(p){
       p.classList.toggle('active', p.dataset.metric==='spend');
       p.addEventListener('click', function(){
         var m = p.dataset.metric;
         var idx = chartState.selected.indexOf(m);
-        if(idx>=0){ chartState.selected.splice(idx,1); p.classList.remove('active'); }
-        else { chartState.selected.push(m); p.classList.add('active'); }
+        if(idx>=0){
+          chartState.selected.splice(idx,1);
+          p.classList.remove('active');
+        } else {
+          // Max 2 KPIs: si ya hay 2, saco el mas viejo
+          if(chartState.selected.length>=2){
+            var oldest = chartState.selected.shift();
+            var oldPill = pills.querySelector('.sat-chart-pill[data-metric="'+oldest+'"]');
+            if(oldPill) oldPill.classList.remove('active');
+          }
+          chartState.selected.push(m);
+          p.classList.add('active');
+        }
         drawChart();
       });
     });
+    if(granBox){
+      granBox.querySelectorAll('.sat-chart-gran-btn').forEach(function(b){
+        b.addEventListener('click', function(){
+          granBox.querySelectorAll('.sat-chart-gran-btn').forEach(function(x){x.classList.remove('active')});
+          b.classList.add('active');
+          chartState.gran = b.dataset.gran;
+          drawChart();
+        });
+      });
+    }
     sel.addEventListener('change', loadChart);
     loadChart();
   }
@@ -5210,32 +5242,101 @@ const SATURACION_JS = `
     canvas.innerHTML = '<div class="sat-chart-empty">'+msg+'</div>';
   }
   var METRIC_META = {
-    spend:     {label:'Inversión',        color:'#E8177A', fmt:function(v){return fmtMoney(v,null)}},
-    reach:     {label:'Alcance',          color:'#0087F2', fmt:fmtNum},
-    frequency: {label:'Frecuencia',       color:'#BF4FCD', fmt:fmtFreq},
-    kpi_value: {label:'Resultado',        color:'#0f8a5f', fmt:fmtNum},
-    kpi_cost:  {label:'Costo / resultado',color:'#d4a85a', fmt:function(v){return fmtMoney(v,null)}}
+    spend:     {label:'Inversión',        color:'#E8177A', fmt:function(v){return fmtMoney(v,null)},         fmtShort:function(v){return fmtMoneyShort(v)}},
+    reach:     {label:'Alcance',          color:'#0087F2', fmt:fmtNum,                                       fmtShort:fmtNumShort},
+    frequency: {label:'Frecuencia',       color:'#BF4FCD', fmt:fmtFreq,                                      fmtShort:fmtFreq},
+    kpi_value: {label:'Resultado',        color:'#0f8a5f', fmt:fmtNum,                                       fmtShort:fmtNumShort},
+    kpi_cost:  {label:'Costo / resultado',color:'#d4a85a', fmt:function(v){return fmtMoney(v,null)},         fmtShort:function(v){return fmtMoneyShort(v)}}
   };
+  function fmtNumShort(v){
+    if(v==null) return '—';
+    var n = Number(v);
+    if(Math.abs(n)>=1e6) return (n/1e6).toFixed(1).replace(/\\.0$/,'')+'M';
+    if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1).replace(/\\.0$/,'')+'k';
+    return Math.round(n).toLocaleString('es-AR');
+  }
+  function fmtMoneyShort(v){
+    if(v==null) return '—';
+    return '$ '+fmtNumShort(v);
+  }
+  // Agrupa serie diaria por granularidad: 'D'=día, 'S'=semana ISO, 'M'=mes
+  function aggregateSeries(series, gran){
+    if(gran==='D') return series.slice();
+    var buckets = {};
+    var order = [];
+    for (var i=0; i<series.length; i++){
+      var row = series[i];
+      if (!row.date) continue;
+      var key, label;
+      if (gran==='M'){
+        key = row.date.slice(0,7); // YYYY-MM
+        label = key;
+      } else {
+        // Semana ISO
+        var d = new Date(row.date+'T00:00:00');
+        // Lunes como primer día
+        var day = (d.getDay()+6)%7;
+        var monday = new Date(d);
+        monday.setDate(d.getDate()-day);
+        var y=monday.getFullYear(),mo=String(monday.getMonth()+1).padStart(2,'0'),dd=String(monday.getDate()).padStart(2,'0');
+        key = y+'-'+mo+'-'+dd;
+        label = key;
+      }
+      if (!buckets[key]){
+        buckets[key] = { date: label, spend:0, reach:0, impressions:0, kpi_value:0, _hasKpi:false };
+        order.push(key);
+      }
+      buckets[key].spend += Number(row.spend)||0;
+      buckets[key].reach += Number(row.reach)||0;
+      buckets[key].impressions += Number(row.impressions)||0;
+      if (row.kpi_value!=null){ buckets[key].kpi_value += Number(row.kpi_value)||0; buckets[key]._hasKpi = true; }
+    }
+    order.sort();
+    return order.map(function(k){
+      var b = buckets[k];
+      var frequency = b.reach>0 ? b.impressions/b.reach : 0;
+      var kpi_cost = b._hasKpi && b.kpi_value>0 ? b.spend/b.kpi_value : null;
+      return {
+        date: b.date,
+        spend: b.spend,
+        reach: b.reach,
+        impressions: b.impressions,
+        frequency: frequency,
+        kpi_value: b._hasKpi ? b.kpi_value : null,
+        kpi_cost: kpi_cost,
+      };
+    });
+  }
+  // Escala "nice" tipo 1·2·5·10 para el eje Y
+  function niceCeil(v){
+    if(v<=0) return 1;
+    var exp = Math.floor(Math.log10(v));
+    var pow = Math.pow(10, exp);
+    var mant = v/pow;
+    var step = mant<=1?1 : mant<=2?2 : mant<=5?5 : 10;
+    return step*pow;
+  }
   function drawChart(){
     var canvas = document.getElementById('sat-chart-canvas');
     if(!canvas || !chartState.data) return;
-    var series = chartState.data.series || [];
-    if(!series.length){ renderEmpty(canvas, 'Sin datos diarios en este período.'); return; }
+    var seriesRaw = chartState.data.series || [];
+    if(!seriesRaw.length){ renderEmpty(canvas, 'Sin datos en este período.'); return; }
+    var series = aggregateSeries(seriesRaw, chartState.gran);
+    if(!series.length){ renderEmpty(canvas, 'Sin datos en este período.'); return; }
     var selected = chartState.selected.filter(function(m){ return METRIC_META[m]; });
     if(!selected.length){ renderEmpty(canvas, 'Seleccioná al menos un KPI.'); return; }
 
     var W = canvas.clientWidth, H = canvas.clientHeight;
-    var padL = 48, padR = 48, padT = 14, padB = 28;
+    var padL = 60, padR = selected.length>1 ? 60 : 20, padT = 14, padB = 28;
     var innerW = W-padL-padR, innerH = H-padT-padB;
 
-    // Un eje Y lineal normalizado por serie: cada serie se escala a [0, maxDeLaSerie]
-    // pintadas en el mismo espacio (0..innerH).
+    // Cada serie tiene su propio max → eje Y independiente (izq y der)
     var maxByMetric = {};
     for (var si=0; si<selected.length; si++){
       var m = selected[si];
       var mx = 0;
       for (var j=0; j<series.length; j++){ var v = series[j][m]; if (v!=null && v>mx) mx=v; }
-      maxByMetric[m] = mx||1;
+      maxByMetric[m] = niceCeil(mx||1);
     }
 
     var N = series.length;
@@ -5250,13 +5351,35 @@ const SATURACION_JS = `
       svg += '<line x1="'+padL+'" y1="'+yg+'" x2="'+(W-padR)+'" y2="'+yg+'"/>';
     }
     svg += '</g>';
+    // Eje Y izquierdo (metric 0)
+    var mL = selected[0], metaL = METRIC_META[mL];
+    svg += '<g class="axis-y">';
+    for (var ly=0; ly<=4; ly++){
+      var yv = maxByMetric[mL] * (1 - ly/4);
+      var yy = padT + (ly*innerH/4);
+      svg += '<text x="'+(padL-8)+'" y="'+(yy+4)+'" text-anchor="end" style="fill:'+metaL.color+'">'+metaL.fmtShort(yv)+'</text>';
+    }
+    svg += '</g>';
+    // Eje Y derecho (metric 1, si existe)
+    if (selected.length>1){
+      var mR = selected[1], metaR = METRIC_META[mR];
+      svg += '<g class="axis-y">';
+      for (var ry=0; ry<=4; ry++){
+        var yv2 = maxByMetric[mR] * (1 - ry/4);
+        var yy2 = padT + (ry*innerH/4);
+        svg += '<text x="'+(W-padR+8)+'" y="'+(yy2+4)+'" text-anchor="start" style="fill:'+metaR.color+'">'+metaR.fmtShort(yv2)+'</text>';
+      }
+      svg += '</g>';
+    }
     // Eje X (fechas)
     svg += '<g class="axis-x">';
     var stepX = Math.max(1, Math.ceil(N/6));
     for (var i=0; i<N; i+=stepX){
       var x = xPos(i);
       var d = series[i].date||'';
-      var short = d.slice(5); // MM-DD
+      var short;
+      if (chartState.gran==='M') short = d.slice(0,7);
+      else short = d.slice(5);
       svg += '<text x="'+x+'" y="'+(H-10)+'" text-anchor="middle">'+short+'</text>';
     }
     svg += '</g>';
