@@ -4539,8 +4539,8 @@ const SATURACION_CSS = `
 .sat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.15rem 1.4rem .95rem;display:flex;flex-direction:column;gap:.95rem}
 .sat-card .lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .sat-card .big{font-size:clamp(1.75rem,2.5vw,2.3rem);font-weight:800;color:var(--ink);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
-.sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em}
-.sat-card .big-sub b{color:var(--ink);font-weight:700}
+.sat-card .big-sub{font-size:.78rem;color:var(--muted);font-weight:500;letter-spacing:.01em;line-height:1.3}
+.sat-card .big-sub b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .sat-card .sub{font-size:.78rem;color:var(--muted);font-weight:500;line-height:1.4}
 .sat-card .sub b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .sat-card .bar{height:4px;background:var(--line);border-radius:100px;overflow:hidden;margin-top:auto}
@@ -4903,11 +4903,11 @@ const SATURACION_JS = `
       var costMetric = '';
       if(a.kpi_value!=null && a.kpi_label){
         kpiMetric = '<div class="sat-ad-metric highlight">'
-          + '<span class="k">'+a.kpi_label+'</span>'
+          + '<span class="k">Resultado</span>'
           + '<span class="v">'+fmtNum(a.kpi_value)+'</span>'
           + '</div>';
         costMetric = '<div class="sat-ad-metric cost">'
-          + '<span class="k">Costo '+a.kpi_label.toLowerCase()+'</span>'
+          + '<span class="k">Costo / resultado</span>'
           + '<span class="v">'+(a.kpi_cost!=null ? fmtMoney(a.kpi_cost,null) : '—')+'</span>'
           + '</div>';
       }
@@ -4975,7 +4975,7 @@ const SATURACION_JS = `
     html += '<div class="sat-card">'
       + '<span class="lbl">Inversión vs Presupuesto</span>'
       + '<div class="big">'+fmtMoney(spend, data.currency)+'</div>'
-      + '<div class="sub">'+(hasBudget
+      + '<div class="big-sub">'+(hasBudget
           ? 'de <b>'+fmtMoney(budget, data.currency)+'</b> · <b>'+fmtPct(consumedPct)+'</b> consumido'
           : 'Sin presupuesto configurado')+'</div>'
       + '</div>';
@@ -4984,7 +4984,7 @@ const SATURACION_JS = `
     html += '<div class="sat-card">'
       + '<span class="lbl">Alcance de la cuenta</span>'
       + '<div class="big">'+fmtNum(data.totals.reach)+'</div>'
-      + '<div class="sub">'+fmtNum(data.totals.impressions)+' impresiones · frec <b>'+fmtFreq(data.totals.frequency)+'</b></div>'
+      + '<div class="big-sub">'+fmtNum(data.totals.impressions)+' impresiones · frec <b>'+fmtFreq(data.totals.frequency)+'</b></div>'
       + '</div>';
 
     // Card 3: Objetivo de conversión totalizado
