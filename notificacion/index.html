@@ -4,83 +4,57 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Break · MCP — Nueva sección Saturación Meta Ads</title>
+<title>Break · MCP — Notificaciones</title>
 <style>
   :root{
-    --ink:#111827;
-    --muted:#6B7280;
-    --line:#E5E7EB;
-    --soft:#F3F4F6;
-    --card:#FFFFFF;
-    --pink:#E13B7D;
-    --pink-soft:#FDF2F8;
+    --ink:#111827; --muted:#6B7280; --line:#E5E7EB; --soft:#F3F4F6; --card:#FFFFFF;
+    --pink:#E13B7D; --pink-soft:#FDF2F8;
     --grad:linear-gradient(90deg,#0087F2 0%,#BF4FCD 55%,#E13B7D 100%);
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--soft);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
-  .wrap{max-width:860px;margin:0 auto;padding:0 1rem 4rem}
-  .card{background:var(--card);border-radius:16px;margin-top:40px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .bar{height:6px;background:var(--grad);line-height:0}
-  .head{padding:34px 44px 10px}
-  .kicker{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;padding-bottom:14px;border-bottom:1px solid var(--line);display:inline-block;width:100%}
-  h1{margin:22px 0 8px;font-size:28px;font-weight:700;letter-spacing:-0.3px}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 60px}
+  .head{margin-bottom:28px}
+  .kicker{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{margin:10px 0 6px;font-size:30px;font-weight:700;letter-spacing:-0.4px}
   .sub{color:var(--muted);font-size:14px;margin:0}
-  .body{padding:24px 44px 36px}
-  .intro{font-size:15px;color:var(--ink);line-height:1.65;margin:0 0 24px}
-  .intro b{color:var(--ink);font-weight:700}
-  .video-wrap{background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;margin-bottom:28px}
-  video{width:100%;height:100%;display:block}
-  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0 0 28px}
-  .feat{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--card)}
-  .feat .k{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--pink);font-weight:700;margin-bottom:6px}
-  .feat .d{font-size:13px;color:var(--ink);line-height:1.5}
-  .cta{text-align:center;margin:16px 0 0}
-  .btn{display:inline-block;background:var(--grad);color:#fff;text-decoration:none;padding:14px 30px;border-radius:100px;font-size:14px;font-weight:600;letter-spacing:0.3px;box-shadow:0 6px 16px rgba(225,59,125,0.25)}
-  .foot{padding:18px 44px 32px;border-top:1px solid var(--soft);color:var(--muted);font-size:12px;text-align:center}
-  @media (max-width:600px){
-    .head,.body,.foot{padding-left:22px;padding-right:22px}
-    h1{font-size:22px}
-  }
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+  .card{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line);text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s,border-color .15s}
+  .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.07);border-color:#D1D5DB}
+  .cover{height:140px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;position:relative}
+  .cover svg{width:40px;height:40px;opacity:.95}
+  .cover .badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:100px}
+  .body{padding:18px 18px 20px;display:flex;flex-direction:column;flex:1}
+  .date{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.3px;margin-bottom:6px}
+  .title{font-size:16px;font-weight:700;letter-spacing:-0.2px;line-height:1.35;margin:0 0 8px;color:var(--ink)}
+  .excerpt{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px;flex:1}
+  .cta{font-size:12px;font-weight:600;color:var(--pink);letter-spacing:0.3px;display:inline-flex;align-items:center;gap:6px}
+  .cta svg{width:12px;height:12px}
+  .empty{color:var(--muted);text-align:center;padding:60px 20px;font-size:14px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
-    <div class="bar"></div>
-    <div class="head">
-      <span class="kicker">Break · MCP · Novedad</span>
-      <h1>Nueva sección: Saturación Meta Ads</h1>
-      <p class="sub">Visualización por cliente del consumo, alcance, rendimiento y evolución de cada campaña activa.</p>
-    </div>
-    <div class="body">
-      <p class="intro">
-        Ya está disponible <b>Saturación Meta Ads</b> en el panel del MCP para todos los usuarios.
-        Esta sección reúne, por cliente, el <b>consumo contra presupuesto</b>, el <b>alcance de la cuenta</b>
-        y el <b>objetivo de conversión</b>, junto con una vista detallada por campaña (categoría, entrega,
-        rendimiento, frecuencia y resultado), y un gráfico de evolución configurable por KPI y granularidad.
-      </p>
-      <div class="video-wrap">
-        <video src="src/explicativo.webm" controls preload="metadata" playsinline></video>
+  <div class="head">
+    <div class="kicker">Break · MCP</div>
+    <h1>Notificaciones</h1>
+    <p class="sub">Novedades, lanzamientos y cambios recientes en el panel.</p>
+  </div>
+  <div class="grid">
+    <a class="card" href="saturacion-meta-ads/">
+      <div class="cover">
+        <span class="badge">Lanzamiento</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
       </div>
-      <div class="features">
-        <div class="feat">
-          <div class="k">Visión general</div>
-          <div class="d">Tabla con cada campaña categorizada automáticamente (Reconocimiento · Interacción · Conversión).</div>
-        </div>
-        <div class="feat">
-          <div class="k">Rendimiento</div>
-          <div class="d">Pills de entrega y rendimiento basados en los rankings de calidad, engagement y conversión de Meta.</div>
-        </div>
-        <div class="feat">
-          <div class="k">Evolución</div>
-          <div class="d">Gráfico de línea con hasta 2 KPIs simultáneos, dos ejes Y y granularidad diaria, semanal o mensual.</div>
-        </div>
+      <div class="body">
+        <div class="date">29 OCT 2026</div>
+        <h2 class="title">Saturación Meta Ads: datos para decidir cuándo rotar creatividades</h2>
+        <p class="excerpt">Nueva sección en el MCP que reúne los datos necesarios para determinar si un conjunto de creatividades necesita ser rotado.</p>
+        <span class="cta">Leer más
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
       </div>
-      <div class="cta">
-        <a class="btn" href="https://mcp.breakmkt.com.ar/admin/saturacion">Ir a Saturación</a>
-      </div>
-    </div>
-    <div class="foot">Enviado automáticamente por Break MCP · <a href="https://mcp.breakmkt.com.ar" style="color:var(--muted);text-decoration:underline">mcp.breakmkt.com.ar</a></div>
+    </a>
   </div>
 </div>
 </body>
