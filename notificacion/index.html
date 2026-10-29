@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Break · MCP — Notificaciones</title>
+<title>Break · Notificaciones</title>
 <style>
   :root{
     --ink:#111827; --muted:#6B7280; --line:#E5E7EB; --soft:#F3F4F6; --card:#FFFFFF;
@@ -13,11 +13,20 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--soft);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 60px}
-  .head{margin-bottom:28px}
+  .top{background:#fff;border-bottom:1px solid var(--line)}
+  .gb{height:4px;background:var(--grad);line-height:0}
+  .tnav{max-width:1040px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink)}
+  .logo{position:relative;color:var(--ink);text-decoration:none;font-weight:800;letter-spacing:-0.4px;font-size:17px;line-height:1}
+  .logo .dot{position:absolute;top:2px;right:-7px;width:5px;height:5px;background:var(--pink);border-radius:100px}
+  .ctx{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;padding-left:12px;border-left:1px solid var(--line);margin-left:4px}
+  .role{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700;border:1px solid var(--line);padding:5px 10px;border-radius:100px}
+  .hero{max-width:1040px;margin:0 auto;padding:40px 20px 24px}
   .kicker{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
-  h1{margin:10px 0 6px;font-size:30px;font-weight:700;letter-spacing:-0.4px}
-  .sub{color:var(--muted);font-size:14px;margin:0}
+  h1{margin:10px 0 6px;font-size:34px;font-weight:800;letter-spacing:-0.6px}
+  h1 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:14px;margin:0;max-width:620px}
+  .wrap{max-width:1040px;margin:0 auto;padding:20px 20px 60px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
   .card{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line);text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s,border-color .15s}
   .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.07);border-color:#D1D5DB}
@@ -30,16 +39,28 @@
   .excerpt{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px;flex:1}
   .cta{font-size:12px;font-weight:600;color:var(--pink);letter-spacing:0.3px;display:inline-flex;align-items:center;gap:6px}
   .cta svg{width:12px;height:12px}
-  .empty{color:var(--muted);text-align:center;padding:60px 20px;font-size:14px}
+  @media (max-width:600px){ h1{font-size:26px} .ctx{display:none} }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="head">
-    <div class="kicker">Break · MCP</div>
-    <h1>Notificaciones</h1>
-    <p class="sub">Novedades, lanzamientos y cambios recientes en el panel.</p>
-  </div>
+<div class="top">
+  <div class="gb"></div>
+  <nav class="tnav">
+    <div class="brand">
+      <a class="logo" href="https://mcp.breakmkt.com.ar">break<span class="dot"></span></a>
+      <span class="ctx">Notificaciones</span>
+    </div>
+    <span class="role">MCP</span>
+  </nav>
+</div>
+
+<section class="hero">
+  <div class="kicker">Novedades del panel</div>
+  <h1>Break · <span class="grad-text">Notificaciones</span></h1>
+  <p class="sub">Lanzamientos, cambios y novedades recientes en el MCP.</p>
+</section>
+
+<section class="wrap">
   <div class="grid">
     <a class="card" href="saturacion-meta-ads/">
       <div class="cover">
@@ -56,6 +77,6 @@
       </div>
     </a>
   </div>
-</div>
+</section>
 </body>
 </html>

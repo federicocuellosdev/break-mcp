@@ -22,13 +22,13 @@ const html = `<!doctype html>
       <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#6B7280;font-weight:600;padding-bottom:14px;border-bottom:1px solid #E5E7EB;">Break · MCP · Novedad</div>
     </td></tr>
     <tr><td style="padding:14px 32px 8px 32px;" align="center">
-      <div style="width:64px;height:64px;border-radius:100px;background:#FDF2F8;display:inline-flex;align-items:center;justify-content:center;line-height:1;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#E13B7D"><polygon points="7 4 21 12 7 20 7 4"/></svg>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" valign="middle" style="width:76px;height:76px;background:#FDF2F8;border-radius:100px;">
+        <img src="https://mcp.breakmkt.com.ar/public/img/notif-saturation.png" width="40" height="40" alt="Saturación" style="display:block;border:0;">
+      </td></tr></table>
     </td></tr>
     <tr><td style="padding:4px 32px 6px 32px;" align="center">
       <h1 style="margin:12px 0 6px 0;font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.3px;">Nueva sección: Saturación Meta Ads</h1>
-      <div style="font-size:14px;color:#374151;max-width:460px;margin:0 auto;line-height:1.6;">El objetivo de esta sección es <b style="color:#111827;">brindar una serie de datos con el propósito de determinar si es necesario rotar un conjunto de creatividades</b>.</div>
+      <div style="font-size:14px;color:#374151;max-width:460px;margin:0 auto;line-height:1.6;">El objetivo de esta sección es brindar una serie de datos con el propósito de determinar si es necesario rotar un conjunto de creatividades.</div>
     </td></tr>
     <tr><td style="padding:24px 32px 10px 32px;" align="center">
       <a href="${LANDING}" style="display:inline-block;background:linear-gradient(90deg,#0087F2 0%,#BF4FCD 55%,#E13B7D 100%);color:#fff;text-decoration:none;padding:14px 32px;border-radius:100px;font-size:14px;font-weight:600;letter-spacing:0.3px;">Ver video explicativo</a>
@@ -52,7 +52,7 @@ const transporter = nodemailer.createTransport({
 const info = await transporter.sendMail({
   from: `"Break MCP" <${FROM}>`,
   to: TO,
-  subject: 'Nueva sección en Break MCP · Saturación Meta Ads',
+  subject: 'Break MCP · Nueva sección: Saturación Meta Ads',
   html,
 });
 console.log('OK', info.messageId, 'accepted=', info.accepted);
