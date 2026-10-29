@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repo = Split-Path -Parent $here
 
-$RECIPIENTS = 'andres@breakmkt.com.ar,federicoc@breakmkt.com.ar,josefina@breakmkt.com.ar,lucas@breaakmkt.com.ar,matias@breakmkt.com.ar'
+$RECIPIENTS = 'andres@breakmkt.com.ar,federicoc@breakmkt.com.ar,josefina@breakmkt.com.ar,lucas@breakmkt.com.ar,matias@breakmkt.com.ar'
 
 $env:SMTP_HOST = 'cloud.ioagencia.com'
 $env:SMTP_PORT = '465'
