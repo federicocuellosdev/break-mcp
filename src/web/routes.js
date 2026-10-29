@@ -47,7 +47,7 @@ import {
   renderSaturacion,
   renderClientSaturacion,
 } from './pages/admin.js';
-import { computeSaturation, computeClientSaturation, computeCampaignAds } from '../providers/saturation.js';
+import { computeSaturation, computeClientSaturation, computeCampaignAds, computeCampaignTimeseries } from '../providers/saturation.js';
 import { generateUserMd } from '../mdConfig.js';
 import { listLogs, deleteLog, logsStorageInfo } from '../logs.js';
 import { listAlertsForUser, createAlert, dismissAlert } from '../alerts.js';
@@ -841,6 +841,33 @@ export function createWebRouter() {
         metaAccount,
         campaignId: req.params.cid,
         campaignObjective: objective,
+        from, to,
+      });
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  router.get('/admin/api/saturacion/:slug/campaign/:cid/timeseries', requireLogin, async (req, res) => {
+    if (!canAccessClient(res.locals.user, req.params.slug)) return res.status(403).json({ error: 'forbidden' });
+    const from = String(req.query.from || '').slice(0, 10);
+    const to = String(req.query.to || '').slice(0, 10);
+    const objective = String(req.query.objective || '').slice(0, 60);
+    const account = String(req.query.account || '').slice(0, 50);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
+    }
+    let client;
+    try { client = { slug: req.params.slug, ...getClient(req.params.slug) }; } catch { return res.status(404).json({ error: 'cliente no encontrado' }); }
+    const accs = (client.meta_ad_accounts || []).filter(Boolean);
+    const metaAccount = account && accs.includes(account) ? account : accs[0];
+    if (!metaAccount) return res.status(400).json({ error: 'cliente sin cuenta Meta configurada' });
+    try {
+      const data = await computeCampaignTimeseries({
+        metaAccount,
+        campaignId: req.params.cid,
+        objective,
         from, to,
       });
       res.json(data);

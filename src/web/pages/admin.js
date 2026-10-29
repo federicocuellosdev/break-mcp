@@ -4605,6 +4605,27 @@ const SATURACION_CSS = `
 .sat-summary td.cat{width:170px}
 
 /* Tabla de campañas · patrón Argenway "Meta Ads" */
+.sat-chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem 1.3rem;margin-bottom:1.4rem}
+.sat-chart-head{display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.sat-chart-select{display:flex;flex-direction:column;gap:.3rem;min-width:260px;flex:1}
+.sat-chart-select .k{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sat-chart-select select{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:.55rem .75rem;font:500 .85rem 'Inter',sans-serif;color:var(--ink);cursor:pointer}
+.sat-chart-pills{display:flex;gap:.4rem;flex-wrap:wrap}
+.sat-chart-pill{background:transparent;border:1px solid var(--line);color:var(--muted);padding:.4rem .75rem;border-radius:100px;font:600 .72rem 'Inter',sans-serif;cursor:pointer;transition:all .15s;position:relative;padding-left:1.4rem}
+.sat-chart-pill::before{content:'';position:absolute;left:.6rem;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:100px;background:var(--c,var(--muted));opacity:.4;transition:opacity .15s}
+.sat-chart-pill.active{color:var(--ink);border-color:var(--c)}
+.sat-chart-pill.active::before{opacity:1}
+.sat-chart-canvas{position:relative;height:280px;border-top:1px solid var(--line);padding-top:.8rem}
+.sat-chart-canvas .sat-chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem}
+.sat-chart-canvas svg{width:100%;height:100%;display:block}
+.sat-chart-canvas .axis-x text,.sat-chart-canvas .axis-y text{font:500 .65rem 'Inter',sans-serif;fill:var(--muted)}
+.sat-chart-canvas .axis-x line,.sat-chart-canvas .axis-y line,.sat-chart-canvas .grid line{stroke:var(--line);stroke-width:1}
+.sat-chart-canvas .series-line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.sat-chart-canvas .series-dot{r:3}
+.sat-chart-canvas .tooltip{position:absolute;background:var(--ink);color:#fff;padding:.5rem .7rem;border-radius:6px;font:600 .7rem 'Inter',sans-serif;pointer-events:none;white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .1s;z-index:10;line-height:1.5}
+.sat-chart-canvas .tooltip.show{opacity:1}
+.sat-chart-canvas .tooltip .row{display:flex;gap:.5rem;align-items:center}
+.sat-chart-canvas .tooltip .row .dot{width:7px;height:7px;border-radius:100px;flex-shrink:0}
 .sat-campaigns-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .sat-campaigns-wrap::-webkit-scrollbar{height:6px}
 .sat-campaigns-wrap::-webkit-scrollbar-track{background:transparent}
@@ -5048,13 +5069,39 @@ const SATURACION_JS = `
 
     html += '</div></div>'; // close .sat-cards + .sat-client-head
 
-    // ─── Tabla única de campañas (con chip de categoría + KPI clave) ───
+    // Lista única de campañas (se usa para la tabla + el selector del gráfico)
     var allCampaigns=[];
     for(var k=0;k<cats.length;k++){
       var bb=data.buckets[cats[k]];
       if(bb && bb.campaigns) allCampaigns=allCampaigns.concat(bb.campaigns);
     }
     allCampaigns.sort(function(a,b){return b.spend-a.spend});
+
+    // ─── Gráfico de evolución (selección de campaña + KPIs) ───
+    if(allCampaigns.length){
+      var options='';
+      for(var ci=0;ci<allCampaigns.length;ci++){
+        var cc=allCampaigns[ci];
+        var cname=cc.campaign_name.replace(/</g,'&lt;');
+        options += '<option value="'+cc.campaign_id+'" data-objective="'+(cc.objective||'')+'" data-account="'+(cc.account_id||'')+'">'+cname+'</option>';
+      }
+      html += '<div class="sat-chart">'
+        + '<div class="sat-chart-head">'
+        +   '<label class="sat-chart-select">'
+        +     '<span class="k">Campaña</span>'
+        +     '<select id="sat-chart-campaign">'+options+'</select>'
+        +   '</label>'
+        +   '<div class="sat-chart-pills" id="sat-chart-pills">'
+        +     '<button type="button" class="sat-chart-pill active" data-metric="spend" style="--c:#E8177A">Inversión</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="reach" style="--c:#0087F2">Alcance</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="frequency" style="--c:#BF4FCD">Frecuencia</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_value" style="--c:#0f8a5f">Resultado</button>'
+        +     '<button type="button" class="sat-chart-pill" data-metric="kpi_cost" style="--c:#d4a85a">Costo / resultado</button>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="sat-chart-canvas" id="sat-chart-canvas"><div class="sat-chart-empty">Elegí una campaña para ver su evolución.</div></div>'
+        + '</div>';
+    }
 
     if(!allCampaigns.length){
       html += '<div class="sat-loading">Sin campañas con datos en este período.</div>';
@@ -5110,6 +5157,142 @@ const SATURACION_JS = `
         + '</tr></tfoot></table></div>';
     }
     listEl.innerHTML = html;
+    initChart();
+  }
+
+  // ─── Chart de evolución ───────────────────────────────────────
+  var chartState = { data: null, selected: ['spend'] };
+  function initChart(){
+    var sel = document.getElementById('sat-chart-campaign');
+    var pills = document.getElementById('sat-chart-pills');
+    if(!sel || !pills) return;
+    chartState.selected = ['spend'];
+    pills.querySelectorAll('.sat-chart-pill').forEach(function(p){
+      p.classList.toggle('active', p.dataset.metric==='spend');
+      p.addEventListener('click', function(){
+        var m = p.dataset.metric;
+        var idx = chartState.selected.indexOf(m);
+        if(idx>=0){ chartState.selected.splice(idx,1); p.classList.remove('active'); }
+        else { chartState.selected.push(m); p.classList.add('active'); }
+        drawChart();
+      });
+    });
+    sel.addEventListener('change', loadChart);
+    loadChart();
+  }
+  async function loadChart(){
+    var sel = document.getElementById('sat-chart-campaign');
+    var canvas = document.getElementById('sat-chart-canvas');
+    if(!sel || !canvas) return;
+    var opt = sel.selectedOptions[0];
+    if(!opt){ chartState.data=null; renderEmpty(canvas,'Elegí una campaña.'); return; }
+    var cid = opt.value, obj = opt.dataset.objective || '', acc = opt.dataset.account || '';
+    renderEmpty(canvas,'Cargando…');
+    var qs = 'from='+fromEl.value+'&to='+toEl.value+'&objective='+encodeURIComponent(obj)+(acc?'&account='+encodeURIComponent(acc):'');
+    try{
+      var r = await fetch('/admin/api/saturacion/'+slug+'/campaign/'+cid+'/timeseries?'+qs);
+      var data = await r.json();
+      if(!r.ok) throw new Error(data.error||'error');
+      chartState.data = data;
+      drawChart();
+    }catch(e){
+      renderEmpty(canvas, 'Error: '+e.message);
+    }
+  }
+  function renderEmpty(canvas, msg){
+    canvas.innerHTML = '<div class="sat-chart-empty">'+msg+'</div>';
+  }
+  var METRIC_META = {
+    spend:     {label:'Inversión',        color:'#E8177A', fmt:function(v){return fmtMoney(v,null)}},
+    reach:     {label:'Alcance',          color:'#0087F2', fmt:fmtNum},
+    frequency: {label:'Frecuencia',       color:'#BF4FCD', fmt:fmtFreq},
+    kpi_value: {label:'Resultado',        color:'#0f8a5f', fmt:fmtNum},
+    kpi_cost:  {label:'Costo / resultado',color:'#d4a85a', fmt:function(v){return fmtMoney(v,null)}}
+  };
+  function drawChart(){
+    var canvas = document.getElementById('sat-chart-canvas');
+    if(!canvas || !chartState.data) return;
+    var series = chartState.data.series || [];
+    if(!series.length){ renderEmpty(canvas, 'Sin datos diarios en este período.'); return; }
+    var selected = chartState.selected.filter(function(m){ return METRIC_META[m]; });
+    if(!selected.length){ renderEmpty(canvas, 'Seleccioná al menos un KPI.'); return; }
+
+    var W = canvas.clientWidth, H = canvas.clientHeight;
+    var padL = 48, padR = 48, padT = 14, padB = 28;
+    var innerW = W-padL-padR, innerH = H-padT-padB;
+
+    // Un eje Y lineal normalizado por serie: cada serie se escala a [0, maxDeLaSerie]
+    // pintadas en el mismo espacio (0..innerH).
+    var maxByMetric = {};
+    for (var si=0; si<selected.length; si++){
+      var m = selected[si];
+      var mx = 0;
+      for (var j=0; j<series.length; j++){ var v = series[j][m]; if (v!=null && v>mx) mx=v; }
+      maxByMetric[m] = mx||1;
+    }
+
+    var N = series.length;
+    function xPos(i){ return padL + (N<=1 ? innerW/2 : (i*innerW/(N-1))); }
+    function yPos(v, m){ return padT + innerH - (v/maxByMetric[m])*innerH; }
+
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
+    // Grid horizontal
+    svg += '<g class="grid">';
+    for (var g=0; g<=4; g++){
+      var yg = padT + (g*innerH/4);
+      svg += '<line x1="'+padL+'" y1="'+yg+'" x2="'+(W-padR)+'" y2="'+yg+'"/>';
+    }
+    svg += '</g>';
+    // Eje X (fechas)
+    svg += '<g class="axis-x">';
+    var stepX = Math.max(1, Math.ceil(N/6));
+    for (var i=0; i<N; i+=stepX){
+      var x = xPos(i);
+      var d = series[i].date||'';
+      var short = d.slice(5); // MM-DD
+      svg += '<text x="'+x+'" y="'+(H-10)+'" text-anchor="middle">'+short+'</text>';
+    }
+    svg += '</g>';
+    // Series
+    for (var k=0; k<selected.length; k++){
+      var mkey = selected[k];
+      var meta = METRIC_META[mkey];
+      var path = '';
+      var dots = '';
+      for (var ii=0; ii<N; ii++){
+        var val = series[ii][mkey];
+        if (val==null) continue;
+        var x2 = xPos(ii), y2 = yPos(val, mkey);
+        path += (path?' L':'M')+x2+' '+y2;
+        dots += '<circle class="series-dot" cx="'+x2+'" cy="'+y2+'" r="3" fill="'+meta.color+'" data-metric="'+mkey+'" data-i="'+ii+'"/>';
+      }
+      svg += '<path class="series-line" d="'+path+'" stroke="'+meta.color+'"/>'+dots;
+    }
+    svg += '</svg>';
+    svg += '<div class="tooltip" id="sat-chart-tt"></div>';
+    canvas.innerHTML = svg;
+
+    // Tooltip al hover sobre los puntos
+    var tt = document.getElementById('sat-chart-tt');
+    canvas.querySelectorAll('.series-dot').forEach(function(dot){
+      dot.addEventListener('mouseenter', function(e){
+        var i = Number(dot.dataset.i);
+        var row = series[i];
+        var html = '<div style="margin-bottom:.25rem;opacity:.7">'+row.date+'</div>';
+        for (var kk=0; kk<selected.length; kk++){
+          var mk = selected[kk], mm = METRIC_META[mk], vv = row[mk];
+          html += '<div class="row"><span class="dot" style="background:'+mm.color+'"></span>'+mm.label+': <b>'+(vv==null?'—':mm.fmt(vv))+'</b></div>';
+        }
+        tt.innerHTML = html;
+        var rect = canvas.getBoundingClientRect();
+        var cx = dot.getBoundingClientRect().left - rect.left + 4;
+        var cy = dot.getBoundingClientRect().top - rect.top;
+        tt.style.left = cx+'px';
+        tt.style.top = cy+'px';
+        tt.classList.add('show');
+      });
+      dot.addEventListener('mouseleave', function(){ tt.classList.remove('show'); });
+    });
   }
 
   // ─── Init ─────────────────────────────────────────────────────

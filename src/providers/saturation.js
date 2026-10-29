@@ -518,3 +518,55 @@ export async function computeClientSaturation({ client, from, to }) {
     errors: campaigns.filter((x) => x.error),
   };
 }
+
+// Serie diaria de métricas para una campaña específica.
+export async function computeCampaignTimeseries({ metaAccount, campaignId, objective, from, to }) {
+  // Insights nivel campaña con time_increment=1 (una fila por día)
+  const insightsResp = await metaGet(`/${metaAccount}/insights`, {
+    level: 'campaign',
+    time_range: { since: from, until: to },
+    time_increment: 1,
+    fields: 'date_start,campaign_id,spend,reach,impressions,frequency,actions,action_values',
+    filtering: [{ field: 'campaign.id', operator: 'IN', value: [campaignId] }],
+    limit: 500,
+  });
+
+  const rows = Array.isArray(insightsResp.data) ? insightsResp.data : [];
+  // Determinar qué KPI corresponde al objective, para derivar value + cost
+  const kpiDef = KPI_BY_OBJECTIVE[String(objective || '').toUpperCase()] || null;
+
+  const series = rows.map((r) => {
+    const spend = Number(r.spend) || 0;
+    const reach = Number(r.reach) || 0;
+    const impressions = Number(r.impressions) || 0;
+    const frequency = Number(r.frequency) || (reach > 0 ? impressions / reach : 0);
+    let kpi_value = null;
+    if (kpiDef) {
+      if (kpiDef.derived === 'reach') {
+        kpi_value = reach;
+      } else if (Array.isArray(kpiDef.action_type)) {
+        const actions = Array.isArray(r.actions) ? r.actions : [];
+        const matched = actions.filter((a) => kpiDef.action_type.includes(a.action_type));
+        kpi_value = matched.reduce((acc, a) => acc + (Number(a.value) || 0), 0);
+      }
+    }
+    const kpi_cost = kpi_value && kpi_value > 0 ? spend / kpi_value : null;
+    return {
+      date: r.date_start,
+      spend,
+      reach,
+      impressions,
+      frequency,
+      kpi_value,
+      kpi_cost,
+    };
+  });
+
+  series.sort((a, b) => (a.date < b.date ? -1 : 1));
+  return {
+    campaign_id: campaignId,
+    kpi_label: kpiDef ? kpiDef.label : null,
+    from, to,
+    series,
+  };
+}
