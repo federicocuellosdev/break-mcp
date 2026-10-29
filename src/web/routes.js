@@ -11,6 +11,7 @@ import {
   isDev,
   isAdminOrDev,
   allowedClientSlugs,
+  canAccessClient,
 } from '../users.js';
 import { listMccChildren } from '../providers/gads.js';
 import { listAccountSummaries, recentActivity } from '../providers/ga4.js';
@@ -774,11 +775,12 @@ export function createWebRouter() {
   });
 
   // ─── Saturación (dev-only) ───────────────────────────────────────
-  router.get('/admin/saturacion', requireLogin, requireDev, (req, res) => {
+  router.get('/admin/saturacion', requireLogin, (req, res) => {
     res.set('Content-Type', 'text/html; charset=utf-8').send(renderSaturacion({ user: res.locals.user }));
   });
 
-  router.get('/admin/saturacion/:slug', requireLogin, requireDev, (req, res) => {
+  router.get('/admin/saturacion/:slug', requireLogin, (req, res) => {
+    if (!canAccessClient(res.locals.user, req.params.slug)) return res.status(403).send('Forbidden');
     let target;
     try { target = getClient(req.params.slug); } catch { return res.status(404).send('Cliente no encontrado'); }
     res
@@ -786,13 +788,14 @@ export function createWebRouter() {
       .send(renderClientSaturacion({ user: res.locals.user, slug: req.params.slug, clientName: target.name }));
   });
 
-  router.get('/admin/api/saturacion', requireLogin, requireDev, async (req, res) => {
+  router.get('/admin/api/saturacion', requireLogin, async (req, res) => {
     const from = String(req.query.from || '').slice(0, 10);
     const to = String(req.query.to || '').slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       return res.status(400).json({ error: 'Parámetros from/to inválidos (YYYY-MM-DD)' });
     }
-    const clients = listClients().filter((c) => c.active !== false && c.slug !== 'demo');
+    const allowed = allowedClientSlugs(res.locals.user);
+    const clients = listClients().filter((c) => c.active !== false && c.slug !== 'demo' && (allowed === null || allowed.includes(c.slug)));
     try {
       const data = await computeSaturation({ clients, from, to });
       res.json(data);
@@ -801,7 +804,8 @@ export function createWebRouter() {
     }
   });
 
-  router.get('/admin/api/saturacion/:slug', requireLogin, requireDev, async (req, res) => {
+  router.get('/admin/api/saturacion/:slug', requireLogin, async (req, res) => {
+    if (!canAccessClient(res.locals.user, req.params.slug)) return res.status(403).json({ error: 'forbidden' });
     const from = String(req.query.from || '').slice(0, 10);
     const to = String(req.query.to || '').slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
@@ -817,7 +821,8 @@ export function createWebRouter() {
     }
   });
 
-  router.get('/admin/api/saturacion/:slug/campaign/:cid/ads', requireLogin, requireDev, async (req, res) => {
+  router.get('/admin/api/saturacion/:slug/campaign/:cid/ads', requireLogin, async (req, res) => {
+    if (!canAccessClient(res.locals.user, req.params.slug)) return res.status(403).json({ error: 'forbidden' });
     const from = String(req.query.from || '').slice(0, 10);
     const to = String(req.query.to || '').slice(0, 10);
     const objective = String(req.query.objective || '').slice(0, 60);

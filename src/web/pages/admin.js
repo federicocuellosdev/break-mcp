@@ -503,13 +503,16 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .rp-btn.primary:hover{background:var(--pink);opacity:.9;color:#fff}
 .rp-btn:disabled{opacity:.4;cursor:not-allowed}
 .inv-list{display:flex;flex-direction:column;gap:.9rem}
-.inv-block-head{display:grid;grid-template-columns:1fr .9fr 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:0 1.4rem .6rem;font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.inv-block-head{display:grid;grid-template-columns:1fr .9fr 44px 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:0 1.4rem .6rem;font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .inv-block-head > .right{text-align:right}
-.inv-block-head > :nth-child(3),
-.inv-block-row > .inv-block-cell:nth-child(3){text-align:center}
+.inv-block-head > :nth-child(3),.inv-block-head > :nth-child(4),
+.inv-block-row > .inv-block-cell:nth-child(3),.inv-block-row > .inv-block-cell:nth-child(4){text-align:center}
+.inv-cell-acc-link{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:100px;background:transparent;color:var(--muted);border:1px solid var(--line);transition:all .15s;text-decoration:none}
+.inv-cell-acc-link:hover{color:var(--pink);border-color:var(--pink);background:var(--pink-soft)}
+.inv-cell-acc-link svg{width:12px;height:12px}
 .inv-block{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .inv-block[hidden]{display:none}
-.inv-block-row{display:grid;grid-template-columns:1fr .9fr 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:.95rem 1.4rem;border-top:1px solid var(--line)}
+.inv-block-row{display:grid;grid-template-columns:1fr .9fr 44px 170px 130px 130px 220px;gap:1.1rem;align-items:center;padding:.95rem 1.4rem;border-top:1px solid var(--line)}
 .inv-block-row:first-child{border-top:none}
 .inv-block-cell{min-width:0}
 .inv-block-cell.right{text-align:right;justify-self:end}
@@ -523,8 +526,9 @@ input.field-invalid,textarea.field-invalid,.field input.field-invalid,.field tex
 .inv-block-row.inv-platform-inactive{opacity:.55;filter:grayscale(.5)}
 .inv-block-row.inv-platform-inactive .inv-bar-fill{background:var(--muted) !important}
 .plat-billing-chip.hidden{display:none}
-.inv-block-cell .inv-cell-platform .ic{width:20px;height:20px;display:inline-flex;flex-shrink:0}
+.inv-block-cell .inv-cell-platform .ic{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .inv-block-cell .inv-cell-platform .ic img,.inv-block-cell .inv-cell-platform .ic svg{width:100%;height:100%;object-fit:contain}
+.inv-block-cell .inv-cell-platform .ic img[alt="Meta Ads"]{transform:scale(1.12) translateY(1px)}
 .inv-list-head{display:grid;grid-template-columns:1fr 130px 130px 130px 240px;gap:1.4rem;align-items:center;padding:0 1.4rem .5rem}
 .inv-list-head.inv-list-head-4{grid-template-columns:1fr 150px 150px 280px}
 .inv-list-head[hidden]{display:none}
@@ -2016,7 +2020,7 @@ function sidebar(user, active) {
     { key: 'users', label: 'Usuarios', href: '/admin/users', adminOnly: true },
     { key: 'clients', label: 'Clientes', href: '/admin/clients' },
     { key: 'investment', label: 'Inversión', href: '/admin/investment' },
-    { key: 'saturacion', label: 'Saturación', href: '/admin/saturacion', dev: true },
+    { key: 'saturacion', label: 'Saturación', href: '/admin/saturacion' },
     { key: 'logs', label: 'Logs', href: '/admin/logs', dev: true },
     { key: 'config', label: 'MCP', href: '/admin/config' },
   ];
@@ -2523,6 +2527,27 @@ export function renderInvestment({ user }) {
       function curSym(c){return c==='USD'?'US$':c==='EUR'?'&#8364;':'$'}
       function fmt(n,c){if(n==null)return '&#8212;';return curSym(c)+' '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}
       var PLAT={meta:{label:'Meta Ads',icon:${JSON.stringify(META_ICON)}},gads:{label:'Google Ads',icon:${JSON.stringify(GADS_ICON)}}};
+      var EXT_LINK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+      function buildPlatformAccountLink(pk, accIds){
+        if(!accIds||!accIds.length)return '<span style="color:var(--muted);font-size:.75rem">&#8212;</span>';
+        var raw=String(accIds[0]).replace(/^act_/,'');
+        var url=null, title='';
+        if(pk==='meta'){
+          var bid=window.INV_META_BUSINESS_ID||'';
+          var qs='act='+raw+(bid?'&business_id='+bid:'')+'&nav_entry_point=mbs_sub_nav';
+          url='https://adsmanager.facebook.com/adsmanager/manage/campaigns?'+qs;
+          title='Abrir Meta Ads Manager';
+        } else if(pk==='gads'){
+          var cid=raw.replace(/-/g,'');
+          url='https://ads.google.com/aw/overview?__u='+cid+'&__c='+cid;
+          title='Abrir Google Ads';
+        } else if(pk==='ga4'){
+          url='https://analytics.google.com/analytics/web/#/p'+raw+'/reports/intelligenthome';
+          title='Abrir Google Analytics';
+        }
+        if(!url)return '<span style="color:var(--muted);font-size:.75rem">&#8212;</span>';
+        return '<a class="inv-cell-acc-link" href="'+url+'" target="_blank" rel="noopener" title="'+title+'" onclick="event.stopPropagation()">'+EXT_LINK_SVG+'</a>';
+      }
       function render(data){
         if(!data.clients||!data.clients.length){
           list.innerHTML='<div class="inv-empty">No hay clientes registrados todav&#237;a.</div>';
@@ -2531,6 +2556,7 @@ export function renderInvestment({ user }) {
         var header='<div class="inv-block-head">'
           +'<span>Cliente</span>'
           +'<span>Plataforma</span>'
+          +'<span></span>'
           +'<span>Estado del pago</span>'
           +'<span class="right">Invertido</span>'
           +'<span class="right">Presupuesto</span>'
@@ -2575,9 +2601,11 @@ export function renderInvestment({ user }) {
             var budgetCell = CAN_EDIT
               ? '<div class="inv-block-cell right inv-num muted"><span class="inv-budget-cell"><span data-role="budget-text">'+budgetText+'</span><button type="button" class="inv-budget-edit" data-role="edit-budget" title="Editar presupuesto" aria-label="Editar presupuesto">'+EDIT_ICON+'</button></span></div>'
               : '<div class="inv-block-cell right inv-num muted">'+budgetText+'</div>';
+            var accLink = buildPlatformAccountLink(pk, accIds);
             return '<div class="inv-block-row'+inactiveCls+'"'+platAttrs+'>'
               +'<div class="inv-block-cell">'+(idx===0?clientCell:'')+'</div>'
               +'<div class="inv-block-cell"><span class="inv-cell-platform"><span class="ic">'+m.icon+'</span>'+m.label+'</span></div>'
+              +'<div class="inv-block-cell">'+accLink+'</div>'
               +'<div class="inv-block-cell">'+(platformActive?'<span class="plat-billing-chip loading" data-role="billing-chip">&#8230;</span>':'<span class="plat-billing-chip inactive">Inactivo</span>')+'</div>'
               +'<div class="inv-block-cell right inv-num">'+spendText+'</div>'
               +budgetCell
@@ -5149,7 +5177,7 @@ export function renderSaturacion({ user }) {
     <div id="sat-content"><div class="sat-loading">Cargando&#8230;</div></div>
     <script>${SATURACION_JS}</script>
   `;
-  return layout({ user, active: 'saturacion', title: 'Saturación', body });
+  return layout({ user, active: 'saturacion', title: 'Saturación Meta Ads', body });
 }
 
 export function renderClientSaturacion({ user, slug, clientName }) {
@@ -5176,5 +5204,5 @@ export function renderClientSaturacion({ user, slug, clientName }) {
     </div>
     <script>${SATURACION_JS}</script>
   `;
-  return layout({ user, active: 'saturacion', title: `Saturación · ${clientName || slug}`, actions, body });
+  return layout({ user, active: 'saturacion', title: `Saturación Meta Ads · ${clientName || slug}`, actions, body });
 }
