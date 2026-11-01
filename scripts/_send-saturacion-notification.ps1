@@ -12,8 +12,7 @@ $env:SMTP_PORT = '465'
 $env:SMTP_USER = 'no-reply@breakmkt.com.ar'
 $env:SMTP_PASS = & python C:\Dev\tools\secrets_cli.py get "break::.mail.json" pass
 if ([string]::IsNullOrWhiteSpace($env:SMTP_PASS)) {
-    # Fallback: value stored en el repo
-    $env:SMTP_PASS = '***REDACTED***'
+    throw 'No se pudo obtener SMTP_PASS del vault. Verifica que c:/Dev/break/.mail.json este descifrable.'
 }
 $env:MAIL_FROM = 'no-reply@breakmkt.com.ar'
 
