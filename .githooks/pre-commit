@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Pre-commit secret scanner: bloquea el commit si detecta credenciales en el diff.
+# Instalacion (una vez por clon):
+#   git config core.hooksPath .githooks
+#
+# Reglas heuristicas: cualquier match literal del contenido *agregado* a archivos staged.
+# Si tenes un falso positivo real, usa el flag --no-verify (y despues avisanos).
+
+set -e
+
+RED=$'\e[31m'; YELLOW=$'\e[33m'; RESET=$'\e[0m'
+hits=0
+
+# Lista de patrones. Cada linea: "<regex>|<descripcion>"
+# Patrones orientados a strings literales en codigo (no a secretos encriptados por SOPS).
+patterns=(
+  'SMTP_PASS[[:space:]]*=[[:space:]]*["'\''][^"'\'' ]{4,}["'\'']|SMTP_PASS asignado con literal'
+  '(password|passwd|PASS)[[:space:]]*[:=][[:space:]]*["'\''][^"'\'' ]{8,}["'\'']|password literal'
+  'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|JWT token'
+  'EAAG[A-Za-z0-9]{80,}|Meta/Facebook access token'
+  'rnd_[A-Za-z0-9]{25,}|Render API token'
+  'sk-ant-api[A-Za-z0-9_-]{20,}|Anthropic API key'
+  'AKIA[0-9A-Z]{16}|AWS access key id'
+  'Bearer[[:space:]]+[A-Za-z0-9._-]{30,}|Bearer token literal'
+)
+
+# Archivos staged (solo adicion/modificacion de contenido, excluyendo binarios)
+staged=$(git diff --cached --name-only --diff-filter=AM | grep -Ev '\.(png|jpg|jpeg|gif|webp|webm|mp4|mov|pdf|zip|tar|gz|woff|woff2|ttf|eot|ico|wasm)$' || true)
+[ -z "$staged" ] && exit 0
+
+# Excepciones: archivos encriptados por SOPS no se escanean
+for f in $staged; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.enc|*.enc.*) continue ;;
+    .env.enc*) continue ;;
+  esac
+
+  diff=$(git diff --cached -U0 -- "$f" | grep -E '^\+[^+]' || true)
+  [ -z "$diff" ] && continue
+
+  # Ignorar lineas que son SOPS (contenido ya cifrado) o process.env.X / env!X / dotenv refs
+  diff_clean=$(printf '%s\n' "$diff" | grep -Ev 'ENC\[AES256_GCM|process\.env\.|\$env:|dotenv' || true)
+  [ -z "$diff_clean" ] && continue
+
+  for row in "${patterns[@]}"; do
+    pat="${row%%|*}"
+    desc="${row##*|}"
+    if match=$(printf '%s\n' "$diff_clean" | grep -nE "$pat" | head -3); then
+      if [ -n "$match" ]; then
+        echo "${RED}SECRETO DETECTADO${RESET} en ${YELLOW}$f${RESET} — $desc"
+        printf '%s\n' "$match" | sed 's/^/  /'
+        echo
+        hits=$((hits+1))
+      fi
+    fi
+  done
+done
+
+if [ "$hits" -gt 0 ]; then
+  echo "${RED}Commit bloqueado:${RESET} $hits patron(es) de secreto detectado(s)."
+  echo "  - Mové el valor al vault (sops) o a env vars y volvé a stagear."
+  echo "  - Si estás MUY seguro de que es falso positivo: git commit --no-verify"
+  exit 1
+fi
+exit 0
